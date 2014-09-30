@@ -1,0 +1,18 @@
+## Custom rsync rules to skip all but the most vital files.
+## Now independent of instead of cumulative with other backup rule files!
+
+## Everything with suboptimal utility-to-size ratio.
+- /.home/***
+- /.home.bak/***
+- /audio/***
+- /bulk/***
+- /dl/***
+- /doc/books/***
+- /doc/VBox shared/***
+- /fun/***
+- /img/wallpaper/***
+- /phone/***
+- /prog/***
+- /tmp/***
+- /vid/***
+- /wine-desktop/***

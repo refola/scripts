@@ -1,0 +1,6 @@
+## Don't backup caches.
+- /.cache/***
+- /.config/chromium/Default/Application Cache/***
+- /.config/chromium/Default/GPUCache/***
+- /.thumbnails/***
+- /.nv/GLCache/***

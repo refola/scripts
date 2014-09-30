@@ -1,0 +1,1 @@
+../system/update-grub.sh
