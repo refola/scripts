@@ -15,9 +15,9 @@ coords="35:-111"; place="Flagstaff"
 
 # defaults -- full brightness and native temperature at day, both cut back a bunch at night
 default_tint_day=0
-default_tint_night=7
+default_tint_night=9
 default_temp_day=65
-default_temp_night=50
+default_temp_night=55
 
 if [ -z "$1" ]
 then
