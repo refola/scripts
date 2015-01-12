@@ -1,8 +1,8 @@
 #!/bin/bash
 # btrfsbackup.sh
-# 
+#
 # Uncopyright 2014 Mark Haferkamp. This code is dedicated to the public domain. Use it as you will.
-# 
+#
 # Makes sure internal btrfs snapshots are up-to-date for today. Then, if the
 # external drive is connected, makes sure that external backups match the latest
 # internal backups, bootstrapping new snapshot clones if required.
@@ -29,6 +29,23 @@
 # The key point is that we must specify /dest as the location, not name, of a
 # btrfs subvolume/snapshot clone.
 
+# TODO: rewrite in Go...
+# 
+# * temporal via snapshots
+# * redundant via external hard drives
+# * Go rewrite of existing script
+# ** can bootstrap entire sequence of backups from one device to another
+# *** can fill in gaps between existing backups
+# ** snapper-like exponential decay in frequency
+# ** easily parsing dates of snapshot names, avoiding "lastbak" files and being more robust
+# ** integration with existing Refola Backup can also benefit from non-btrfs devices
+# *** once i figure out topological sorting, this can help linux machines become backup servers for any storage system, e.g., network
+# **** backup server uses existing rsync to get latest contents, makes btrfs snapshot, pushes snapshot to external drive
+# ** can add all sorts of bells and whistles later
+# *** checking btrfs caveats (e.g., sufficient free space) and warning users
+# *** on system shutdown, make a snapshot. then on successful startup, immediately create grub option to boot from snapshot, making an automatic last-known good recovery
+
+
 
 ### GLOBAL VARS ###
 
@@ -43,6 +60,8 @@ EXTERNS="
 /run/media/mark/OT4P
 /media/mark/OT4P
 /media/OT4P
+/run/media/adminn/OT4P
+/media/adminn/OT4P
 "
 
 # where to make/find/update external snapshot clones
@@ -164,12 +183,19 @@ internal() {
 
 ### UTILITY FUNCTIONS ###
 
-# Get name of X_LASTBAK file for location and VOL, where "X_" is "INT" or "EXT".
+# Get name of last backup, or empty string if it doesn't yet exist
 # Usage: X_LASTBAK="$(lastbak VOL X_SNAPDIR)"
 lastbak() {
 	local VOL=$(san "$1")
 	local SNAPDIR=$2
-	echo -n "$SNAPDIR/$VOL/lastbak"
+	local DIR="$SNAPDIR/$VOl"
+	if [ ! -z "`ls $DIR`" ] # NOTE: assumes that non-empty snapshot dir = backups have been made with this script before
+	then
+		# get list of existing snapshots, get last one, and remove trailing '/'
+		# NOTE: The "ls -d */" part is from <ref>. It would be insane if copyright/patent applied to a string too short to be a secure password.
+		# ref: https://stackoverflow.com/questions/15737399/any-reason-for-using-in-command-ls-d-to-list-directories#15737436
+		ls -d "$DIR/*/" | tail -n 1 | rev | cut -c2- | rev
+	fi
 }
 
 # Sanitize a volume's name for a snapshot folder name.
@@ -226,39 +252,38 @@ for VOL in $VOLS
 do
 	# Set up directories for the next stuff.
 	voldir "$VOL"
-	
+
 	# Set up internal snapshot, ensuring it's from today
 	INTLASTBAK="$(lastbak "$VOL" "$INTSNAPDIR")"
-	if [ ! -e "$INTLASTBAK" ] || [ "$(cat "$INTLASTBAK")" != "$TIME" ]
+	if [ "$INTLASTBAK" != "$TIME" ]
 	then
-		internal "$VOL"
-		# using tee and ignoring its standard output as a workaround for the lack of a simpler "pipe" command with which to pipe things under sudo
-		echo -n "$TIME" | sudo tee "$INTLASTBAK" > /dev/null
+		internal $VOL
+	else
+		echo "There's already a snapshot from $TIME for $VOL"
 	fi
-	
+
 	# Check if we should do this next part
 	if [ -z "$EXTSNAPDIR" ]
 	then
 		continue
 	fi
-	
+
 	# Set up external snapshot
 	EXTLASTBAK="$(lastbak "$VOL" "$EXTSNAPDIR")"
-	if [ ! -e "$EXTLASTBAK" ]
+	if [ -z "$EXTLASTBAK" ]
 	then
 		bootstrap "$VOL"
-		echo -n "$TIME" > "$EXTLASTBAK"
 	else
-		OLDEXTTIME="$(cat "$EXTLASTBAK")"
-		if [ "$OLDEXTTIME" != "$TIME" ]
+		if [ "$EXTLASTBAK" != "$TIME" ]
 		then
-			incremental "$VOL" "$OLDEXTTIME"
-			echo -n "$TIME" > "$EXTLASTBAK"
+			incremental "$VOL" "$EXTLASTBAK"
+		else
+			echo "There's already a backup from $TIME for $VOL."
 		fi
 	fi
 done
 
-# kill sudo-refreshing loop
+echo "Killing sudo refresher before exiting."
 kill "$CHILDPID"
 
 exit
