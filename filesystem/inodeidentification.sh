@@ -19,7 +19,7 @@ checktype() {
 	elif [ -h "$1" ]
 	then
 		echo "It's a symbolic link! Here's where it points...."
-		basename "$1"
+		readlink "$1"
 	elif [ -b "$1" ]
 	then
 		echo "It's a block device! You might be able to (carefully!) do something to it with \"dd\"...."
