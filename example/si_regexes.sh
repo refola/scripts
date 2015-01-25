@@ -75,8 +75,17 @@ BREAKS="$FAKE$FAKE"
 PARAS='<\/p>\n<p>'
 replace "$BREAKS" "$PARAS"
 
+# Fix unmatched opening quotes
+OPENPARAQUO='<p>"'
+OPENPARALDQUO='<p>&ldquo;'
+replace "$OPENPARAQUO" "$OPENPARALDQUO"
+
 # Convert remaining line break placeholders back into real line breaks.
 replace "$FAKE" '\n'
+
+# Manually add <p> at beginning and </p> at end
+echo -n "<p>$(cat $OUTPUT)</p>" > $OUTPUT.bak
+mv $OUTPUT.bak $OUTPUT
 
 # Quality check
 diff $OUTPUT $EXPECTED
