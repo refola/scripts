@@ -70,16 +70,16 @@ regexes() {
 
 	# Pairs of line breaks into <p> tags
 	BREAKS="$FAKE$FAKE"
-	PARAS='<\/p>\n<p>'
+	PARAS='<\/p>\n\n<p>'
 	replace "$BREAKS" "$PARAS"
+
+	# Convert remaining line break placeholders back into real line breaks.
+	replace "$FAKE" '' #'\n'
 
 	# Fix unmatched opening quotes
 	OPENPARAQUO='<p>"'
 	OPENPARALDQUO='<p>&ldquo;'
 	replace "$OPENPARAQUO" "$OPENPARALDQUO"
-
-	# Convert remaining line break placeholders back into real line breaks.
-	replace "$FAKE" '\n'
 
 	# Manually add <p> at beginning and </p> at end
 	echo -n "<p>$(cat $OUTPUT)</p>" > $OUTPUT.bak
