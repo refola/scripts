@@ -11,8 +11,8 @@ fi
 
 if [ -z "$1" ]
 then
-	echo "Usage: `basename $0` pattern [count]"
-	echo "Searches files in $DIR for pattern, returning the last count (default $COUNT) lines"
+	echo "Usage: `basename $0` regex [count]"
+	echo "Searches files in $DIR for given regex, returning the last count (default $COUNT) lines"
 	echo "Count can be \"all\" to display all matching history items."
 	exit 1
 fi
