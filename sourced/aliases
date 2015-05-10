@@ -1,0 +1,21 @@
+# Nicer ls formatting
+alias ls='ls --group-directories-first --time-style=+"%d.%m.%Y %H:%M" --color=auto -F'
+
+alias cp="cp -i"	# confirm before overwriting something
+alias df='df -h'	# human-readable sizes
+alias free='free -m'	# show sizes in MB
+
+# colorize grep
+alias grep='grep --color=tty'
+alias fgrep='fgrep --color=tty'
+alias egrep='egrep --color=tty'
+
+
+# Aliases
+alias make='make -j6' # Parallelize make with 6 cores.
+alias cp='cp -i' # Prompt before overwriting
+# Editor aliases
+alias nano='emacs-nox' # Do the right thing despite old muscle memory.
+alias vi='echo "Just use emacs."'
+alias vim='echo "Just use emacs."'
+alias ed='echo "What is this? I don'\''t even."'
