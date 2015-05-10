@@ -1,5 +1,9 @@
 #!/bin/bash
-# Generate random password-suitable symbols from /dev/random
+# Generate random password-suitable symbols from /dev/random.
+
+# Note: The combination of cat|tr|fold|head and the original tr
+# pattern are originally from <ref>.
+# ref: http://blog.colovirt.com/2009/01/07/linux-generating-strong-passwords-using-randomurandom/
 
 if [ -z "$1" ]
 then
