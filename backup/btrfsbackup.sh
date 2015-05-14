@@ -82,7 +82,6 @@ fi
 VOLS="
 @fedora
 @kubuntu
-@kylin
 @suse
 @home
 @home/gaming
