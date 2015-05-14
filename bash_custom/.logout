@@ -1,0 +1,5 @@
+# Custom file to be called by ~/.bash_logout
+
+# Clear caches, etc....
+#cleanhome # commented out as it makes btrfs snapshots take more space over time
+

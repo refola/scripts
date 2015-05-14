@@ -1,0 +1,8 @@
+# This folder contains files ready for symlinking if you want to
+# mirror my custom Bash shell configuration on your own system.
+
+# To use this:
+# 1. Set your ~/.bash_logout, ~/.bash_profile, ~/.bashrc, ~/.logout,
+#    and ~/.profile to link to the corresponding files here.
+# 2. Make the folders ~/.bash.d and ~/.bash.d/history
+# 3. Cross your fingers and start a new Bash session.
