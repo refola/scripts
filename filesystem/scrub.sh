@@ -15,7 +15,7 @@ external /run/media/mark/OT4P/
 
 # Usage: scrub name location
 # Runs btrfs scrub on location and saves results to file based on name.
-scrub() {
+scrubit() {
 	local NAME="$1"
 	local LOCATION="$2"
 	local FILE="${PLACE}/${DATE}_scrub_${NAME}"
@@ -41,8 +41,8 @@ tupleloop() {
 	for PAIR in $TUPLES
 	do
 		local IFS=" "
-		set $PAIR
-		$FUNC $*
+		set "$PAIR"
+		$FUNC $* # Don't change to "$@" because it breaks $FUNC seeing multiple args.
 	done
 }
 
@@ -51,9 +51,9 @@ tupleloop() {
 tuplelooploop() {
 	local TUPLES="$1"
 	shift
-	for FUNC in $*
+	for FUNC in "$@"
 	do
-		tupleloop "$TUPLES" $FUNC
+		tupleloop "$TUPLES" "$FUNC"
 	done
 }
 
@@ -71,9 +71,10 @@ setLASTifdir() {
 scrubwrap() {
 	if [ "$2" = "$LAST" ]
 	then
-		scrub "$1" "$2"
+		scrubit "$1" "$2"
 	elif [ -d "$2" ]
-		scrub "$1" "$2"
+	then
+		scrubit "$1" "$2" &
 	fi
 }
 
