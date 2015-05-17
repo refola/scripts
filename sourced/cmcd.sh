@@ -1,11 +1,10 @@
 #!/bin/bash
 # Change the the folder containing a command's executable file.
 # NOTE: This must be sourced (e.g., in your .bashrc) in order to work!
-# After sourcing, run it like "cmdcd command".
 
-# Usage: cmdcd command
+# Usage: cmcd command
 # Changes working directory to location of command.
-cmdcd() {
+cmcd() {
 	if [ -z "$1" ]
 	then
 		echo "Usage: $(basename "$(readlink -f "$0")")" command
