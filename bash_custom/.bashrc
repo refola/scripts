@@ -56,15 +56,23 @@ source_them() {
 	done
 }
 
-source_them "" "$to_source"
+# Usage: main
+# Changes the Bash environment to match all the custom stuff in other
+# files.
+main() {
+	unalias -a # Get rid of whatever distro-specific crud is
+		   # invoked before this.
+	source_them "" "$to_source"
+}
 
+# Do the major changes.
+main
 
-# Environment variable cleanup
-unset DEBUG
-unset msg
-unset to_source
-unset source_them
+# Clean up the environment after the changes.
+for clutter in DEBUG msg to_source source_them main
+do
+	unset $clutter
+done
 
-
-# Change to where my stuff really is
+# Move out of the multi-distro "home" folder mess.
 cd "$HOME/../.."
