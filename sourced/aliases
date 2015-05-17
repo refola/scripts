@@ -1,5 +1,5 @@
 # Prettiness
-alias ls='ls --group-directories-first --time-style=+"%d.%m.%Y %H:%M" --color=auto'
+alias ls='ls --group-directories-first --time-style=+"%Y-%m-%d_%H%M:%S" --color=auto'
 alias df='df -h'
 alias free='free -m'
 alias grep='grep --color=tty'
@@ -13,7 +13,7 @@ alias cp='cp -i' # Prompt before overwriting
 alias make='make -j6' # Parallelize make with 6 cores.
 
 # Editing
-alias emacs='emacs-nox' # I probably don't want the GUI when I'm calling it from Bash.
+alias emac='emacs-nox' # Save a letter and skip the GUI when calling emacs from Bash.
 alias nano='emacs-nox' # Do the right thing despite old muscle memory.
 alias vi='echo "Just use emacs."'
 alias vim='echo "Just use emacs."'
