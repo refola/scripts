@@ -38,7 +38,7 @@ dofolder() {
 	then
 		cd $folder
 		echo "Caching folder $folder."
-		(time `cachefolder > /dev/null`) 2>&1 | grep -v user | grep -v sys | grep -v "^$" | grep -v "Permission denied"
+		(time `cache-folder > /dev/null`) 2>&1 | grep -v user | grep -v sys | grep -v "^$" | grep -v "Permission denied"
 	else
 		echo "Folder doesn't exist: $folder"
 	fi

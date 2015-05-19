@@ -10,7 +10,6 @@ else
 	echo "CPU frequency-controlling command not found!"
 fi
 
-# See message echoed by savecorezero.sh.
-savecorezero
+cpu-save-core-zero
 
 exit

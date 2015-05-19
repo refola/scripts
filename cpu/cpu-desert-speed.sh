@@ -9,7 +9,6 @@ then
 	sudo cpufreq-set -g ondemand --max 2GHz
 fi
 
-# See message echoed by savecorezero.sh.
-savecorezero
+cpu-save-core-zero
 
 exit
