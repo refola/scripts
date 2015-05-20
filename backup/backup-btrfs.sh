@@ -80,6 +80,7 @@ fi
 # subvolumes to snapshot
 # See output of "sudo btrfs subvolume list $INTROOT | grep -v SNAPSHOTDIRECTORY" for ideas.
 VOLS="
+@chakra
 @fedora
 @kubuntu
 @suse
