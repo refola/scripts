@@ -18,3 +18,7 @@ alias nano='emacs-nox' # Do the right thing despite old muscle memory.
 alias vi='echo "Just use emacs."'
 alias vim='echo "Just use emacs."'
 alias ed='echo "What is this? I don'\''t even."'
+
+# Gitting
+alias gca='git commit -a'
+alias gpom='git push origin master'
