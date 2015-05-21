@@ -13,7 +13,6 @@ alias cp='cp -i' # Prompt before overwriting
 alias make='make -j6' # Parallelize make with 6 cores.
 
 # Editing
-alias emacs-nox='emacs --no-window-system' # Functionally equivalent, and works on distros where emacs and emacs-nox packages conflict.
 alias emac='emacs-nox' # Save a letter and skip the GUI when calling emacs from Bash.
 alias nano='emacs-nox' # Do the right thing despite old muscle memory.
 alias vi='echo "Just use emacs."'
