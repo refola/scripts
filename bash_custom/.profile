@@ -7,7 +7,7 @@ PATH="$H/prog/bin:$PATH"
 PATH="$H/prog/script/bin:$PATH"
 PATH="$HOME/.cabal/bin:$PATH"
 # Emacs is pretty neat.
-EDITOR="emacs-nox"
+EDITOR="emacs --no-window-system" # Works whether or not emacs-nox is installed.
 VISUAL="emacs" # automatically chooses the beautiful emacs-gtk instead of emacs-x11 which is almost as ugly as xemacs
 # I like UTC.
 TZ="UTC"
