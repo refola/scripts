@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Output the location of a command. Useful for scripts that need to
-# access their location.
+# Output the path of a command. Useful for, e.g., editing the command
+# without typing a bunch of recursive subshell stuff.
 
 if [ -z "$1" ]
 then
@@ -10,5 +10,5 @@ then
 	exit 1
 else
 	# get command's path and convert symlinks into canonical paths
-	echo -n "$(readlink -f "$(which $1)")"
+	echo -n "$(readlink -f "$(maybe-which "$1")")"
 fi
