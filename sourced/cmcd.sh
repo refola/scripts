@@ -7,13 +7,12 @@
 cmcd() {
 	if [ -z "$1" ]
 	then
-		echo "Usage: $(basename "$(readlink -f "$0")")" command
+		echo "Usage: cmcd command"
 		echo "Changes the working directory to command's location."
-		exit 1
+	else
+		# With proper quoting and subshell result-getting, get
+		# location of command from $PATH, convert all involved
+		# symlinks into canonical paths, and take the directory name.
+		cd "$(dirname "$(readlink -f "$(which "$1")")")"
 	fi
-
-	# With proper quoting and subshell result-getting, get
-	# location of command from $PATH, convert all involved
-	# symlinks into canonical paths, and take the directory name.
-	cd "$(dirname "$(readlink -f "$(which "$1")")")"
 }
