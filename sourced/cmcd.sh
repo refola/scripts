@@ -8,8 +8,8 @@ cmcd() {
 		echo "Usage: cmcd command"
 		echo "Changes the working directory to command's location."
 	else
-		# Convert any symlinks in path, take directory name,
-		# and move to there.
-		cd "$(dirname "$(cmpath "$1")")"
+		# Find and source the actual command, passing the
+		# argument to it.
+		. "$(cmpath cmcd)" "$1"
 	fi
 }
