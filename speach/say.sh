@@ -1,18 +1,15 @@
-#!/bin/sh
-x=`echo $@`
+#!/bin/bash
 
-## Unsuccessful way of making only one message happen at once.
-f() {
-#sleep 2
-while [ "`ps cax | grep -c say`" -gt 2 ]
-do
-	echo `ps cax | grep -c say`
-	sleep 1
-done
-spd-say "$x"
-}
-#f
+if [ -z "$1" ]
+then
+    echo "Usage: $(basename "$0") words that you want spoken"
+    echo "Uses a speech synthesizer to speak words that you want spoken."
+    echo
+    echo "Note: This depends on the 'spd-say' command. In Chakra Linux,"
+    echo "this command is found in the 'speech-dispatcher' package."
+    exit 1
+fi
 
-spd-say "$x"
-
-echo $x
+words="$(echo "$@")" # Collect all the words into a single variable.
+echo $words # Show what is being said.
+spd-say -w "$words" # Say it.
