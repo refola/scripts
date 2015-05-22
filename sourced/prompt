@@ -5,8 +5,8 @@
 ## Environment variables for controlling Bash history
 
 # History file control to go with fancy PROMPT_COMMAND stuff
-export HISTFILE="$HOME/.bash.d/emptyhistory" # Yes, it really is empty.
-export HISTARCHIVE="$HOME/.bash.d/history" # Where the "hist" command looks...
+export HISTFILE="$HOME/.bash_history" # This will always be empty....
+export HISTARCHIVE="$HOME/.bash_history.d" # Where the "hist" command looks...
 
 # What to store and how
 export HISTCONTROL="ignoreboth" # "both" = duplicate commands and whitespace
