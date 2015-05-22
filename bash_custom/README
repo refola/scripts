@@ -4,5 +4,5 @@
 # To use this:
 # 1. Set your ~/.bash_logout, ~/.bash_profile, ~/.bashrc, ~/.logout,
 #    and ~/.profile to link to the corresponding files here.
-# 2. Make the folders ~/.bash.d and ~/.bash.d/history
+# 2. Make the folder ~/.bash_history.d
 # 3. Cross your fingers and start a new Bash session.
