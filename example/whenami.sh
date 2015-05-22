@@ -4,10 +4,10 @@
 
 if [ -z "$1" ]
 then
-	timedatectl status | grep Local | cut -c23-
+	date "+%F %H:%M:%S %Z"
 elif [ "$1" == "-loop" ]
 then
-	watch -n1 -p 'timedatectl status | grep Local | cut -c23-'
+	watch -n1 -p 'date "+%F %H:%M:%S %Z"'
 else
 	echo "Usage: `basename $0` [-loop]"
 	echo "Outputs the local time, repeatedly with \"-loop\"."
