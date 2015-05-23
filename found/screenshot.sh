@@ -13,21 +13,21 @@ wasrunning="yes"
 pid="`pidof -s ksnapshot`"
 if [ -z "$pid" ]
 then
-  wasrunning=""
-  ksnapshot &
-  pid="`pidof -s ksnapshot`"
+    wasrunning=""
+    ksnapshot &
+    pid="`pidof -s ksnapshot`"
 fi
 if [ -z "$pid" ]
 then
-  echo "Could not start ksnapshot (Unknown error). Exiting..."
-  exit 1
+    echo "Could not start ksnapshot (Unknown error). Exiting..."
+    exit 1
 fi
 # wait for the service to come online
 e_val="dummy"
 while [ "$e_val" ]
 do
-  e_val=`qdbus org.kde.ksnapshot-$pid /KSnapshot org.freedesktop.DBus.Peer.Ping 2>&1`
-  sleep 1
+    e_val=`qdbus org.kde.ksnapshot-$pid /KSnapshot org.freedesktop.DBus.Peer.Ping 2>&1`
+    sleep 1
 done
 
 # if there is no default format, set PNG
@@ -35,8 +35,8 @@ url="`qdbus org.kde.ksnapshot-$pid /KSnapshot org.kde.ksnapshot.url`"
 ext="${url##*.}"
 if [ -z "$ext" ]
 then
-  echo "Setting url $url to PNG"
-  qdbus org.kde.ksnapshot-$pid /KSnapshot org.kde.ksnapshot.setUrl $url.png
+    echo "Setting url $url to PNG"
+    qdbus org.kde.ksnapshot-$pid /KSnapshot org.kde.ksnapshot.setUrl $url.png
 fi
 
 # find the window ID
@@ -46,35 +46,34 @@ modified=`xprop -id $win_id | grep NET_WM_NAME | grep modified`
 mode=`qdbus org.kde.ksnapshot-$pid /KSnapshot org.kde.ksnapshot.grabMode`
 if [ "$modified" ]
 then
-  # save if it already says modified, so we know we have to wait for the string to show again
-  url=`qdbus org.kde.ksnapshot-$pid /KSnapshot org.kde.ksnapshot.url`
-  qdbus org.kde.ksnapshot-$pid /KSnapshot org.kde.ksnapshot.slotSave
-  # but discard the saved grab if not already running and mode other than 0
-  if [ -z "$wasrunning"  -a $mode -ne 0 ]
-  then
-    qdbus org.kde.ksnapshot-$pid /KSnapshot org.kde.ksnapshot.setURL "$url"
-  fi
+    # save if it already says modified, so we know we have to wait for the string to show again
+    url=`qdbus org.kde.ksnapshot-$pid /KSnapshot org.kde.ksnapshot.url`
+    qdbus org.kde.ksnapshot-$pid /KSnapshot org.kde.ksnapshot.slotSave
+    # but discard the saved grab if not already running and mode other than 0
+    if [ -z "$wasrunning"  -a $mode -ne 0 ]
+    then
+	qdbus org.kde.ksnapshot-$pid /KSnapshot org.kde.ksnapshot.setURL "$url"
+    fi
 fi
 
 # grab a new screenshot if it was already running or the mode is not 0
 if [ "$wasrunning" -o $mode -ne 0 ]
 then
-  qdbus org.kde.ksnapshot-$pid /KSnapshot org.kde.ksnapshot.slotGrab
+    qdbus org.kde.ksnapshot-$pid /KSnapshot org.kde.ksnapshot.slotGrab
 
-  # wait for the window to report the grab is done
-  modified=""
-  while [ -z "$modified" ]
-  do
-  modified="`xprop -id $win_id | grep 'NET_WM_NAME.*modified'`"    sleep 1
-  done
+    # wait for the window to report the grab is done
+    modified=""
+    while [ -z "$modified" ]
+    do
+	modified="`xprop -id $win_id | grep 'NET_WM_NAME.*modified'`"    sleep 1
+    done
 
-  # save that shot in the preselected directory/format
-  qdbus org.kde.ksnapshot-$pid /KSnapshot org.kde.ksnapshot.slotSave
+    # save that shot in the preselected directory/format
+    qdbus org.kde.ksnapshot-$pid /KSnapshot org.kde.ksnapshot.slotSave
 fi
 
 # shut down if we started it
 if [ -z $wasrunning ]
 then
-  qdbus org.kde.ksnapshot-$pid /KSnapshot org.kde.ksnapshot.exit
+    qdbus org.kde.ksnapshot-$pid /KSnapshot org.kde.ksnapshot.exit
 fi
-

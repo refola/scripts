@@ -5,9 +5,9 @@
 
 if [ -z "$1" ]
 then
-	echo "Usage: \"$(cmpath "$0")\" path"
-	echo "Outputs the path's location after resolving symlinks and such."
-	exit 1
+    echo "Usage: \"$(cmpath "$0")\" path"
+    echo "Outputs the path's location after resolving symlinks and such."
+    exit 1
 else
-	echo -n "$(dirname "$(cmpath "$1")")"
+    echo -n "$(dirname "$(cmpath "$1")")"
 fi

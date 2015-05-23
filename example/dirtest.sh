@@ -6,12 +6,12 @@ mkdir $place
 cur=$place
 
 makedirs() {
-	echo "Making directory tree $1 levels deep."
-	for ((num=0; num<$1; num++));
-	do
-		cur="$cur/$num"
-		mkdir $cur
-	done
+    echo "Making directory tree $1 levels deep."
+    for ((num=0; num<$1; num++));
+    do
+	cur="$cur/$num"
+	mkdir $cur
+    done
 }
 
 echo "Timing directory creation 1000 levels deep."

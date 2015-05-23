@@ -21,15 +21,15 @@ default_temp_night=55
 
 if [ -z "$1" ]
 then
-        echo "Usage: `basename $0` - | [(day)temp100s [nighttemp100s]] [(day)tint [nighttint]]"
-	echo "Kills currently running instances of redshift and runs it again with the given (day and night) color temperature(s) in hundreds of Kelvins."
-	echo "  Temperature ranges from 10 through 100, correspoding to the 1000K to 10000K range."
-	echo "  Tint ranges from 0 to 9, with \"0\" actually meaning \"10\" since 10 is a temperature, not a tint. Lower number meanings give darker screens."
-	echo
-	echo "  Defaults: \"`basename $0` -\" is equivalent to \"`basename $0` ${default_tint_day} ${default_tint_night} ${default_temp_day} ${default_temp_night}\"."
-	echo "  Note: It doesn't matter which order arguments are passed in."
-	echo "  Note: Location is currently hardcoded to ${place} with coordinates ${coords}. See the source to change this."
-	exit 1
+    echo "Usage: `basename $0` - | [(day)temp100s [nighttemp100s]] [(day)tint [nighttint]]"
+    echo "Kills currently running instances of redshift and runs it again with the given (day and night) color temperature(s) in hundreds of Kelvins."
+    echo "  Temperature ranges from 10 through 100, correspoding to the 1000K to 10000K range."
+    echo "  Tint ranges from 0 to 9, with \"0\" actually meaning \"10\" since 10 is a temperature, not a tint. Lower number meanings give darker screens."
+    echo
+    echo "  Defaults: \"`basename $0` -\" is equivalent to \"`basename $0` ${default_tint_day} ${default_tint_night} ${default_temp_day} ${default_temp_night}\"."
+    echo "  Note: It doesn't matter which order arguments are passed in."
+    echo "  Note: Location is currently hardcoded to ${place} with coordinates ${coords}. See the source to change this."
+    exit 1
 fi
 
 echo "Killing redshift."
@@ -37,62 +37,62 @@ killall redshift
 
 # Convert redcontrol tint values into redshift tint values
 tint() {
-	if (( $1 == 0 ))
-	then
-		echo "1"
-	else
-		echo "0.$1"
-	fi
+    if (( $1 == 0 ))
+    then
+	echo "1"
+    else
+	echo "0.$1"
+    fi
 }
 
 # Convert redcontrol temperature values into redshift temperature values
 temp() {
-	echo "${1}00"
+    echo "${1}00"
 }
 
 # Get all the info we need.
 for arg in "$@"
 do
-	if [ "$arg" == "-" ]
+    if [ "$arg" == "-" ]
+    then
+	shift # skipping "-" if it's the only arg leaves things default
+    elif (( arg < 10 ))	# Tint, not temperature
+    then
+	if [ -z "$tint_day" ]
 	then
-		shift # skipping "-" if it's the only arg leaves things default
-	elif (( arg < 10 ))	# Tint, not temperature
+	    tint_day="$arg"
+	elif [ -z "$tint_night" ]
 	then
-		if [ -z "$tint_day" ]
-		then
-			tint_day="$arg"
-		elif [ -z "$tint_night" ]
-		then
-			tint_night="$arg"
-		else
-			echo "Invalid to have more than 2 tints! Exiting."
-			exit 1
-		fi
-	else	# We're assuming here that the user won't pass any invalid parameters even though we assumed 3 lines up that they might pass too many....
-		if [ -z "$temp_day" ]
-		then
-			temp_day="$arg"
-		elif [ -z "$temp_night" ]
-		then
-			temp_night="$arg"
-		else
-			echo "Invalid to have more than 2 temperatures! Exiting."
-			exit 1
-		fi
+	    tint_night="$arg"
+	else
+	    echo "Invalid to have more than 2 tints! Exiting."
+	    exit 1
 	fi
+    else	# We're assuming here that the user won't pass any invalid parameters even though we assumed 3 lines up that they might pass too many....
+	if [ -z "$temp_day" ]
+	then
+	    temp_day="$arg"
+	elif [ -z "$temp_night" ]
+	then
+	    temp_night="$arg"
+	else
+	    echo "Invalid to have more than 2 temperatures! Exiting."
+	    exit 1
+	fi
+    fi
 done
 
 # Gracefully handle any combination of unset vars.
 if [ -z $tint_day ]
 then
-	tint_day=$default_tint_day
-	tint_night=$default_tint_night
+    tint_day=$default_tint_day
+    tint_night=$default_tint_night
 fi
 if [ -z $tint_night ]; then tint_night=$tint_day; fi
 if [ -z $temp_day ]
 then
-	temp_day=$default_temp_day
-	temp_night=$default_temp_night
+    temp_day=$default_temp_day
+    temp_night=$default_temp_night
 fi
 if [ -z $temp_night ]; then temp_night=$temp_day; fi
 
@@ -108,4 +108,3 @@ redshift -g ${gamma} -l ${coords} -t "${temp_day}:${temp_night}" -b "${tint_day}
 sleep 0.2 && echo # Make the prompt happen correctly after running this.
 
 exit
-

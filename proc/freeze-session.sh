@@ -19,45 +19,45 @@ okular
 "
 
 pause(){
-	procs=`ps -U $(whoami) -o "pid comm" | grep $1 | sed "s/[^0-9]//g"`
-	echo "PIDs for $1: $procs"
+    procs=`ps -U $(whoami) -o "pid comm" | grep $1 | sed "s/[^0-9]//g"`
+    echo "PIDs for $1: $procs"
 
-	echo "Pausing process(es)."
-	for pid in $procs
-	do
-		kill -s SIGSTOP $pid
-	done
+    echo "Pausing process(es)."
+    for pid in $procs
+    do
+	kill -s SIGSTOP $pid
+    done
 }
 unpause(){
-	procs=`ps -U $(whoami) -o "pid comm" | grep $1 | sed "s/[^0-9]//g"`
-	echo "PIDs for $1: $procs"
+    procs=`ps -U $(whoami) -o "pid comm" | grep $1 | sed "s/[^0-9]//g"`
+    echo "PIDs for $1: $procs"
 
-	echo "Unpausing process(es)."
-	for pid in $procs
-	do
-		kill -s SIGCONT $pid
-	done
+    echo "Unpausing process(es)."
+    for pid in $procs
+    do
+	kill -s SIGCONT $pid
+    done
 }
 lock(){
-	echo "Starting locker"
-	#qdbus org.freedesktop.ScreenSaver /ScreenSaver Lock&
-	/usr/lib/kde4/libexec/kscreenlocker --forcelock
-	echo "Locker finished"
-	uptime
+    echo "Starting locker"
+    #qdbus org.freedesktop.ScreenSaver /ScreenSaver Lock&
+    /usr/lib/kde4/libexec/kscreenlocker --forcelock
+    echo "Locker finished"
+    uptime
 }
 pauseapps(){
-	echo "Pausing common apps to conserve CPU and bandwidth"
-	for app in $apps
-	do
-		pause $app
-	done
+    echo "Pausing common apps to conserve CPU and bandwidth"
+    for app in $apps
+    do
+	pause $app
+    done
 }
 resumeapps(){
-	echo "Unpausing apps"
-	for app in $apps
-	do
-		unpause $app
-	done
+    echo "Unpausing apps"
+    for app in $apps
+    do
+	unpause $app
+    done
 }
 
 lock&

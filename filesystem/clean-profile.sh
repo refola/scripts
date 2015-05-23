@@ -44,29 +44,29 @@ netfiles="
 "
 
 folders() {
-for folder in $1
-do
+    for folder in $1
+    do
 	if [ -d ~/$folder ]
 	then
-		echo "Removing folder: $folder"
-		rm -r ~/$folder/
-#	else
-#		echo "Folder doesn't exist: $folder"
+	    echo "Removing folder: $folder"
+	    rm -r ~/$folder/
+	    #	else
+	    #		echo "Folder doesn't exist: $folder"
 	fi
-done
+    done
 }
 
 files() {
-for file in $1
-do
+    for file in $1
+    do
 	if [ -f ~/$file ]
 	then
-		echo "Removing file: $file"
-		rm ~/$file
-#	else
-#		echo "File doesn't exist: $file"
+	    echo "Removing file: $file"
+	    rm ~/$file
+	    #	else
+	    #		echo "File doesn't exist: $file"
 	fi
-done
+    done
 }
 
 echo "Cleaning caches, histories, et cetera."
@@ -82,10 +82,10 @@ files "`echo "$localfiles" | tr '\n' ' '`"
 # Disable when at a place with limited Internet access.
 if [ "$1" == "all" ]
 then
-	folders "`echo "$netfolders" | tr '\n' ' '`"
-	files "`echo "$netfiles" | tr '\n' ' '`"
+    folders "`echo "$netfolders" | tr '\n' ' '`"
+    files "`echo "$netfiles" | tr '\n' ' '`"
 else
-	echo "Skipping network cache clearing. Use \"$0 all\" to clear them too."
+    echo "Skipping network cache clearing. Use \"$0 all\" to clear them too."
 fi
 
 #echo "Running other commands...."

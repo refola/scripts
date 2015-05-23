@@ -5,10 +5,10 @@
 
 if [ -z "$1" ]
 then
-	echo "Usage: \"$($0 "$0")\" path"
-	echo "Outputs the path's location after resolving symlinks."
-	exit 1
+    echo "Usage: \"$($0 "$0")\" path"
+    echo "Outputs the path's location after resolving symlinks."
+    exit 1
 else
-	# get command's path and convert symlinks into canonical paths
-	echo -n "$(readlink -f "$(maybe-which "$1")")"
+    # get command's path and convert symlinks into canonical paths
+    echo -n "$(readlink -f "$(maybe-which "$1")")"
 fi

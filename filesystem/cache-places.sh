@@ -24,9 +24,9 @@ $HOME
 sec=15
 if [ -z "$1" ]
 then
-	echo "You can optionally tell this script how long to wait before caching things. Try 0 for instant gratification."
+    echo "You can optionally tell this script how long to wait before caching things. Try 0 for instant gratification."
 else
-	sec="$1"
+    sec="$1"
 fi
 
 echo "Waiting $sec seconds before caching stuff...."
@@ -34,14 +34,14 @@ sleep $sec
 echo "Caching a bunch of commonly-used folders...."
 
 dofolder() {
-	if [ -d $folder ]
-	then
-		cd $folder
-		echo "Caching folder $folder."
-		(time `cache-folder > /dev/null`) 2>&1 | grep -v user | grep -v sys | grep -v "^$" | grep -v "Permission denied"
-	else
-		echo "Folder doesn't exist: $folder"
-	fi
+    if [ -d $folder ]
+    then
+	cd $folder
+	echo "Caching folder $folder."
+	(time `cache-folder > /dev/null`) 2>&1 | grep -v user | grep -v sys | grep -v "^$" | grep -v "Permission denied"
+    else
+	echo "Folder doesn't exist: $folder"
+    fi
 }
 
 # Times:
@@ -59,7 +59,7 @@ dofolder() {
 # Conclusion 3: Something random is going on....
 for folder in $folders
 do
-	dofolder $folder & # Fastest way. See times above.
+    dofolder $folder & # Fastest way. See times above.
 done
 
 exit

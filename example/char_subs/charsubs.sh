@@ -5,7 +5,7 @@ dv="[]',.pyfgcrl/=\\\\aoeuidhtns\\-;qjkxbmwvz"
 qw="\\-=qwertyuiop[]\\\\asdfghjkl;'zxcvbnm,./"
 
 cases(){
-	echo "$1$(echo "$1" | tr "a-z\-=\[\]\\;',./" "A-Z_+{}|:\"<>\?")"
+    echo "$1$(echo "$1" | tr "a-z\-=\[\]\\;',./" "A-Z_+{}|:\"<>\?")"
 }
 
 CK="$(cases $ck)"

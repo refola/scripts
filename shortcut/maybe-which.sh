@@ -6,7 +6,7 @@ then
     echo "Outputs the result of 'which command' if it works."
     echo "Otherwise, outputs the original input."
 else
-# See if the argument is found in $PATH and transform accordingly.
+    # See if the argument is found in $PATH and transform accordingly.
     CMD_PATH="$(which "$1" 2> /dev/null)"
     if [ $? = "1" ]
     then

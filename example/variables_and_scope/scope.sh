@@ -1,11 +1,11 @@
 #!/bin/bash
 
 func1() {
-	func2
+    func2
 }
 
 func2() {
-	echo $var
+    echo $var
 }
 
 # Would echo a blank line, since $var isn't defined yet.

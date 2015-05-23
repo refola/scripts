@@ -8,16 +8,16 @@
 
 if [ -z "$1" ]
 then
-	if [ "$0" = "/bin/bash" ]    # If this script is sourced as intended,
-	then
-		CMD="$(cmpath cmcd)" # then get the command's path via cmpath,
-	else
-		CMD="$0"             # but otherwise just use $0.
-	fi
-	echo "Usage: . $CMD command"
-	echo "Changes the working directory to command's location."
+    if [ "$0" = "/bin/bash" ]    # If this script is sourced as intended,
+    then
+	CMD="$(cmpath cmcd)" # then get the command's path via cmpath,
+    else
+	CMD="$0"             # but otherwise just use $0.
+    fi
+    echo "Usage: . $CMD command"
+    echo "Changes the working directory to command's location."
 else
-	# Convert any symlinks in path, take directory name,
-	# and move to there.
-	cd "$(dirname "$(cmpath "$1")")"
+    # Convert any symlinks in path, take directory name,
+    # and move to there.
+    cd "$(dirname "$(cmpath "$1")")"
 fi

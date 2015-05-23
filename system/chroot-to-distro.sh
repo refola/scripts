@@ -2,9 +2,9 @@
 
 if [ -z "$1" ]
 then
-	echo "Usage: `basename $0` mount-point"
-	echo "Sets things up, chroots into mount-point, and tares things down when done."
-	exit 1
+    echo "Usage: `basename $0` mount-point"
+    echo "Sets things up, chroots into mount-point, and tares things down when done."
+    exit 1
 fi
 
 echo "Setting up chroot for $1."

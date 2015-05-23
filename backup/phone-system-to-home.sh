@@ -49,30 +49,30 @@ sys	# Makes phone reboot at \"sys/devices/platform/s5pv210-uart.0/clock_source\"
 "
 
 pull() {
-	echo "adb pull $1 $TO/$1"
-	adb pull $1 $TO/$1
+    echo "adb pull $1 $TO/$1"
+    adb pull $1 $TO/$1
 }
 
 backup() {
-	adb root
-	sleep 5 # let adb have some time....
-	if [ -d $TO.bak ]
-	then
-		echo "Deleting backup at $TO.bak"
-		rm -r $TO.bak
-	fi
-	if [ -d $TO ]
-	then
-		echo "Backing up existing $TO to $TO.bak"
-		mv $TO $TO.bak
-	fi
-	echo "Backing up system to $TO."
-	mkdir $TO
+    adb root
+    sleep 5 # let adb have some time....
+    if [ -d $TO.bak ]
+    then
+	echo "Deleting backup at $TO.bak"
+	rm -r $TO.bak
+    fi
+    if [ -d $TO ]
+    then
+	echo "Backing up existing $TO to $TO.bak"
+	mv $TO $TO.bak
+    fi
+    echo "Backing up system to $TO."
+    mkdir $TO
 
-	for PLACE in $SAFE
-	do
-		pull $PLACE
-	done
+    for PLACE in $SAFE
+    do
+	pull $PLACE
+    done
 }
 
 time backup

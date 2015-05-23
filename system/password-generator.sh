@@ -7,9 +7,9 @@
 
 if [ -z "$1" ]
 then
-	PATTERN="a-zA-Z0-9-_!@#$%^&*()+{}|:<>?='\`\"\\\\"
+    PATTERN="a-zA-Z0-9-_!@#$%^&*()+{}|:<>?='\`\"\\\\"
 else
-	PATTERN="$1"
+    PATTERN="$1"
 fi
 echo "Password character pattern is: $PATTERN"
 

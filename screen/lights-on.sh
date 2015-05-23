@@ -21,16 +21,16 @@
 
 delayScreensaver()
 {
-	# Tell KDE that there's been user activity so it doesn't activate the screensaver, etc.
-	qdbus org.freedesktop.ScreenSaver /ScreenSaver SimulateUserActivity > /dev/null
+    # Tell KDE that there's been user activity so it doesn't activate the screensaver, etc.
+    qdbus org.freedesktop.ScreenSaver /ScreenSaver SimulateUserActivity > /dev/null
 
-# Commented out to see if it actually makes a difference.
-# 	#Check if DPMS is on. If it is, deactivate and reactivate again. If it is not, do nothing.    
-# 	dpmsStatus=`xset -q | grep -ce 'DPMS is Enabled'`
-# 	if [ $dpmsStatus == 1 ];then
-# 		xset -dpms
-# 		xset dpms
-# 	fi
+    # Commented out to see if it actually makes a difference.
+    # 	#Check if DPMS is on. If it is, deactivate and reactivate again. If it is not, do nothing.    
+    # 	dpmsStatus=`xset -q | grep -ce 'DPMS is Enabled'`
+    # 	if [ $dpmsStatus == 1 ];then
+    # 		xset -dpms
+    # 		xset dpms
+    # 	fi
 }
 
 while true
