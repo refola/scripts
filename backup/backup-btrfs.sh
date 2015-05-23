@@ -189,13 +189,11 @@ lastbak() {
 	local VOL=$(san "$1")
 	local SNAPDIR=$2
 	local DIR="$SNAPDIR/$VOL"
-	if [ ! -z "`ls $DIR`" ] # NOTE: assumes that non-empty snapshot dir = backups have been made with this script before
+	if [ ! -z "$(ls "$DIR")" ] # NOTE: assumes that the snapshot directory is empty iff backups have been made with this script before
 	then
-		# get list of existing snapshots, get last one, and remove trailing '/'
-		# NOTE: The "ls -d */" part is from <ref>. It would be insane if copyright/patent applied to a string too short to be a secure password.
-		# ref: https://stackoverflow.com/questions/15737399/any-reason-for-using-in-command-ls-d-to-list-directories#15737436
-		cd $DIR # because ls'ing "$DIR/*/" doesn't work the same
-		ls -d */ | tail -n 1 | rev | cut -c2- | rev
+		# get list of existing snapshots, get last one, and remove leading './'
+		cd "$DIR" # make the leading part of find's results a deterministic "./"
+		find . -maxdepth 1 -mindepth 1 | sort | tail -n 1 | cut -c3-
 	fi
 }
 
@@ -258,7 +256,7 @@ do
 	INTLASTBAK="$(lastbak "$VOL" "$INTSNAPDIR")"
 	if [ "$INTLASTBAK" != "$TIME" ]
 	then
-		internal $VOL
+		internal "$VOL"
 	else
 		echo "There's already a snapshot from $TIME for $VOL"
 	fi
