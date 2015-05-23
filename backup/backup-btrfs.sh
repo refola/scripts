@@ -1,55 +1,47 @@
 #!/bin/bash
+##
 # btrfsbackup.sh
-#
-# Uncopyright 2014 Mark Haferkamp. This code is dedicated to the public domain. Use it as you will.
-#
-# Makes sure internal btrfs snapshots are up-to-date for today. Then, if the
-# external drive is connected, makes sure that external backups match the latest
-# internal backups, bootstrapping new snapshot clones if required.
-# See https://btrfs.wiki.kernel.org/index.php/Incremental_Backup for reference.
-
-# NOTE: You'll almost certainly have to change the variables to match your own setup. Also, this script makes the following assumptions:
-# * You have only one "internal" btrfs "drive" (may be multiple disks with btrfs RAID or whatever) to make and clone snapshots from.
-# * The internal and external drives' snapshot directory structure is snapshotdir/vol/date.
-# * For each subvolume to backup, the internal drive's snapshot matching the latest external drive's snapshot is still saved in the internal drive.
-# * You don't care about syncing every internal snapshot to the external drive, but rather only the latest.
-# * You only have one external drive attached at a time.
-# * By default you only want one snapshot per day. This can be overridden by passing "--now" to this script to change backup granularity to per-second.
-# * You have your own system for dealing with old snapshots on each drive before it runs short on space and breaks btrfs.
-
-### HOW BTRFS CLONES SUBVOLUMES ###
-
-# clone /src/a/foo to /dest:
-# 	foo's clone is named /dest/foo
-# clone /src/b/bar to /dest with parent /src/a/foo to /dest:
-# 	bar's clone is named /dest/bar
-# 	only works if /dest/foo is already a clone of /src/a/foo
-# 	requires foo and bar to have different names
-
-# The key point is that we must specify /dest as the location, not name, of a
-# btrfs subvolume/snapshot clone.
-
-# TODO: rewrite in Go...
-# 
-# * temporal via snapshots
-# * redundant via external hard drives
-# * Go rewrite of existing script
-# ** can bootstrap entire sequence of backups from one device to another
-# *** can fill in gaps between existing backups
-# ** snapper-like exponential decay in frequency
-# ** easily parsing dates of snapshot names, avoiding "lastbak" files and being more robust
-# ** integration with existing Refola Backup can also benefit from non-btrfs devices
-# *** once i figure out topological sorting, this can help linux machines become backup servers for any storage system, e.g., network
-# **** backup server uses existing rsync to get latest contents, makes btrfs snapshot, pushes snapshot to external drive
-# ** can add all sorts of bells and whistles later
-# *** checking btrfs caveats (e.g., sufficient free space) and warning users
-# *** on system shutdown, make a snapshot. then on successful startup, immediately create grub option to boot from snapshot, making an automatic last-known good recovery
+##
+# Uncopyright 2014-2015 Mark Haferkamp. This code is dedicated to the
+# public domain. Use it as you will.
+##
+# Makes sure internal btrfs snapshots are up-to-date for today. Then,
+# if the external drive is connected, makes sure that external backups
+# match the latest internal backups, bootstrapping new snapshot clones
+# if required. See <1> for reference.
+##
+# 1: https://btrfs.wiki.kernel.org/index.php/Incremental_Backup
 
 
+### limitations ###
 
-### GLOBAL VARS ###
+# The btrfs setup is hard-coded instead of being moved to a config
+# file.
 
-# where internal drive's btrfs partition root (not just a subvolume) is mounted
+# This only works with a single "internal" btrfs "drive" (may be
+# multiple disks with btrfs RAID or whatever) to make and clone
+# snapshots from.
+
+# For each subvolume to backup, the external drive's latest snapshot
+# must have a matching snapshot in the internal drive (which acts as
+# the parent for btrfs updates).
+
+# This only syncs the latest internal snapshots to the external drive.
+
+# This only handles one external drive attached at a time.
+
+# This assumes that you only want one snapshot per UTC day, though
+# this can be overridden by passing "--now" to this script to change
+# backup granularity to per-second.
+
+# This does not delete old snapshots as drive space fills up. You must
+# do this manually since btrfs breaks when the drive's full.
+
+
+### global variables ###
+
+# where internal drive's btrfs partition root (not just a subvolume)
+# is mounted
 INTROOT="/mnt"
 
 # where to make the internal drive's snapshots
@@ -69,7 +61,8 @@ for EXTROOT in $EXTERNS
 do
 	if [ -d "$EXTROOT" ]
 	then
-		EXTSNAPDIR="$EXTROOT" # I backup to the root of the external drive.
+		# I backup to the root of the external drive.
+		EXTSNAPDIR="$EXTROOT"
 	fi
 done
 if [ -z "$EXTSNAPDIR" ]
@@ -77,8 +70,9 @@ then
 	echo "External drive not found. Only doing internal snapshotting."
 fi
 
-# subvolumes to snapshot
-# See output of "sudo btrfs subvolume list $INTROOT | grep -v SNAPSHOTDIRECTORY" for ideas.
+## subvolumes to snapshot
+# See output of <cmd> for ideas.
+# cmd: sudo btrfs subvolume list $INTROOT | grep -v SNAPSHOTDIRECTORY
 VOLS="
 @chakra
 @fedora
@@ -101,21 +95,23 @@ then
 fi
 
 
-### btrfs FUNCTIONS ###
+### btrfs functions ###
 
-# Clone subvolume to another location. Useful for copying between disks.
-# Usage: clonesub FROM TODIR
-# Result: TODIR/PART_OF_FROM_AFTER_SLASH is now a clone of FROM
+# Usage: clonesub fromsnap todir
+# Clone subvolume at fromsnap to same-named snapshot in todir. Useful
+# for copying between disks.
+# Result: todir/part_of_fromsnap_after_slash is now a clone of fromsnap
 clonesub() {
 	local FROM=$1
 	local TODIR=$2
 	sudo btrfs send "$FROM" | sudo btrfs receive "$TODIR"
 }
 
-# Update existing btrfs clone from newer snapshot version
-# Usage: cloneup FROMPARENT FROMNEW TODIR
-# Assumption: TODIR/PART_OF_FROMPARENT_AFTER_SLASH is already a clone of FROMPARENT
-# Result: TODIR/PART_OF_FROMNEW_AFTER_SLASH is a clone of FROMNEW
+# Usage: cloneup fromparent fromnew todir
+# Update existing btrfs clone from newer snapshot version.
+# Assumption: todir/part_of_fromparent_after_slash is already a clone
+# of fromparent
+# Result: todir/part_of_fromnew_after_slash is a clone of fromnew
 cloneup() {
 	local FROMPARENT=$1
 	local FROMNEW=$2
@@ -123,11 +119,14 @@ cloneup() {
 	sudo btrfs send -p "$FROMPARENT" "$FROMNEW" | sudo btrfs receive "$TODIR"
 }
 
-# Sync, then do "btrfs filesystem sync" for both INTSNAPDIR and EXTSNAPDIR.
-# It's called "syncem" as a contraction of "sync them", since it syncs more than one thing, i.e., "them".
-# This is important after doing at least some btrfs snapshot operations.
+# Usage: syncem
+# Sync, then do "btrfs filesystem sync" for both INTSNAPDIR and
+# EXTSNAPDIR.  It's called "syncem" as a contraction of "sync them",
+# since it syncs more than one thing, i.e., "them".  This is important
+# after doing at least some btrfs snapshot operations.
 syncem() {
-	# the wiki lists sync as part of its snapshot cloning steps, but i think "btrfs filesystem sync" might also be in order
+	# the wiki lists sync as part of its snapshot cloning steps,
+	# but i think "btrfs filesystem sync" might also be in order
 	sync
 	btrfs filesystem sync "$INTROOT" > /dev/null
 	if [ -n "$EXTSNAPDIR" ]
@@ -137,10 +136,10 @@ syncem() {
 }
 
 
-### SNAPSHOTTING FUNCTIONS ###
+### snapshotting functions ###
 
-# Bootstrap initial external snapshot clone of VOL.
-# Usage: bootstrap VOL
+# Usage: bootstrap volume
+# Bootstrap initial external snapshot clone of volume.
 bootstrap() {
 	local VOL=$1
 	
@@ -150,8 +149,8 @@ bootstrap() {
 	clonesub "$FROM" "$TO"
 }
 
-# Incrementally update external snapshot of VOL.
-# Usage: incremental VOL OLDTIME
+# Usage: incremental volume oldtime
+# Incrementally update external snapshot of volume.
 incremental() {
 	local VOL=$1
 	local OLDTIME=$2
@@ -164,8 +163,8 @@ incremental() {
 	sudo btrfs send -p "$OLD" "$FROM" | sudo btrfs receive "$TO"
 }
 
-# Make an internal snapshot.
-# Usage: internal VOL
+# Usage: internal volume
+# Make an internal snapshot of volume.
 internal() {
 	local VOL=$1
 	
@@ -181,15 +180,18 @@ internal() {
 }
 
 
-### UTILITY FUNCTIONS ###
+### utility functions ###
 
-# Get name of last backup, or empty string if it doesn't yet exist
-# Usage: X_LASTBAK="$(lastbak VOL X_SNAPDIR)"
+# Usage: LAST_BACKUP="$(lastbak volume snapdir)"
+# Get name of last backup for volume in snapdir, or empty string if
+# there is no backup.
 lastbak() {
 	local VOL=$(san "$1")
 	local SNAPDIR=$2
 	local DIR="$SNAPDIR/$VOL"
-	if [ ! -z "$(ls "$DIR")" ] # NOTE: assumes that the snapshot directory is empty iff backups have been made with this script before
+	# NOTE: This assumes that the snapshot directory is empty iff
+	# backups have been made with this script before.
+	if [ ! -z "$(ls "$DIR")" ]
 	then
 		# get list of existing snapshots, get last one, and remove leading './'
 		cd "$DIR" # make the leading part of find's results a deterministic "./"
@@ -197,32 +199,39 @@ lastbak() {
 	fi
 }
 
-# Sanitize a volume's name for a snapshot folder name.
-# Usage: VAR="$(san "$VOL")
+# Usage: SANITIZED="$(san volume)"
+# Sanitize volume's name to be a suitable snapshot folder name.
 san() {
 	echo -n "$1" | tr / -
 }
 
+# Usage: sudo -v; sudonotimeout &; PID=$!; stuff; kill $PID
 # Keep sudo from timing out.
-# Usage: sudo -v; sudonotimeout &; CHILDPID=$!; stuff; kill $CHILDPID
+# Note: Deviate from the example usage pattern at risk of bugs.
 sudonotimeout() {
 	while true
 	do
 		sudo -v
-		sleep 50 # a short enough time that even if heavy i/o is slowing things down and credential-caching is set for the minimum time, this will still work.
+		# 50 seconds is a short enough time that even heavy
+		# i/o combined with sudo using minimum-time validation
+		# caching should not break this. In practice this
+		# works, but it is theoretically fallable.
+		sleep 50
 	done
 }
 
-# Get time-including name for snapshot, complete with sanitized VOL.
-# Usage: VAR="$(timedvol "$VOL")"
+# Usage: TIME_INCLUDING_VOLUME_PATH="$(timedvol volume)"
+# Get time-including name for volume's latest snapshot, complete with
+# sanitized volume name.
 # Note: This uses the global TIME var so the caller doesn't have to.
 timedvol() {
 	local VOL=$(san "$1")
 	echo -n "$VOL/$TIME"
 }
 
-# Ensure that the directory for VOL exists in INTSNAPDIR, and also for EXTSNAPDIR if the external drive is available.
-# Usage: voldir VOL
+# Usage: voldir volume
+# Ensure that the directory for volume exists in $INTSNAPDIR, and also
+# for $EXTSNAPDIR if the external drive is available.
 voldir() {
 	local VOL=$(san "$1")
 	if [ ! -e "$INTSNAPDIR/$VOL" ]
@@ -239,9 +248,9 @@ voldir() {
 }
 
 
-### MAIN STUFF ###
+### main stuff ###
 
-# make sure sudo doesn't time out -- make sure to kill this later
+# Make sure sudo doesn't time out. NOTE: This must be killed later.
 echo "Obtaining sudo privilege"
 sudo -v
 sudonotimeout &
@@ -252,7 +261,7 @@ do
 	# Set up directories for the next stuff.
 	voldir "$VOL"
 
-	# Set up internal snapshot, ensuring it's from today
+	# Set up internal snapshot, ensuring that it's from today.
 	INTLASTBAK="$(lastbak "$VOL" "$INTSNAPDIR")"
 	if [ "$INTLASTBAK" != "$TIME" ]
 	then
@@ -261,13 +270,13 @@ do
 		echo "There's already a snapshot from $TIME for $VOL"
 	fi
 
-	# Check if we should do this next part
+	# Check if we should do this next part.
 	if [ -z "$EXTSNAPDIR" ]
 	then
 		continue
 	fi
 
-	# Set up external snapshot
+	# Set up external snapshot.
 	EXTLASTBAK="$(lastbak "$VOL" "$EXTSNAPDIR")"
 	if [ -z "$EXTLASTBAK" ]
 	then
@@ -282,7 +291,7 @@ do
 	fi
 done
 
+# Cleanup forked subshell and exit.
 echo "Killing sudo refresher before exiting."
 kill "$CHILDPID"
-
 exit
