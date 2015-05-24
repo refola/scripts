@@ -200,7 +200,7 @@ function main() {
     then
 	runit gui_error gui_message gui_results gui_close_window
     else
-	runit cli_error cli_message cli_results echo
+	runit cli_error cli_message cli_results true # "true" is a no-op replacement for closing a cli window
     fi
 }
 
