@@ -49,11 +49,9 @@ INTSNAPDIR="$INTROOT/@snapshots"
 
 # places that the external hard drive might be mounted at
 EXTERNS="
-/run/media/mark/OT4P
-/media/mark/OT4P
-/media/OT4P
 /run/media/adminn/OT4P
-/media/adminn/OT4P
+/run/media/mark/OT4P
+/run/media/sampla/OT4P
 "
 
 # where to make/find/update external snapshot clones

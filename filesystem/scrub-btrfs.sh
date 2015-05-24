@@ -8,8 +8,9 @@ DATE="$(date --utc +%F)" # Get current UTC date
 
 # List of scrubs to run, in the "name location" format.
 DISKS="
-internal /
-external /run/media/mark/OT4P/
+internal /mnt
+external /run/media/mark/OT4P
+external /run/media/sampla/OT4P
 "
 
 ## Usage: scrubit name location
@@ -19,11 +20,16 @@ scrubit() {
     local LOCATION="$2"
     local FILE="${PLACE}/${DATE}_scrub_${NAME}"
     local DISP="$NAME at $LOCATION"
-    echo "Starting btrfs scrub for $DISP."
-    sudo btrfs scrub start -B -d "$LOCATION" > "$FILE"
-    echo
-    echo "Scrub finished for $DISP. Results are as follows:"
-    cat "$FILE"
+    if [ -d "$LOCATION" ]
+    then
+	echo "Starting btrfs scrub for $DISP."
+	sudo btrfs scrub start -B -d "$LOCATION" > "$FILE"
+	echo
+	echo "Scrub finished for $DISP. Results are as follows:"
+	cat "$FILE"
+    else
+	echo "Could not find disk $NAME at $LOCATION."
+    fi
 }
 
 # Before starting, make sure that sudo is freshly validated.
