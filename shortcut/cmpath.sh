@@ -10,5 +10,5 @@ then
     exit 1
 else
     # get command's path and convert symlinks into canonical paths
-    echo -n "$(readlink -f "$(maybe-which "$1")")"
+    echo -n "$(readlink -f "$(which "$1")")"
 fi
