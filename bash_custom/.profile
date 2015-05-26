@@ -1,7 +1,7 @@
 ## CUSTOM STUFF
 
 # Stuff that's not automatically cluttered by programs ($HOME is $H/sys/DISTRONAME)
-H=/home/mark
+H="/home/$USER"
 # Include private bin folders in PATH
 PATH="$H/prog/bin:$PATH"
 PATH="$H/prog/script/bin:$PATH"

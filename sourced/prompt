@@ -32,7 +32,7 @@ ps1() {
 	local dark="\[\e[1;30m\]"
 	local sec="\$(date +:%S)"
 	local off="\[\e[0m\]"
-	local dir="\$(pwd)"
+	local dir="\${PWD/\$H/\~}"
 	echo -n "$brown$hm$dark$sec$off$dir> "
 }
 export PS1="$(ps1)"
