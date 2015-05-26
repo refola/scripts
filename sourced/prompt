@@ -31,9 +31,11 @@ ps1() {
 	local hm="\$(date +%H%M)"
 	local dark="\[\e[1;30m\]"
 	local sec="\$(date +:%S)"
-	local off="\[\e[0m\]"
+	local green="\e[0;32m"
 	local dir="\${PWD/\$H/\~}"
-	echo -n "$brown$hm$dark$sec$off$dir> "
+	local bright="\e[1;37m"
+	local off="\[\e[0m\]"
+	echo -n "$brown$hm$dark$sec$green$dir$bright> $off"
 }
 export PS1="$(ps1)"
 unset ps1
