@@ -44,12 +44,13 @@ netfiles="
 "
 
 folders() {
+    local IFS=$'\n'
     for folder in $1
     do
-	if [ -d ~/$folder ]
+	if [ -d "$HOME/$folder" ]
 	then
 	    echo "Removing folder: $folder"
-	    rm -r ~/$folder/
+	    rm -r "$HOME/$folder/"
 	    #	else
 	    #		echo "Folder doesn't exist: $folder"
 	fi
@@ -57,12 +58,13 @@ folders() {
 }
 
 files() {
+    local IFS=$'\n'
     for file in $1
     do
-	if [ -f ~/$file ]
+	if [ -f "$HOME/$file" ]
 	then
 	    echo "Removing file: $file"
-	    rm ~/$file
+	    rm "$HOME/$file"
 	    #	else
 	    #		echo "File doesn't exist: $file"
 	fi
@@ -71,19 +73,14 @@ files() {
 
 echo "Cleaning caches, histories, et cetera."
 
-## Lots of syntaxy Bash stuff here....
-## Outer double quotes make files() and folders() treat it as one arg.
-## Backticks get the output of the command.
-## Echoing the vars to the tr command converts newlines to spaces.
-
-folders "`echo "$localfolders" | tr '\n' ' '`"
-files "`echo "$localfiles" | tr '\n' ' '`"
+folders "$localfolders"
+files "$localfiles"
 
 # Disable when at a place with limited Internet access.
 if [ "$1" == "all" ]
 then
-    folders "`echo "$netfolders" | tr '\n' ' '`"
-    files "`echo "$netfiles" | tr '\n' ' '`"
+    folders "$netfolders"
+    files "$netfiles"
 else
     echo "Skipping network cache clearing. Use \"$0 all\" to clear them too."
 fi
