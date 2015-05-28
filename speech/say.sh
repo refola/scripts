@@ -10,6 +10,6 @@ then
     exit 1
 fi
 
-words="$(echo "$@")" # Collect all the words into a single variable.
-echo $words # Show what is being said.
+words="$*" # Collect all the words into a single variable.
+echo "$words" # Show what is being said.
 spd-say -w "$words" # Say it.

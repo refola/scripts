@@ -2,7 +2,7 @@
 
 if [ -z "$2" ]
 then
-    say "Usage: $(basename $0) max delta"
+    say "Usage: $(basename "$0") max delta"
     say "Counts to max in increments of delta."
     exit 1
 else
