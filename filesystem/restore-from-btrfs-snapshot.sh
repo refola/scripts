@@ -10,7 +10,7 @@
 snapdir="/mnt/@snapshots/@home-mark"
 cd $snapdir # because ls'ing "$snapdir/*/" doesn't work the same
 # get last folder in snapshot directory
-lastsnap="$(ls -d */ | tail -n 1 | rev | cut -c2- | rev)"
+lastsnap="$(basename "$(find "$snapdir" -mindepth 1 -maxdepth 1 | tail -n 1)")"
 snapshot="$snapdir/$lastsnap"
 
 destination="/mnt/@home/mark"
