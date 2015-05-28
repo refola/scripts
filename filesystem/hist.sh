@@ -5,24 +5,30 @@
 
 DIR="$HISTARCHIVE" # Custom history location used by $PROMPT_COMMAND
 
-COUNT="50" # How many entries to show
-if [ ! -z "$2" ]
+COUNT="25" # How many entries to show
+if [ -n "$2" ]
 then
     COUNT="$2"
 fi
 
 if [ -z "$1" ]
 then
-    echo "Usage: `basename $0` regex [count]"
+    echo "Usage: $(basename "$0") regex [count]"
     echo "Searches files in $DIR for given regex, returning the last count (default $COUNT) lines"
     echo "Count can be \"all\" to display all matching history items."
     exit 1
 fi
 
-cd "$DIR"
+# Usage: search regex
+# Searches history folder for entries matching given regex.
+search() {
+    local files=( $DIR/* )
+    cat "${files[@]}" | egrep "$1"
+}
+
 if [ "$COUNT" = "all" ]
 then
-    cat `ls $DIR` | egrep "$1"
+    search "$1"
 else
-    cat `ls $DIR` | egrep "$1" | tail -n $COUNT
+    search "$1" | tail -n "$COUNT"
 fi
