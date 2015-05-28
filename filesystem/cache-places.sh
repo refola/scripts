@@ -4,11 +4,11 @@
 # Folders to cache. Sorted alphabetically because they'll be chaotically parallelized anyway.
 folders="
 /bin
-/home/mark/code
-/home/mark/doc
-/home/mark/media/img/wallpaper
-/home/mark/prog
-/home/mark/refola
+/home/$USER/code
+/home/$USER/doc
+/home/$USER/media/img/wallpaper
+/home/$USER/prog
+/home/$USER/refola
 $HOME
 /lib
 /lib64
@@ -30,15 +30,15 @@ else
 fi
 
 echo "Waiting $sec seconds before caching stuff...."
-sleep $sec
+sleep "$sec"
 echo "Caching a bunch of commonly-used folders...."
 
 dofolder() {
-    if [ -d $folder ]
+    if [ -d "$folder" ]
     then
-	cd $folder
+	cd "$folder"
 	echo "Caching folder $folder."
-	(time `cache-folder > /dev/null`) 2>&1 | grep -v user | grep -v sys | grep -v "^$" | grep -v "Permission denied"
+	(time "cache-folder > /dev/null") 2>&1 | grep -v user | grep -v sys | grep -v "^$" | grep -v "Permission denied"
     else
 	echo "Folder doesn't exist: $folder"
     fi
@@ -59,7 +59,7 @@ dofolder() {
 # Conclusion 3: Something random is going on....
 for folder in $folders
 do
-    dofolder $folder & # Fastest way. See times above.
+    dofolder "$folder" & # Fastest way. See times above.
 done
 
 exit
