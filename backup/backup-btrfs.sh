@@ -189,7 +189,7 @@ lastbak() {
     local DIR="$SNAPDIR/$VOL"
     # NOTE: This assumes that the snapshot directory is empty iff
     # backups have been made with this script before.
-    if [ ! -z "$(ls "$DIR")" ]
+    if [ -n "$(ls "$DIR")" ]
     then
 	# get list of existing snapshots, get last one, and remove leading './'
 	cd "$DIR" # make the leading part of find's results a deterministic "./"
