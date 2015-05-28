@@ -8,5 +8,5 @@ then
     exit 1
 else
     # get command's path and run ls on it
-    ls -l $(cmpath $1)
+    ls -l "$(cmpath "$1")"
 fi

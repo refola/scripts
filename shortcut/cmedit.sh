@@ -19,5 +19,5 @@ then
 else
     # convert symlinks into canonical paths and take directory
     # name
-    $CMD $(cmpath $1)
+    $CMD "$(cmpath "$1")"
 fi
