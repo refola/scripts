@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Prettiness
 alias ls='ls --group-directories-first --time-style=+"%Y-%m-%d_%H%M:%S" --color=auto'
 alias df='df -h'

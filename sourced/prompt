@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # This contains everything that's done when a Bash prompt happens,
 # namely setting: history behaviour, PROMPT_COMMAND, PS1, and PS2.
 

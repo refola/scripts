@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Miscellaneous custom Bash stuff
 
 # Set $LS_COLORS so ls is properly pretty.
