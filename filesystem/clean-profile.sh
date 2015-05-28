@@ -50,7 +50,7 @@ folders() {
 	if [ -d "$HOME/$folder" ]
 	then
 	    echo "Removing folder: $folder"
-	    rm -r "$HOME/$folder/"
+	    rm -r "${HOME:?}/${folder:?}/"
 	    #	else
 	    #		echo "Folder doesn't exist: $folder"
 	fi
@@ -64,7 +64,7 @@ files() {
 	if [ -f "$HOME/$file" ]
 	then
 	    echo "Removing file: $file"
-	    rm "$HOME/$file"
+	    rm "${HOME:?}/${file:?}"
 	    #	else
 	    #		echo "File doesn't exist: $file"
 	fi
