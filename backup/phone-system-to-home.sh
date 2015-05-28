@@ -2,12 +2,8 @@
 # Phone system backup script, using a delete-and-copy method via
 #  "adb pull [source] [destination]".
 
-# Get script location.
-DELINKED=`readlink -f "$0"`
-HERE="`dirname "$DELINKED"`"
 # Figure out where to backup to.
-USER=`whoami`
-TO=/home/$USER/phone/system-backup
+TO="/home/$USER/phone/system-backup"
 LS_CMD="adb shell ls -a /"
 
 # Places that can be backed up normally....
@@ -50,28 +46,28 @@ sys	# Makes phone reboot at \"sys/devices/platform/s5pv210-uart.0/clock_source\"
 
 pull() {
     echo "adb pull $1 $TO/$1"
-    adb pull $1 $TO/$1
+    adb pull "$1" "$TO/$1"
 }
 
 backup() {
     adb root
     sleep 5 # let adb have some time....
-    if [ -d $TO.bak ]
+    if [ -d "$TO.bak" ]
     then
 	echo "Deleting backup at $TO.bak"
-	rm -r $TO.bak
+	rm -r "$TO.bak"
     fi
-    if [ -d $TO ]
+    if [ -d "$TO" ]
     then
 	echo "Backing up existing $TO to $TO.bak"
-	mv $TO $TO.bak
+	mv "$TO" "$TO.bak"
     fi
     echo "Backing up system to $TO."
-    mkdir $TO
+    mkdir "$TO"
 
     for PLACE in $SAFE
     do
-	pull $PLACE
+	pull "$PLACE"
     done
 }
 
