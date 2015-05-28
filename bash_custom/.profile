@@ -1,3 +1,5 @@
+#!/bin/bash
+
 ## CUSTOM STUFF
 
 # Stuff that's not automatically cluttered by programs ($HOME is $H/sys/DISTRONAME)

@@ -15,7 +15,7 @@ DEBUG="false" # not "true"
 msg(){
 	if [ "$DEBUG" = "true" ]
 	then
-		echo $*
+		echo "$@"
 	fi
 }
 msg "DEBUG=$DEBUG"

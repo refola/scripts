@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Custom file to be called by ~/.bash_logout
 
 # Clear caches, etc....
