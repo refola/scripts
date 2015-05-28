@@ -2,7 +2,7 @@
 
 if [ -z "$1" ]
 then
-    echo "Usage: $(basename $0) maxGHz"
+    echo "Usage: $(basename "$0") maxGHz"
     echo "Sets the CPU to run up to the given frequency."
     exit 1
 fi
