@@ -26,7 +26,7 @@ kill $pid
 wait $pid 2> /dev/null
 
 echo "Here are the \"random\" symbols."
-cat "$FILE" | tr -dc "$PATTERN" | fold -w 20
+tr -dc "$PATTERN" < "$FILE" | fold -w 20
 echo
 
 echo "Now deleting temporary file $FILE."
