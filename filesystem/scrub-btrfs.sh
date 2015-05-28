@@ -23,6 +23,8 @@ scrubit() {
     if [ -d "$LOCATION" ]
     then
 	echo "Starting btrfs scrub for $DISP."
+	# We don't want sudo for writing $FILE.
+	# shellcheck disable=SC2024
 	sudo btrfs scrub start -B -d "$LOCATION" > "$FILE"
 	echo
 	echo "Scrub finished for $DISP. Results are as follows:"
@@ -39,6 +41,8 @@ IFS=$'\n' # split DISKS on newline
 for line in $DISKS
 do
     IFS=' ' # split line on space
+    # We want $line split into its components.
+    # shellcheck disable=SC2086
     set $line
     scrubit "$1" "$2" &
 done

@@ -2,7 +2,7 @@
 echo "Running script for checking file existence."
 if [ -z "$1" ]
 then
-    echo "Usage: `basename $0` filename"
+    echo "Usage: $(basename "$0") filename"
     echo "This checks if filename exists and says what it is."
     exit
 fi
