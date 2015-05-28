@@ -10,7 +10,7 @@
 _title="Mirror-Check"
 # I don't know what the sed command does, but I added the 'tr|sort|tr'
 # bit to sort the repos by name.
-_repos="$(cat /etc/pacman.conf | grep -v "#" | grep -v "options" | grep "\[" | cut -d[ -f2 | cut -d] -f1 | uniq | sed "{:q;N;s/\n/ /g;t q}" | tr ' ' '\n' | sort | tr '\n' ' ')"
+_repos="$(grep -v "#" < "/etc/pacman.conf" | grep -v "options" | grep "\[" | cut -d[ -f2 | cut -d] -f1 | uniq | sed "{:q;N;s/\n/ /g;t q}" | tr ' ' '\n' | sort | tr '\n' ' ')"
 _mode="$1"
 
 ### GENERAL FUNCTIONS ###
@@ -45,8 +45,11 @@ function download_or_error() {
 # Downloads the main and mirror databases for the given repo. Make
 # sure to run delete_databases later to clean up.
 function get_databases() {
+    local repo="$1"
     local main="http://rsync.chakraos.org/packages/${repo}/x86_64/${repo}.db.tar.gz"
-    local mirror="$(grep '^[^#]erver' /etc/pacman.d/mirrorlist | head -1 | cut -d' ' -f3 |sed 's,$repo.*,'"${repo}/x86_64/${repo}.db.tar.gz,")"
+    # Tell shellcheck that the $repo in sed's argument is literal.
+    # shellcheck disable=SC2016
+    local mirror="$(grep '^[^#]erver' /etc/pacman.d/mirrorlist | head -1 | cut -d' ' -f3 | sed 's,$repo.*,'"${repo}/x86_64/${repo}.db.tar.gz,")"
     for place in main mirror
     do
 	download_or_error "${!place}" "$(db_file "$repo" $place)" "Could not download $place database for $repo. " &
@@ -60,29 +63,26 @@ function delete_databases() {
 }
 
 ### SYNCHRONIZATION CHECKING FUNCTIONS ###
-## Usage: sync_filter repo code
-# Echos back the repo name iff its sync status matches the given
-# code. Codes are 0 for mirrors matching and 1 for mirrors not
-# matching.
-function sync_filter() {
+## Usage: is_synced repo
+# Echos back the repo name iff it is synced.
+function is_synced() {
     local main="$(db_file "$1" main)"
     local mirror="$(db_file "$1" mirror)"
     diff "$main" "$mirror" > /dev/null
-    if [ "$?" = "$2" ]
+    if [ "$?" = 0 ]
     then
-	# The newline is for keeping results from running together.
-	echo -n "$1"$'\n'
+	echo "$1"
     fi
-}
-## Usage: is_synced repo
-# Echos back the repo's name iff it's synced.
-function is_synced() {
-    sync_filter "$1" 0
 }
 ## Usage: is_synced repo
 # Echos back the repo's name iff it's not synced.
 function is_unsynced() {
-    sync_filter "$1" 1
+    local synced="$(is_synced "$1")"
+    # If is_synced didn't echo it back
+    if [ "$synced" != "$1" ]
+    then
+	echo "$1"
+    fi
 }
 
 ### CLI FUNCTIONS ###
@@ -122,21 +122,25 @@ function gui_message() {
     __gui_window_pid=$!
 }
 ## Usage: gui_fmt_repos repos fmt
-# Formats a list of repos for the GUI.
+# Formats list lines of repos for the GUI.
 function gui_fmt_repos() {
-    local list=""
     local fmt="$2"
     for repo in $1
     do
-	list="$list$(printf "<li>$fmt</li>" "$repo")"
+	# Tell shellcheck that we really want $fmt in printf's format string.
+	# shellcheck disable=SC2059
+	printf "<li>$fmt</li>" "$repo"
     done
-    echo "<ul>$list</ul>"
 }
 ## Usage: gui_results synced unsynced
 # Shows a message of which repos are and aren't synced.
 function gui_results() {
-    local text="$(gui_fmt_repos "$1" "<b>[%s]</b> is <font color="#00FF00">synced</font>.")<br/>"
-    text="$text$(gui_fmt_repos "$2" "<b>[%s]</b> is <font color="#FF0000">not synced</font>.")"
+    local synced_fmt="<b>[%s]</b> is <font color=\"#00FF00\">synced</font>."
+    local unsynced_fmt="<b>[%s]</b> is <font color=\"#FF0000\">not synced</font>."
+    local text="<ul>"
+    text="$(gui_fmt_repos "$1" "$synced_fmt")"
+    text="$text$(gui_fmt_repos "$2" "$unsynced_fmt")"
+    text="$text</ul>"
     gui_message "$text"
 }
 ## Usage: gui_close_window
@@ -176,7 +180,7 @@ function runit() {
 	$error_fn "Could not find '/etc/pacman.conf'. Are you sure you're running a pacman-based distro?"
 	exit 1
     fi
-    $msg_fn "Checking ${_repos[@]}..."
+    $msg_fn "Checking $_repos..."
     local error="$(repo_loop get_databases)"
     $close_fn
     if [ ! -z "$error" ]
