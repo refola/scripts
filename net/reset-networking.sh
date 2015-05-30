@@ -1,33 +1,55 @@
 #!/bin/bash
 
-# Hardcoded; change on different systems or as-needed.
-IF="enp3s0"
+### Space-separated lists of interfaces and modules to reset.
+INTERFACES="enp3s0 fake_interface_name_for_testing"
+MODULES="r8169 fake_module_name_for_testing"
 
-# Get the interface info, limit to the line with the driver's name, and remove the 8 characters "driver: ", finally resulting in just the driver's name.
-# NOTE: This probably won't work for non-ethernet interfaces like wifi.
-DRIVER="$(ethtool -i $IF | grep driver | cut -c 9-)"
+### One-liners that enable and disable modules and interfaces.
+disable_module() { sudo modprobe -r "$1"; }
+disable_interface() { sudo ifconfig "$1" down; }
+enable_module() { sudo modprobe "$1"; }
+enable_interface() { sudo ifconfig "$1" up; }
 
-echo "Resetting networking for interface $IF."
-echo "Here are its current stats, in case you're interested."
-ifconfig "$IF"
+### One-liners that filter modules and interfaces to only those found.
+filter_module() { begins_line "$1" lsmod; }
+filter_interface() { begins_line "$1" ifconfig; }
 
-echo "Bringing down interface $IF (requires password for sudo)."
-sudo ifconfig "$IF" down
+## Usage: begins_line text command
+# Outputs text iff it begins a line in command's output.
+begins_line() {
+    if $2 | egrep -q "^$1"
+    then echo "$1"
+    fi
+}
 
-echo "Removing driver $DRIVER."
-sudo modprobe -r "$DRIVER"
+## Usage: loop_cmd list command
+# Runs command for each item in quoted list.
+loop_cmd() {
+    local items="$1"
+    local cmd="$2"
+    for item in $items
+    do $cmd "$item"
+    done
+}
 
-echo "Reloading driver $DRIVER."
-sudo modprobe "$DRIVER"
+## Usage: main
+# Resets networking interfaces and modules, hopefully fixing whatever
+# networking issues may be present.
+main() {
+    local modules="$(loop_cmd "$MODULES" filter_module)"
+    local interfaces="$(loop_cmd "$INTERFACES" filter_module)"
+    echo "Disabling and re-enabling networking. Note: This uses sudo."
+    echo "Bringing down interface(s): $interfaces"
+    loop_cmd "$interfaces" disable_interface
+    echo "Unloading module(s): $modules"
+    loop_cmd "$modules" disable_module
+    echo "Reloading module(s): $modules"
+    loop_cmd "$modules" enable_module
+    SEC=3
+    echo "Waiting $SEC seconds for modules to finish loading."
+    sleep "$SEC"
+    echo "Bringing up interface(s): $interfaces"
+    loop_cmd "$interfaces" enable_interface
+}
 
-SEC=3
-echo "Waiting $SEC seconds for stuff to activate...."
-sleep "$SEC"
-
-echo "Bringing up interface $IF."
-sudo ifconfig "$IF" up
-
-echo "Done! Enjoy the zeroed stats, as follows."
-ifconfig "$IF"
-
-exit
+main
