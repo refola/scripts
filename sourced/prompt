@@ -34,7 +34,7 @@ ps1() {
 	local dark="\[\e[1;30m\]"
 	local sec="\$(date +:%S)"
 	local green="\e[0;32m"
-	local dir="\${PWD/\$H/\~}"
+	local dir="\${PWD/#\$H/\~}"
 	local bright="\e[1;37m"
 	local off="\[\e[0m\]"
 	echo -n "$brown$hm$dark$sec$green$dir$bright> $off"
