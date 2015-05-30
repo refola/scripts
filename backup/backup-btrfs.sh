@@ -203,9 +203,10 @@ san() {
     echo -n "$1" | tr / -
 }
 
-# Usage: sudo -v; sudonotimeout &; PID=$!; stuff; kill $PID
+# Usage: sudo -v; sudonotimeout &; SUDO_PID=$!; stuff; kill_sudo
 # Keep sudo from timing out.
-# Note: Deviate from the example usage pattern at risk of bugs.
+# Note: It's a lot cleaner to invoke this via simply wrapping "stuff"
+# between startsudo and killsudo.
 sudonotimeout() {
     while true
     do
@@ -216,6 +217,26 @@ sudonotimeout() {
 	# works, but it is theoretically fallable.
 	sleep 50
     done
+}
+
+# Usage: startsudo; stuff; stopsudo
+# Activates sudo mode, starts a sudo-refreshing loop, saves the loop's
+# process to $SUDO_PID, and sets a C-c trap to stop the loop on abrupt
+# exit.
+# Note: Failure to run stopsudo after running this will leave a stray
+# sudo-refreshing process running.
+startsudo() {
+    sudo -v
+    sudonotimeout &
+    SUDO_PID="$!"
+    trap stopsudo SIGINT SIGTERM
+}
+
+# Usage: stopsudo
+# Kills the sudonotimeout loop and cancels the C-c trap.
+stopsudo() {
+    kill "$SUDO_PID"
+    trap - SIGINT SIGTERM
 }
 
 # Usage: TIME_INCLUDING_VOLUME_PATH="$(timedvol volume)"
@@ -248,11 +269,9 @@ voldir() {
 
 ### main stuff ###
 
-# Make sure sudo doesn't time out. NOTE: This must be killed later.
+# Make sure sudo doesn't time out.
 echo "Obtaining sudo privilege"
-sudo -v
-sudonotimeout &
-CHILDPID=$!
+startsudo # Note: Make sure to run stopsudo later to kill the loop.
 
 for VOL in $VOLS
 do
@@ -291,5 +310,5 @@ done
 
 # Cleanup forked subshell and exit.
 echo "Killing sudo refresher before exiting."
-kill "$CHILDPID"
+stopsudo
 exit
