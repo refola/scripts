@@ -27,16 +27,20 @@ pcmd() {
 export PROMPT_COMMAND="$(pcmd)"
 unset pcmd
 
+# Get a properly-escaped color code.
+# Make sure to unset this at the end.
+color() { echo -n "\[\e[$1m\]"; }
+
 # Set PS1.
 ps1() {
-    local brown="\[\e[0;33m\]"
+    local brown="$(color '0;33')"
     local hm="\$(date +%H%M)"
-    local dark="\[\e[1;30m\]"
+    local dark="$(color '1;30')"
     local sec="\$(date +:%S)"
-    local green="\[\e[0;32m\]"
+    local green="$(color '0;32')"
     local dir="\${PWD/#\$H/\~}"
-    local bright="\[\e[1;37m\]"
-    local off="\[\e[0m\]"
+    local bright="$(color '1;37')"
+    local off="$(color '0')"
     echo -n "$brown$hm$dark$sec$green$dir$bright> $off"
 }
 export PS1="$(ps1)"
@@ -44,13 +48,14 @@ unset ps1
 
 # Set PS2.
 ps2() {
-    local cyan="\[\e[0;36m\]"
-    local off="\[\e[0m\]"
-    echo -n "${cyan}> $off"
+    local cyan="$(color '0;36')"
+    local off="$(color '0')"
+    echo -n "$cyan> $off"
 }
 export PS2="$(ps2)"
 unset ps2
 
+unset color
 
 # See <ref> for Bash "eternal history" which might be adaptable to
 # personal customizations and not losing history entered in one
