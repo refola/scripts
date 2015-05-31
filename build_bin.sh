@@ -57,7 +57,8 @@ nuke () {
 # Usage: target path
 # Outputs how the given script should be targetted in a link.
 target () {
-    echo -n "$1"
+    local target="$(realpath --no-symlinks --relative-to "$BIN" "$1")"
+    echo -n "$target"
 }
 
 # Usage: name path
