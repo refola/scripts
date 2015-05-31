@@ -18,35 +18,35 @@ shopt -s cmdhist # Store multiline commands as single commands
 
 # Set PROMPT_COMMAND.
 pcmd() {
-	local append="history -a"
-	local read="history -n"
-	local save="cat $HISTFILE >> \"${HISTARCHIVE}/\$(date --utc +%F)\""
-	local zero="> $HISTFILE"
-	echo -n "$append;$read;$save;$zero"
+    local append="history -a"
+    local read="history -n"
+    local save="cat $HISTFILE >> \"${HISTARCHIVE}/\$(date --utc +%F)\""
+    local zero="> $HISTFILE"
+    echo -n "$append;$read;$save;$zero"
 }
 export PROMPT_COMMAND="$(pcmd)"
 unset pcmd
 
 # Set PS1.
 ps1() {
-	local brown="\[\e[0;33m\]"
-	local hm="\$(date +%H%M)"
-	local dark="\[\e[1;30m\]"
-	local sec="\$(date +:%S)"
-	local green="\e[0;32m"
-	local dir="\${PWD/#\$H/\~}"
-	local bright="\e[1;37m"
-	local off="\[\e[0m\]"
-	echo -n "$brown$hm$dark$sec$green$dir$bright> $off"
+    local brown="\[\e[0;33m\]"
+    local hm="\$(date +%H%M)"
+    local dark="\[\e[1;30m\]"
+    local sec="\$(date +:%S)"
+    local green="\e[0;32m"
+    local dir="\${PWD/#\$H/\~}"
+    local bright="\e[1;37m"
+    local off="\[\e[0m\]"
+    echo -n "$brown$hm$dark$sec$green$dir$bright> $off"
 }
 export PS1="$(ps1)"
 unset ps1
 
 # Set PS2.
 ps2() {
-	local cyan="\[\e[0;36m\]"
-	local off="\[\e[0m\]"
-	echo -n "${cyan}> $off"
+    local cyan="\[\e[0;36m\]"
+    local off="\[\e[0m\]"
+    echo -n "${cyan}> $off"
 }
 export PS2="$(ps2)"
 unset ps2
