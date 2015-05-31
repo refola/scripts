@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# Single sourcable file for all "must be dotted" commands.
+
+## Usage: source_command command [args]
+# Sources command, passing it args.
+source_command() {
+    local cmd="$1"
+    shift
+    . "$(cmpath "$cmd")" "$@"
+}
+
+# Here are the commands to source.
+cdh() { source_command cdh "$@" ; }
+cmcd() { source_command cmcd "$@" ; }
