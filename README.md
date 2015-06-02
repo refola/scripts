@@ -26,12 +26,12 @@ This should get you a basic working system of scripts.
 4. Complain to me when a script is hard-coded to my system's setup.
 
 ### Bash Environment Setup
-This should get you a Bash shell environment similar to mine. As of this writing, such integration is required for at least the "cmcd" command to work correctly.
+This should get you a Bash shell environment similar to mine. As of this writing, such integration or similar is required for shell-environment-changing things like the "cmcd" command to work correctly.
 
 0. Follow the Initial Setup directions first.
-1. Do the things that install_bash_custom.sh is meant to do.
+1. Do the things that bash_custom/install.sh is meant to do.
 2. Cross your fingers and open a new shell.
-3. Complain to me if install_bash_custom.sh eats your hamster.
+3. Complain to me if bash_custom/install.sh eats your hamster.
 
 ### System-specific Setup
 There's too much integration to describe this. Instead, I need to refactor the scripts to use config files for system-specific stuff instead of hard-coding it. Please help me by complaining about scripts you want to use being hard-coded to my system.

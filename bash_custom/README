@@ -6,3 +6,6 @@
 #    and ~/.profile to link to the corresponding files here.
 # 2. Make the folder ~/.bash_history.d
 # 3. Cross your fingers and start a new Bash session.
+
+# Untested shortcut version:
+# Run install.sh found in this folder.

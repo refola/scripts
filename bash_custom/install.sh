@@ -8,7 +8,7 @@ HERE="$(dirname "$(readlink -f "$0")")"
 for file in .bash_logout .bash_profile .bashrc .logout .profile
 do
     mv "$HOME/$file" "$HOME/$file.bak"
-    ln -s "$HERE/bash_custom/$file" "$HOME/$file"
+    ln -s "$HERE/$file" "$HOME/$file"
 done
 
 # Make custom bash history directory for use with the custom $PROMPT_COMMAND and hist.sh
