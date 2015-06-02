@@ -21,7 +21,7 @@ default_temp_night=55
 
 if [ -z "$1" ]
 then
-    local name="$(basename "$0")"
+    name="$(basename "$0")"
     echo "Usage: $name - | [(day)temp100s [nighttemp100s]] [(day)tint [nighttint]]"
     echo "Kills currently running instances of redshift and runs it again with the given (day and night) color temperature(s) in hundreds of Kelvins."
     echo "  Temperature ranges from 10 through 100, correspoding to the 1000K to 10000K range."
