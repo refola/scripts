@@ -1,5 +1,5 @@
 #!/bin/bash
-# redcontrol.sh sets redshift on Mark's computer to change the color temperature for Flagstaff according to the day and night temperature
+# redshift-control.sh sets redshift on Mark's computer to change the color temperature for Flagstaff according to the day and night temperature
 
 # gamma for the X server, as R:G:B
 gamma="0.85:0.95:1.05"
@@ -15,9 +15,9 @@ coords="35:-111"; place="Flagstaff"
 
 # defaults -- full brightness and native temperature at day, both cut back a bunch at night
 default_tint_day=0
-default_tint_night=9
+default_tint_night=8
 default_temp_day=65
-default_temp_night=55
+default_temp_night=35
 
 if [ -z "$1" ]
 then
@@ -33,10 +33,7 @@ then
     exit 1
 fi
 
-echo "Killing redshift."
-killall redshift
-
-# Convert redcontrol tint values into redshift tint values
+# Convert redshift-control tint values into redshift tint values
 tint() {
     if (( "$1" == 0 ))
     then
@@ -46,7 +43,7 @@ tint() {
     fi
 }
 
-# Convert redcontrol temperature values into redshift temperature values
+# Convert redshift-control temperature values into redshift temperature values
 temp() {
     echo "${1}00"
 }
@@ -103,6 +100,9 @@ temp_night="$(temp "$temp_night")"
 tint_day="$(tint "$tint_day")"
 tint_night="$(tint "$tint_night")"
 
+# Stop and restart redshift.
+echo "Killing redshift."
+killall redshift
 echo "Starting redshift for $place at lat:lon $coords with (daytemp, nighttemp, daytint, nighttint) = (${temp_day}K, ${temp_night}K, $tint_day, $tint_night)."
 echo "redshift -g \"$gamma\" -l \"$coords\" -t \"$temp_day:$temp_night\" -b \"$tint_day:$tint_night\" -r &"
 redshift -g "$gamma" -l "$coords" -t "$temp_day:$temp_night" -b "$tint_day:$tint_night" -r &
