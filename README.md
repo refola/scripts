@@ -1,6 +1,5 @@
 scripts
 =======
-
 This repository contains most of the personal Bash scripts I've developed over the years. They cover a wide variety of tasks and reflect the process of me learning more and more Bash. Please see the Contents section below to see which scripts may interest you.
 
 
@@ -39,7 +38,6 @@ There's too much integration to describe this. Instead, I need to refactor the s
 
 Contents
 --------
-
 Beyond this readme, the license file, and build_bin.sh at the top level, here's what to expect if you dig in to the script collection.
 
 <table>
@@ -68,6 +66,22 @@ Beyond this readme, the license file, and build_bin.sh at the top level, here's 
  <ul><li>chrootdistro.sh automates certain mount points needed for system stuff to work in the chroot</li><li>update-grub.sh acts like the Ubuntu update-grub command</li><li>mirror-check.sh is a rewritten version of Chakra Linux's mirror-check script</li></ul></td></tr>
 <tr><td>volume</td><td>controls volume from the command line</td><td>volume-* scripts increase, decrease, and (un) mute the volume</td></tr>
 </table>
+
+
+### Dependencies - in progress
+Right now the state of dependencies in my scripts is undefined. Here's the situation and how I plan to fix it.
+
+Most scripts are useless without some other command that is not part of the shell. Bad things happen if the command is not found. Here are my use cases:
+1. A script calls a command or other script that cannot be found.
+2. A script's dependency changes in a way that breaks how it's called.
+3. Some scripts have functionality in common and it's annoying to handle the duplicate code.
+
+Here's what I plan to do about these cases:
+1. Make a `using` script that checks for the existence of every command name passed to it and returns an error if one of them is missing, allowing something like `if ! using cmd1 cmd2; then exit 1; fi` to do a quick sanity check at the beginning of each script and allow explicit broken dependency checking.
+2. Localize generally-useful dependency scripts into the `lib` folder and other dependency scripts into the folders that contain the scripts they're used in. This makes it easier to avoid breaking dependencies, but doesn't solve the problem. Suggestions are welcome and encouraged.
+3. Refactor common functionality into new scripts with locations as described in #2.
+
+Finally, I'll try to avoid these issues in the future.
 
 
 Future Plans

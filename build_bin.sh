@@ -23,10 +23,16 @@ msg "VERBOSE=$VERBOSE"
 # Directories to skip, via regex patterns that will be
 # concatenated. For example, "\." will skip all items that have a
 # literal dot (".") in their name.
+## Note: This list is hard-coded and not moved to config (to be gotten
+## via 'SKIP_DIRS="$(config build_bin/skip_dirs)"') because this
+## script is not allowed to have dependencies beyond Bash and basic
+## *nix utilities.
+# Note: The dot in '\.' must be escaped for egrep.
 SKIP_DIRS="
 \.
 bash_custom
 bin
+config
 example
 fun
 sourced
