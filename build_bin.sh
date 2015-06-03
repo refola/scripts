@@ -24,7 +24,7 @@ msg "VERBOSE=$VERBOSE"
 # concatenated. For example, "\." will skip all items that have a
 # literal dot (".") in their name.
 ## Note: This list is hard-coded and not moved to config (to be gotten
-## via 'SKIP_DIRS="$(config build_bin/skip_dirs)"') because this
+## via 'SKIP_DIRS="$(get-config build_bin/skip_dirs)"') because this
 ## script is not allowed to have dependencies beyond Bash and basic
 ## *nix utilities.
 # Note: The dot in '\.' must be escaped for egrep.
