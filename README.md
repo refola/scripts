@@ -77,7 +77,7 @@ Most scripts are useless without some other command that is not part of the shel
 3. Some scripts have functionality in common and it's annoying to handle the duplicate code.
 
 Here's what I plan to do about these cases:
-1. Make a `using` script that checks for the existence of every command name passed to it and returns an error if one of them is missing, allowing something like `if ! using cmd1 cmd2; then exit 1; fi` to do a quick sanity check at the beginning of each script and allow explicit broken dependency checking.
+1. Use something like `if ! which cmd1 cmd2; then exit 1; fi` to do a quick sanity check at the beginning of each script that uses custom commands.
 2. Localize generally-useful dependency scripts into the `lib` folder and other dependency scripts into the folders that contain the scripts they're used in. This makes it easier to avoid breaking dependencies, but doesn't solve the problem. Suggestions are welcome and encouraged.
 3. Refactor common functionality into new scripts with locations as described in #2.
 
