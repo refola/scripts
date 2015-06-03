@@ -15,9 +15,6 @@
 
 ### limitations ###
 
-# The btrfs setup is hard-coded instead of being moved to a config
-# file.
-
 # This only works with a single "internal" btrfs "drive" (may be
 # multiple disks with btrfs RAID or whatever) to make and clone
 # snapshots from.
@@ -38,21 +35,28 @@
 # do this manually since btrfs breaks when the drive's full.
 
 
+### pre-run sanity check ###
+if ! which btrfs get-config > /dev/null
+then
+    echo "Error: Could not find all necessary commands."
+    exit 1
+fi
+
+
 ### global variables ###
+
+# Shortcut variable for use with get-config.
+THIS="backup-btrfs"
 
 # where internal drive's btrfs partition root (not just a subvolume)
 # is mounted
-INTROOT="/mnt"
+INTROOT="$(get-config "$THIS/internal-root")"
 
 # where to make the internal drive's snapshots
-INTSNAPDIR="$INTROOT/@snapshots"
+INTSNAPDIR="$INTROOT/$(get-config "$THIS/internal-snapshot-directory")"
 
 # places that the external hard drive might be mounted at
-EXTERNS="
-/run/media/adminn/OT4P
-/run/media/mark/OT4P
-/run/media/sampla/OT4P
-"
+EXTERNS="$(get-config "$THIS/external-roots")"
 
 # where to make/find/update external snapshot clones
 for EXTROOT in $EXTERNS
@@ -71,19 +75,7 @@ fi
 ## subvolumes to snapshot
 # See output of <cmd> for ideas.
 # cmd: sudo btrfs subvolume list $INTROOT | grep -v SNAPSHOTDIRECTORY
-VOLS="
-@chakra
-@fedora
-@kubuntu
-@suse
-@home
-@home/gaming
-@home/guest
-@home/mark
-@home/minecraft
-@home/shared
-@home/shared/media
-"
+VOLS="$(get-config "$THIS/subvolumes")"
 
 # time to use in naming snapshot directories
 TIME="$(date --utc +%F)"
