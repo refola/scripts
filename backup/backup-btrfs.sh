@@ -43,27 +43,28 @@ then
 fi
 
 
-### global variables ###
+### get configuration, exiting on error ###
 
 # Shortcut variable for use with get-config.
 THIS="backup-btrfs"
-
-# where internal drive's btrfs partition root (not just a subvolume)
-# is mounted
-INTROOT="$(get-config "$THIS/internal-root")"
-
+# where internal drive's btrfs partition root is mounted
+INTROOT="$(get-config "$THIS/internal-root")" || exit 1
 # where to make the internal drive's snapshots
-INTSNAPDIR="$INTROOT/$(get-config "$THIS/internal-snapshot-directory")"
-
+INTSNAPDIR="$INTROOT/$(get-config "$THIS/internal-snapshot-directory")" || exit 1
 # places that the external hard drive might be mounted at
-EXTERNS="$(get-config "$THIS/external-roots")"
+EXTERNS="$(get-config "$THIS/external-roots")" || exit 1
+# subvolumes to snapshot (see "btrfs subvolume list $INTROOT")
+VOLS="$(get-config "$THIS/subvolumes")" || exit 1
+
+
+### derived global variables ###
 
 # where to make/find/update external snapshot clones
 for EXTROOT in $EXTERNS
 do
     if [ -d "$EXTROOT" ]
     then
-	# I backup to the root of the external drive.
+	# backup to the root of the external drive.
 	EXTSNAPDIR="$EXTROOT"
     fi
 done
@@ -71,11 +72,6 @@ if [ -z "$EXTSNAPDIR" ]
 then
     echo "External drive not found. Only doing internal snapshotting."
 fi
-
-## subvolumes to snapshot
-# See output of <cmd> for ideas.
-# cmd: sudo btrfs subvolume list $INTROOT | grep -v SNAPSHOTDIRECTORY
-VOLS="$(get-config "$THIS/subvolumes")"
 
 # time to use in naming snapshot directories
 TIME="$(date --utc +%F)"
