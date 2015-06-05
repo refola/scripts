@@ -72,11 +72,13 @@ Beyond this readme, the license file, and build_bin.sh at the top level, here's 
 Right now the state of dependencies in my scripts is undefined. Here's the situation and how I plan to fix it.
 
 Most scripts are useless without some other command that is not part of the shell. Bad things happen if the command is not found. Here are my use cases:
+
 1. A script calls a command or other script that cannot be found.
 2. A script's dependency changes in a way that breaks how it's called.
 3. Some scripts have functionality in common and it's annoying to handle the duplicate code.
 
 Here's what I plan to do about these cases:
+
 1. Use something like `if ! which cmd1 cmd2; then exit 1; fi` to do a quick sanity check at the beginning of each script that uses custom commands.
 2. Localize generally-useful dependency scripts into the `lib` folder and other dependency scripts into the folders that contain the scripts they're used in. This makes it easier to avoid breaking dependencies, but doesn't solve the problem. Suggestions are welcome and encouraged.
 3. Refactor common functionality into new scripts with locations as described in #2.
@@ -86,7 +88,6 @@ Finally, I'll try to avoid these issues in the future.
 
 Future Plans
 ------------
-
 My computer use and understanding evolve constantly. So the main goals for these scripts are to make them general enough for future changes and simple enough for present use.
 
 One key criterion for both generality and simplicity is that other people can easily setup and use my scripts if they want to. So if a script doesn't work easily for you, or you have a better idea, please <a href="http://refola.com/contact">send me your feedback</a> and I'll try to make it better.
