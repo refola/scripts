@@ -1,7 +1,7 @@
 #!/bin/bash
 names="
-lightson.sh
-lightson
+lights-on.sh
+lights-on
 "
 
 stop() {

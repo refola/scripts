@@ -1,5 +1,5 @@
 #!/bin/bash
-# lightsOn.sh
+# lights-on.sh
 
 # Copyright © 2011 iye.cba at gmail com, © 2013 Mark Haferkamp
 # Original url: https://github.com/iye/lightsOn
