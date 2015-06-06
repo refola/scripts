@@ -36,6 +36,7 @@ config
 example
 fun
 sourced
+test
 "
 
 # Build the skip pattern by converting newlines to pipes and removing
