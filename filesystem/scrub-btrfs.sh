@@ -3,11 +3,11 @@
 # Run btrfs scrub for pre-determined locations and save output to
 # date-based filenames.
 
-PLACE="/home/mark/doc/text/tech/hardware/core-plus/btrfs-info"
-DATE="$(date --utc +%F)" # Get current UTC date
+place="/home/mark/doc/text/tech/hardware/core-plus/btrfs-info"
+today="$(date --utc +%F)" # Get current UTC date
 
 # List of scrubs to run, in the "name location" format.
-DISKS="
+disks="
 internal /mnt
 external /run/media/mark/OT4P
 external /run/media/sampla/OT4P
@@ -16,29 +16,29 @@ external /run/media/sampla/OT4P
 ## Usage: scrubit name location
 # Runs btrfs scrub on location and saves results to file based on name.
 scrubit() {
-    local NAME="$1"
-    local LOCATION="$2"
-    local FILE="${PLACE}/${DATE}_scrub_${NAME}"
-    local DISP="$NAME at $LOCATION"
-    if [ -d "$LOCATION" ]
+    local name="$1"
+    local location="$2"
+    local file="${place}/${today}_scrub_${name}"
+    local disp="$name at $location"
+    if [ -d "$location" ]
     then
-	echo "Starting btrfs scrub for $DISP."
-	# We don't want sudo for writing $FILE.
+	echo "Starting btrfs scrub for $disp."
+	# We only want sudo for btrfs scrub, not for writing $file.
 	# shellcheck disable=SC2024
-	sudo btrfs scrub start -B -d "$LOCATION" > "$FILE"
+	sudo btrfs scrub start -B -d "$location" > "$file"
 	echo
-	echo "Scrub finished for $DISP. Results are as follows:"
-	cat "$FILE"
+	echo "Scrub finished for $disp. Results are as follows:"
+	cat "$file"
     else
-	echo "Could not find disk $NAME at $LOCATION."
+	echo "Could not find disk $name at $location."
     fi
 }
 
 # Before starting, make sure that sudo is freshly validated.
 echo "Entering sudo mode."
 sudo -v
-IFS=$'\n' # split DISKS on newline
-for line in $DISKS
+IFS=$'\n' # split disks on newline
+for line in $disks
 do
     IFS=' ' # split line on space
     # We want $line split into its components.
