@@ -11,9 +11,11 @@ PATH="$HOME/.cabal/bin:$PATH"
 # Emacs is pretty neat.
 EDITOR="emacs-nox"
 VISUAL="emacs" # automatically chooses the beautiful emacs-gtk instead of emacs-x11 which is almost as ugly as xemacs
+# Enable making things prettier
+TERM="xterm-256color"
 
 # EXPORT CUSTOM
-export PATH EDITOR VISUAL TZ
+export PATH EDITOR VISUAL TERM
 
 
 ## GO STUFF
