@@ -1,0 +1,16 @@
+/bin
+/home/$USER/code
+/home/$USER/doc
+/home/$USER/media/img/wallpaper
+/home/$USER/prog
+/home/$USER/refola
+$HOME
+/lib
+/lib64
+/sbin
+/usr/bin
+/usr/lib
+/usr/lib64
+/usr/sbin
+/usr/share/applications
+/usr/share/icons
