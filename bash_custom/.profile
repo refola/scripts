@@ -9,9 +9,9 @@ PATH="$H/prog/bin:$PATH"
 PATH="$H/prog/script/bin:$PATH"
 PATH="$HOME/.cabal/bin:$PATH"
 # Emacs is pretty neat.
-EDITOR="emacs-nox"
-VISUAL="emacs" # automatically chooses the beautiful emacs-gtk instead of emacs-x11 which is almost as ugly as xemacs
-# Enable making things prettier
+EDITOR="emacsclient -t"
+VISUAL="emacsclient -c" # automatically chooses emacs-gtk instead of the almost-as-ugly-as-xemacs emacs-x11
+# Enable pretty things like the Zenburn theme in terminal Emacs
 TERM="xterm-256color"
 
 # EXPORT CUSTOM
