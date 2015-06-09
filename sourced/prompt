@@ -38,7 +38,7 @@ ps1() {
     local dark="$(color '1;30')"
     local sec="\$(date +:%S)"
     local green="$(color '0;32')"
-    local dir="\${PWD/#\$H/\~}"
+    local dir="\${PWD/#\$H/\$(echo -n '~')}" # Here's hoping that an escaped "$(echo -n '~')" gets a literal ~ that works in both Bash 4.2 and 4.3
     local bright="$(color '1;37')"
     local off="$(color '0')"
     echo -n "$brown$hm$dark$sec$green$dir$bright> $off"
