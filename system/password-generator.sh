@@ -7,6 +7,7 @@
 
 if [ -z "$1" ]
 then
+    # "\\\\" -> "\\" by bash and "\\" -> "\" by tr
     PATTERN="a-zA-Z0-9-_!@#$%^&*()+{}|:<>?='\`\"\\\\"
 else
     PATTERN="$1"
