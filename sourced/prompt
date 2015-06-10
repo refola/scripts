@@ -38,7 +38,13 @@ ps1() {
     local dark="$(color '1;30')"
     local sec="\$(date +:%S)"
     local green="$(color '0;32')"
-    local dir="\${PWD/#\$H/\$(echo -n '~')}" # Here's hoping that an escaped "$(echo -n '~')" gets a literal ~ that works in both Bash 4.2 and 4.3
+    # \$(echo '~') is the only way I've found to get a literal ~ in
+    # $PS1 in both Bash 4.2 and 4.3. 4.3 requires ~ to be escaped,
+    # while 4.2 shows the characters used to escape ~ in 4.3. Using
+    # "bling quoting" like $'~' works in an echo command in 4.3, but
+    # does not work as part of $PS1. See also
+    # http://stackoverflow.com/a/24347937/619001 .
+    local dir="\${PWD/#\$H/\$(echo '~')}"
     local bright="$(color '1;37')"
     local off="$(color '0')"
     echo -n "$brown$hm$dark$sec$green$dir$bright> $off"
