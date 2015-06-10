@@ -20,13 +20,20 @@ fi
 
 # Caches a single folder, wrapping the "cache-folder" command for prettiness.
 cache-one() {
-    if [ -d "$folder" ]
+    if [ -d "$folder" -a ! -h "$folder" ]
     then
+        size="$(du -sh "$folder" 2>/dev/null)"
+        size="${size%$'\t'$folder}"
 	duration="$( (time cache-folder "$folder" > /dev/null) 2>&1 | grep -v user | grep -v sys | grep -v "^$" | grep -v "Permission denied")"
-        duration="${duration/#real/}"
-        echo -e "Finished $folder in $duration."
+        duration="${duration#real$'\t'}"
+        echo -e "Took $duration to cache $size in $folder."
     else
-	echo "Folder doesn't exist: $folder"
+        if [ -h "$folder" ]
+        then
+            echo "Skipping symlink: $folder"
+        else
+            echo "Folder doesn't exist: $folder"
+        fi
     fi
 }
 
@@ -38,9 +45,13 @@ cache-em-all() {
         # Replace variable references in the folder.
         folder="$(eval echo "$folder")"
         # On the developer's dual-spinning-platter-disk btrfs RAID 1
-        # setup, everything at once has been tested as faster than doing
-        # it serially or with forking two serial processes that each
-        # handle half the work.
+        # setup, everything at once has been tested as faster than
+        # doing it serially or with forking two serial processes that
+        # each handle half the work. Note that HDD I/O is at only a
+        # trickle during this time, so the disks are spending most of
+        # the time waiting for the right data to be under the heads
+        # and there's tons of room for performance improvement (e.g.,
+        # something system-level that puts the files in sequence).
         cache-one "$folder" &
     done
     wait # ... for background caching to finish
