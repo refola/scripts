@@ -15,7 +15,7 @@ VISUAL="emacsclient-c" # since arguments don't work here.
 TERM="xterm-256color"
 
 # EXPORT CUSTOM
-export PATH EDITOR VISUAL TERM
+export H PATH EDITOR VISUAL TERM
 
 
 ## GO STUFF
