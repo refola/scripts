@@ -11,6 +11,8 @@ commands=( $(get-config "gui-autostart-stuff/commands" \
 
 for cmd in "${commands[@]}"
 do
+    # Replace variable references in commands
+    cmd="$(eval echo "$cmd")"
     # Separate command and arguments with spaces.
     IFS=' '
     $cmd
