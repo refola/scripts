@@ -3,7 +3,7 @@
 # to emacs-nox if needed.
 
 # Try connecting to existing emacs daemon.
-if ! (pidsof emacs && emacsclient -c "$@")
+if ! (pidsof emacs && emacsclient -c "$@") 2> /dev/null
 then
     # Otherwise fall back to emacs.
     emacs "$@"
