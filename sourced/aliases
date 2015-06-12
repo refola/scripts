@@ -18,12 +18,12 @@ alias grep='grep --color=tty'
 alias fgrep='fgrep --color=tty'
 alias egrep='egrep --color=tty'
 
-# Editing
-alias emac='emacsclient -t' # Connect to existing daemon for instant gratification.
-alias nano='emacsclient -t' # Do the right thing despite old muscle memory.
-alias vi='echo "Just use emacs."'
-alias vim='echo "Just use emacs."'
-alias ed='echo "What is this? I don'\''t even."'
+# Always use $EDITOR for editing
+alias emac="$EDITOR"
+alias nano="$EDITOR"
+alias vi="$EDITOR"
+alias vim="$EDITOR"
+alias ed="$EDITOR"
 
 # Safety
 alias cp='cp -i' # Prompt before overwriting
