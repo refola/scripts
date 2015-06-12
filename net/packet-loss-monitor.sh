@@ -14,7 +14,8 @@ multiple ways if there's a disruption. If max consecutive packets are
 lost, say that we're giving up and stop the script.
 
 Without max being passed, this script defaults to a limit of $max
-consecutive lost packets."
+consecutive lost packets. Setting max to anything that isn't a
+positive integer disables the excessive packet loss check."
 
 msg() {
     say "$@"
