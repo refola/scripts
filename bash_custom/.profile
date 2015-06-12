@@ -5,8 +5,8 @@
 # Stuff that's not automatically cluttered by programs ($HOME is $H/sys/DISTRONAME)
 H="/home/$USER"
 # Include private bin folders in PATH
-PATH="$H/prog/bin:$PATH"
-PATH="$H/prog/script/bin:$PATH"
+PATH="$H/skami/samtci/bin:$PATH"
+PATH="$H/sampla/samselpla/scripts/bin:$PATH"
 PATH="$HOME/.cabal/bin:$PATH"
 # Emacs is pretty neat.
 EDITOR="emacsclient-t" # Custom commands for running emacsclient
@@ -21,14 +21,14 @@ export H PATH EDITOR VISUAL TERM
 ## GO STUFF
 
 # According to http://golang.org/doc/code.html#GOPATH, GOPATH is "likely the only environment variable you'll need to set when developing Go code".
-GOPATH="$H/code/go"
+GOPATH="$H/sampla/samselpla/go"
 # However, experience shows that GOBIN is needed to keep it from trying to place binaries in GOROOT.
-GOBIN="$H/prog/bin/go"
+GOBIN="$H/skami/samtci/bin/go"
 # TODO: Figure out why "go build" is placing binaries in the current working directory instead....
 # Make sure I can run stuff from GOBIN
 PATH="$GOBIN:$PATH"
 # Shortcut variables for common paths
-GOREF="$H/code/go/src/github.com/refola"
+GOREF="$GOPATH/src/github.com/refola"
 
 # EXPORT GO STUFF
 export GOPATH GOBIN PATH GOREF

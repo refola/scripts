@@ -7,8 +7,8 @@
 # "true" or not "true": Should debugging messages be printed?  "true"
 # is useful for figuring out which sourced thing is causing errors,
 # while not "true" is good for general use when things are working.
-#DEBUG="true"
 DEBUG="false" # not "true"
+#DEBUG="true"
 
 # Usage: msg message
 # Prints message if DEBUG is true.
@@ -20,6 +20,10 @@ msg(){
 }
 msg "DEBUG=$DEBUG"
 
+# These variables are required for bootstrapping Bash customizations.
+h="/home/$USER" # local version of $H
+custom_sourced="$h/sampla/samselpla/scripts/sourced"
+
 # All sorts of custom behaviour locations.
 # Note: On openSUSE 13.2 I had to delete grub, libreoffice.sh, and
 # ooffice.sh from /etc/bash_completion.d because they caused problems,
@@ -29,8 +33,8 @@ msg "DEBUG=$DEBUG"
 to_source="
 /etc/bash_completion
 /etc/bash_completion.d
-$HOME/../../code/scripts/sourced
 $HOME/.profile
+$custom_sourced
 "
 
 # Usage: source_them base thing1 [thing2 [...]]
@@ -41,7 +45,10 @@ source_them() {
 	local x
 	for x in $2
 	do
-		x="$base/$x"
+		if [ -n "$base" ]
+		then
+			x="$base/$x"
+		fi
 		if [ -d "$x" ]
 		then
 			msg "Getting contents of $x to source"
@@ -68,11 +75,11 @@ main() {
 # Do the major changes.
 main
 
+# Move out of the multi-distro "home" folder mess.
+cd "$h"
+
 # Clean up the environment after the changes.
-for clutter in DEBUG msg to_source source_them main
+for clutter in DEBUG msg h custom_sourced to_source source_them main
 do
 	unset $clutter
 done
-
-# Move out of the multi-distro "home" folder mess.
-cd "$HOME/../.."
