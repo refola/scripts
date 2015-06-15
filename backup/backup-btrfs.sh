@@ -2,9 +2,6 @@
 ##
 # btrfsbackup.sh
 ##
-# Uncopyright 2014-2015 Mark Haferkamp. This code is dedicated to the
-# public domain. Use it as you will.
-##
 # Makes sure internal btrfs snapshots are up-to-date for today. Then,
 # if the external drive is connected, makes sure that external backups
 # match the latest internal backups, bootstrapping new snapshot clones
@@ -36,8 +33,7 @@
 
 
 ### pre-run sanity check ###
-if ! which btrfs get-config > /dev/null
-then
+if ! which btrfs get-config > /dev/null; then
     echo "Error: Could not find all necessary commands."
     exit 1
 fi
@@ -45,196 +41,194 @@ fi
 
 ### get configuration, exiting on error ###
 
-# Shortcut variable for use with get-config.
-THIS="backup-btrfs"
-# where internal drive's btrfs partition root is mounted
-INTROOT="$(get-config "$THIS/internal-root")" || exit 1
-# where to make the internal drive's snapshots
-INTSNAPDIR="$INTROOT/$(get-config "$THIS/internal-snapshot-directory")" || exit 1
-# places that the external hard drive might be mounted at
-EXTERNS="$(get-config "$THIS/external-roots")" || exit 1
-# subvolumes to snapshot (see "btrfs subvolume list $INTROOT")
-VOLS="$(get-config "$THIS/subvolumes")" || exit 1
+# Shortcut function to get a config with description, exiting on fail.
+get() { get-config "backup-btrfs/$1" -what-do "$2" || exit 1; }
+internal_root="$(get "internal-root" \
+   "where btrfs partition\'s root is mounted")"
+internal_snapshot_dir="$(get "internal-snapshot-directory" \
+   "name of internal snapshot directory, relative to internal-root")"
+internal_snapshot_dir="$internal_root/$internal_snapshot_dir"
+externs="$(get "external-roots" \
+   "list of places to search for external backup drive")"
+vols="$(get "subvolumes" \
+   "list of subvolumes that should be snapshotted")"
 
 
 ### derived global variables ###
 
 # where to make/find/update external snapshot clones
-for EXTROOT in $EXTERNS
-do
-    if [ -d "$EXTROOT" ]
-    then
+IFS=$'\n'
+for external_root in $externs; do
+    if [ -d "$external_root" ]; then
 	# backup to the root of the external drive.
-	EXTSNAPDIR="$EXTROOT"
+	external_snapshot_dir="$external_root"
     fi
 done
-if [ -z "$EXTSNAPDIR" ]
-then
+if [ -z "$external_snapshot_dir" ]; then
     echo "External drive not found. Only doing internal snapshotting."
 fi
 
 # time to use in naming snapshot directories
-TIME="$(date --utc +%F)"
-if [ "$1" == "--now" ]
-then
-    TIME="$(date --utc +%F_%H-%M-%S)"
+time="$(date --utc +%F)"
+if [ "$1" == "--now" ]; then
+    time="$(date --utc +%F_%H-%M-%S)"
 fi
 
 
 ### btrfs functions ###
 
-# Usage: clonesub fromsnap todir
-# Clone subvolume at fromsnap to same-named snapshot in todir. Useful
-# for copying between disks.
-# Result: todir/part_of_fromsnap_after_slash is now a clone of fromsnap
-clonesub() {
-    local FROM=$1
-    local TODIR=$2
-    sudo btrfs send "$FROM" | sudo btrfs receive "$TODIR"
+## Usage: clone-sub from-snap to-dir
+# Clone subvolume at from-snap to same-named snapshot in
+# to-dir. Useful for copying between disks.
+##
+# Result: to-dir/part_of_from-snap_after_slash is now a clone of
+# from-snap
+clone-sub() {
+    local from=$1
+    local to_dir=$2
+    sudo btrfs send "$from" | sudo btrfs receive "$to_dir"
 }
 
-# Usage: cloneup fromparent fromnew todir
+## Usage: clone-up from-parent from-new to-dir
 # Update existing btrfs clone from newer snapshot version.
-# Assumption: todir/part_of_fromparent_after_slash is already a clone
-# of fromparent
-# Result: todir/part_of_fromnew_after_slash is a clone of fromnew
-cloneup() {
-    local FROMPARENT=$1
-    local FROMNEW=$2
-    local TODIR=$3
-    sudo btrfs send -p "$FROMPARENT" "$FROMNEW" | sudo btrfs receive "$TODIR"
+##
+# Assumption: to-dir/part_of_from-parent_after_slash is already a
+# clone of from-parent
+##
+# Result: to-dir/part_of_from-new_after_slash is a clone of from-new
+clone-up() {
+    local from_parent=$1
+    local from_new=$2
+    local to_dir=$3
+    sudo btrfs send -p "$from_parent" "$from_new" | sudo btrfs receive "$to_dir"
 }
 
-# Usage: syncem
-# Sync, then do "btrfs filesystem sync" for both INTSNAPDIR and
-# EXTSNAPDIR.  It's called "syncem" as a contraction of "sync them",
-# since it syncs more than one thing, i.e., "them".  This is important
-# after doing at least some btrfs snapshot operations.
-syncem() {
-    # the wiki lists sync as part of its snapshot cloning steps,
-    # but i think "btrfs filesystem sync" might also be in order
+## Usage: sync-em
+# Sync, then do "btrfs filesystem sync" for both internal_snapshot_dir
+# and external_snapshot_dir.  It's called "sync-em" as a contraction
+# of "sync them", since it syncs more than one thing, i.e., "them".
+# This is important after doing at least some btrfs snapshot
+# operations.
+sync-em() {
+    # The wiki lists sync as part of its snapshot cloning steps, but I
+    # think "btrfs filesystem sync" might also be in order.
     sync
-    btrfs filesystem sync "$INTROOT" > /dev/null
-    if [ -n "$EXTSNAPDIR" ]
-    then
-	btrfs filesystem sync "$EXTSNAPDIR" > /dev/null
+    btrfs filesystem sync "$internal_root" > /dev/null
+    if [ -n "$external_snapshot_dir" ]; then
+	btrfs filesystem sync "$external_snapshot_dir" > /dev/null
     fi
 }
 
 
 ### snapshotting functions ###
 
-# Usage: bootstrap volume
+## Usage: bootstrap volume
 # Bootstrap initial external snapshot clone of volume.
 bootstrap() {
-    local VOL=$1
+    local vol=$1
     
     # The tr bit converts slashes to dashes so it's a valid folder name.
-    local FROM="$INTSNAPDIR/$(timedvol "$VOL")"
-    local TO="$EXTSNAPDIR/$(san "$VOL")"
-    clonesub "$FROM" "$TO"
+    local from="$internal_snapshot_dir/$(timed-vol "$vol")"
+    local to="$external_snapshot_dir/$(sanitize "$vol")"
+    clone-sub "$from" "$to"
 }
 
-# Usage: incremental volume oldtime
+## Usage: incremental volume old-time
 # Incrementally update external snapshot of volume.
 incremental() {
-    local VOL=$1
-    local OLDTIME=$2
-    # no NEWTIME, since that's gotten via timedvol()
+    local vol=$1
+    local old_time=$2
+    # no new_time, since that's gotten via timed-vol()
     
     # The tr bit converts slashes to dashes so it's a valid folder name.
-    local OLD="$INTSNAPDIR/$(san "$VOL")/$OLDTIME"
-    local FROM="$INTSNAPDIR/$(timedvol "$VOL")"
-    local TO="$EXTSNAPDIR/$(san "$VOL")"
-    sudo btrfs send -p "$OLD" "$FROM" | sudo btrfs receive "$TO"
+    local old="$internal_snapshot_dir/$(sanitize "$vol")/$old_time"
+    local from="$internal_snapshot_dir/$(timed-vol "$vol")"
+    local to="$external_snapshot_dir/$(sanitize "$vol")"
+    sudo btrfs send -p "$old" "$from" | sudo btrfs receive "$to"
 }
 
-# Usage: internal volume
+## Usage: internal volume
 # Make an internal snapshot of volume.
 internal() {
-    local VOL=$1
+    local vol=$1
     
     # The tr bit converts slashes to dashes so it's a valid folder name.
-    local FROM="$INTROOT/$VOL"
-    local TO="$INTSNAPDIR/$(timedvol "$VOL")"
+    local from="$internal_root/$vol"
+    local to="$internal_snapshot_dir/$(timed-vol "$vol")"
     # The btrfs tool already explains what's happening.
     # "-r" is for readonly so it can be used for cloning.
-    sudo btrfs subvolume snapshot -r "$FROM" "$TO"
+    sudo btrfs subvolume snapshot -r "$from" "$to"
     
     # Make sure snapshot creation is fully propagated.
-    syncem
+    sync-em
 }
 
 
 ### utility functions ###
 
-# Usage: LAST_BACKUP="$(lastbak volume snapdir)"
-# Get name of last backup for volume in snapdir, or empty string if
+## Usage: last_backup="$(last-backup-name volume snap-dir)"
+# Get name of last backup for volume in snap-dir, or empty string if
 # there is no backup.
-lastbak() {
-    local VOL=$(san "$1")
-    local SNAPDIR=$2
-    local DIR="$SNAPDIR/$VOL"
+last-backup-name() {
+    local vol=$(sanitize "$1")
+    local snap_dir=$2
+    local dir="$snap_dir/$vol"
     # NOTE: This assumes that the snapshot directory is empty iff
     # backups have been made with this script before.
-    if [ -n "$(ls "$DIR")" ]
-    then
+    if [ -n "$(ls "$dir")" ]; then
 	# get list of existing snapshots, get last one, and remove leading './'
-	cd "$DIR" # make the leading part of find's results a deterministic "./"
+	cd "$dir" # make the leading part of find's results a deterministic "./"
 	find . -maxdepth 1 -mindepth 1 | sort | tail -n 1 | cut -c3-
     fi
 }
 
-# Usage: SANITIZED="$(san volume)"
+## Usage: sanitized="$(sanitize volume)"
 # Sanitize volume's name to be a suitable snapshot folder name.
-san() {
+sanitize() {
     echo -n "$1" | tr / -
 }
 
-# Usage: startsudo; stuff; stopsudo
+## Usage: start-sudo; stuff; stop-sudo
 # Activates sudo mode, starts a sudo-refreshing loop, saves the loop's
-# process number to $SUDO_PID, and sets a C-c trap to stop the loop on
-# abrupt exit.
-# Note: Failure to run stopsudo after running this will leave a stray
-# sudo-refreshing process running.
-startsudo() {
+# process number to $sudo_pid, and sets a trap to stop the loop when
+# the script exits (e.g., from the user pressing ^C).
+##
+# Note: Failure to run stop-sudo after running this may leave a stray
+# sudo-refreshing process running. I'm don't really understand on
+# which signals `trap` should activate stop-sudo
+start-sudo() {
     sudo -v
     ( while true; do sudo -v; sleep 50; done; ) &
-    SUDO_PID="$!"
-    trap stopsudo SIGINT SIGTERM
+    sudo_pid="$!"
+    trap stop-sudo SIGINT SIGTERM
 }
 
-# Usage: stopsudo
-# Kills the sudonotimeout loop and cancels the C-c trap.
-stopsudo() {
-    kill "$SUDO_PID"
+## Usage: stop-sudo
+# Kills the sudo-refreshing loop and cancels the ^C trap.
+stop-sudo() {
+    kill "$sudo_pid"
     trap - SIGINT SIGTERM
 }
 
-# Usage: TIME_INCLUDING_VOLUME_PATH="$(timedvol volume)"
+## Usage: time_including_volume_path="$(timed-vol volume)"
 # Get time-including name for volume's latest snapshot, complete with
 # sanitized volume name.
-# Note: This uses the global TIME var so the caller doesn't have to.
-timedvol() {
-    local VOL=$(san "$1")
-    echo -n "$VOL/$TIME"
+##
+# Note: This uses the global time var so the caller doesn't have to.
+timed-vol() {
+    local vol=$(sanitize "$1")
+    echo -n "$vol/$time"
 }
 
-# Usage: voldir volume
-# Ensure that the directory for volume exists in $INTSNAPDIR, and also
-# for $EXTSNAPDIR if the external drive is available.
-voldir() {
-    local VOL=$(san "$1")
-    if [ ! -e "$INTSNAPDIR/$VOL" ]
-    then
-	sudo mkdir "$INTSNAPDIR/$VOL"
-    fi
-    if [ -n "$EXTSNAPDIR" ]
-    then
-	if [ ! -e "$EXTSNAPDIR/$VOL" ]
-	then
-	    mkdir "$EXTSNAPDIR/$VOL"
-	fi
+## Usage: volume-dir volume
+# Ensure that the directory for volume exists in
+# $internal_snapshot_dir, and also for $external_snapshot_dir if the
+# external drive is available.
+volume-dir() {
+    local vol=$(sanitize "$1")
+    sudo mkdir -p "$internal_snapshot_dir/$vol"
+    if [ -n "$external_snapshot_dir" ]; then
+	mkdir -p "$external_snapshot_dir/$vol"
     fi
 }
 
@@ -243,44 +237,40 @@ voldir() {
 
 # Make sure sudo doesn't time out.
 echo "Obtaining sudo privilege"
-startsudo # Note: Make sure to run stopsudo later to kill the loop.
+start-sudo # Note: Make sure to run stop-sudo later to kill the loop.
 
-for VOL in $VOLS
-do
+for vol in $vols; do
     # Set up directories for the next stuff.
-    voldir "$VOL"
+    volume-dir "$vol"
 
     # Set up internal snapshot, ensuring that it's from today.
-    INTLASTBAK="$(lastbak "$VOL" "$INTSNAPDIR")"
-    if [ "$INTLASTBAK" != "$TIME" ]
-    then
-	internal "$VOL"
+    int_last_backup_name="$(last-backup-name "$vol" "$internal_snapshot_dir")"
+    if [ "$int_last_backup_name" != "$time" ]; then
+	internal "$vol"
     else
-	echo "There's already a snapshot from $TIME for $VOL"
+	echo "There's already a snapshot from $time for $vol"
     fi
 
-    # Check if we should do this next part.
-    if [ -z "$EXTSNAPDIR" ]
-    then
+    # Skip external snapshotting if the directory couldn't be found.
+    if [ -z "$external_snapshot_dir" ]; then
 	continue
     fi
 
-    # Set up external snapshot.
-    EXTLASTBAK="$(lastbak "$VOL" "$EXTSNAPDIR")"
-    if [ -z "$EXTLASTBAK" ]
-    then
-	bootstrap "$VOL"
+    # Set up external snapshot, making sure we end up with a clone of
+    # the most recent internal snapshot.
+    external_last_backup_name="$(last-backup-name "$vol" "$external_snapshot_dir")"
+    if [ -z "$external_last_backup_name" ]; then
+	bootstrap "$vol"
     else
-	if [ "$EXTLASTBAK" != "$TIME" ]
-	then
-	    incremental "$VOL" "$EXTLASTBAK"
+	if [ "$external_last_backup_name" != "$time" ]; then
+	    incremental "$vol" "$external_last_backup_name"
 	else
-	    echo "There's already a backup from $TIME for $VOL."
+	    echo "There's already a backup from $time for $vol."
 	fi
     fi
 done
 
 # Cleanup forked subshell and exit.
 echo "Killing sudo refresher before exiting."
-stopsudo
+stop-sudo
 exit
