@@ -1,7 +1,9 @@
 #!/bin/bash
 # Cache a bunch of regularly-used folders for faster future access
 
-folders=( $(get-config "cache-places/folders" "list of folders to cache") )
+folders=( $(get-config "cache-places/folders" \
+                       -what-do "list of folders to cache" \
+                       -var-rep ) )
 
 sec=15
 if [ -z "$1" ]
@@ -24,7 +26,7 @@ cache-one() {
     then
         size="$(du -sh "$folder" 2>/dev/null)"
         size="${size%$'\t'$folder}"
-	duration="$( (time cache-folder "$folder" > /dev/null) 2>&1 | grep -v user | grep -v sys | grep -v "^$" | grep -v "Permission denied")"
+	duration="$( (time cache-folder "$folder" > /dev/null) 2>&1 | egrep -v 'user|sys|^$|Permission denied')"
         duration="${duration#real$'\t'}"
         echo -e "Took $duration to cache $size in $folder."
     else
@@ -42,8 +44,6 @@ cache-em-all() {
     echo "Caching configured list of commonly-used folders. This may take a while...."
     for folder in "${folders[@]}"
     do
-        # Replace variable references in the folder.
-        folder="$(eval echo "$folder")"
         # On the developer's dual-spinning-platter-disk btrfs RAID 1
         # setup, everything at once has been tested as faster than
         # doing it serially or with forking two serial processes that
