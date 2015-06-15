@@ -98,7 +98,7 @@ reset-config() {
     fi
 }
 
-## Test cases
+## Situations to test
 # shellcheck disable=SC2034
 test_simple="one-word_config"
 # shellcheck disable=SC2034
@@ -118,28 +118,46 @@ tests=(test_simple test_spaces test_lines test_mixed_separators
 
 echo -n "Testing get-config with: "
 
-# Reset config, test abort option, test default config option, test no
-# option, and reset config again.
+# Reset config, test a bunch of situations, and remove config.
 for cfg in "${tests[@]}"
 do
+    # Utility function to abbreviate tests.
+    get() { get-config "$this/$cfg" "$@"; }
+    
+    # Show some context
     echo -n "$cfg ... "
-    val="$(echo -e "${!cfg}")" # Get normalized test case contents
-    val_var_rep="$(eval "echo \"$val\"")"
-    reset-config "$cfg" "$val"
-    test-equal "Abort: $cfg" "$(echo a | get-config "$this/$cfg" 2>/dev/null)" ""
-    test-equal "Default: $cfg" "$(echo d | get-config "$this/$cfg" 2>/dev/null)" "$val"
-    test-equal "Already set, >&1: $cfg" "$(get-config "$this/$cfg" >&1)" "$val"
-    test-equal "Already set: $cfg" "$(get-config "$this/$cfg")" "$val"
-    test-equal "Path only: $cfg" "$(get-config "$this/$cfg" -path)" "$config_dir/$cfg"
-    test-equal "-var-rep: $cfg" "$(get-config "$this/$cfg" -var-rep)" "$val_var_rep"
-    bad_arg_output="$(get-config "$this/$cfg" -bad-arg 2>/dev/null)"
+
+    # What the configs should be
+    raw="$(echo -e "${!cfg}")"       # Verbatim test case contents
+    evald="$(eval "echo \"$raw\"")"  # Test case with ${variable}-expression replacements
+    path="$config_dir/$cfg"
+
+    # Set config to have default
+    reset-config "$cfg" "$raw"
+
+    # Test basic cases without extra arguments
+    test-equal "Abort: $cfg" "$(echo a | get 2>/dev/null)" ""
+    test-equal "Default: $cfg" "$(echo d | get 2>/dev/null)" "$evald"
+    test-equal "Already set, >&1: $cfg" "$(get >&1)" "$evald"
+    test-equal "Already set: $cfg" "$(get)" "$evald"
+
+    # Test valid arguments
+    test-equal "-path: $cfg" "$(get -path)" "$path"
+    test-equal "-var-rep: $cfg" "$(get -var-rep)" "$evald"
+    test-equal "-var-rep does nothing: $cfg" "$(get -var-rep)" "$(get)"
+    test-equal "-verbatim is verbatim: $cfg" "$(get -verbatim)" "$raw"
+
+    # Test invalid arguments
+    bad_arg_output="$(get -bad-arg 2>/dev/null)"
     # 3-stream redirection followed by stderr redirection, as
     # described at http://stackoverflow.com/a/13299397
-    bad_arg_errors="$((get-config "$this/$cfg" -bad-arg 3>&2 2>&1 1>&3) 2>/dev/null)"
+    bad_arg_errors="$( (get -bad-arg 3>&2 2>&1 1>&3) 2>/dev/null)"
     bad_arg_result="$?"
     test-equal "No config on bad arg output: $cfg" "$bad_arg_output" ""
     test-true "Non-zero status on bad arg: $cfg" "[ '$bad_arg_result' != '0' ]"
     test-true "Error message on bad arg: $cfg" "[ '$bad_arg_errors' != '' ]"
+
+    # Remove test configuratios
     reset-config "$cfg"
 done
 echo

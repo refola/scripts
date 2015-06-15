@@ -25,11 +25,14 @@ exists. Otherwise copies the default (if found) and prompts the user
 to edit the config with \$EDITOR.
 
 Options are as follows:
-    -what-do  The next parameter is used to tell the user what the
+  -what-do    The next parameter is used to tell the user what the
               config does.
-    -var-rep  Enable replacement of variable expressions like
-              \$foo and \${foo:-bar} with the corresponding value.
-    -path     Output the path to the config instead of its contents.
+  -var-rep    Enable replacement of variable expressions like \$foo
+              and \${foo:-bar} with the corresponding value. This is
+              the default, and overrides any previous '-verbatim'.
+  -verbatim   Override the effect of -var-rep and output only the
+              verbatim contents of the config.
+  -path       Output the path to the config instead of its contents.
               This option overrides normal make-sure-the-config-exists
               functionality.
 
@@ -47,9 +50,9 @@ config_path=""           # The full path to the config file.
 default_config_path=""   # The full path to the default config file.
 path_only=""             # Whether or not the config's path should be
                          # outputted instead of getting the contents.
-var_rep=""               # Whether or not variables in the config
-                         # should be replaced before outputting the
-                         # config.
+verbatim=""              # Whether variables expressions in the config
+                         # should be displayed verbatim instead of
+                         # evaluating them.
 what_do=""               # A description of what the config does.
 
 # Outputs error message to stderr, prefixed with "Error: " in red.
@@ -118,13 +121,13 @@ can_read_config() {
 }
 
 # Outputs the configuration, converting variable expressions if
-# $var_rep is set.
+# $verbatim is blank.
 output-config() {
     local cfg
     if ! cfg="$(cat "$config_path")"; then
         error "Could not read config at '$config_path'."
         return 1
-    elif [ -n "$var_rep" ]; then
+    elif [ -z "$verbatim" ]; then
         if ! cfg="$(eval "echo \"$cfg\"")"; then
             error "Could not do variable replacements in config:\n$(yellow "$cfg")"
             return 1
@@ -145,7 +148,11 @@ parse-args() {
                 shift 2
                 ;;
             -var-rep)
-                var_rep="true"
+                verbatim=""
+                shift
+                ;;
+            -verbatim)
+                verbatim="true"
                 shift
                 ;;
             -path)
