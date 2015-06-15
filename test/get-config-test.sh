@@ -19,10 +19,22 @@ num_tests="0"
 num_pass="0"
 num_fail="0"
 
-# Color functions
-green() { echo -n "\e[0;32m${1}\e[0m"; }
-red() { echo -n "\e[0;31m${1}\e[0m"; }
-yellow() { echo -n "\e[1;33m${1}\e[0m"; }
+## Usage: color name code
+# Makes a color-setting function of given name, using given code
+color ()
+{
+    local name="$1";
+    local code="$2";
+    local template='%s() { echo -n "\\e[%sm$*\\e[0m"; }';
+    # Using "$template" as the printf format string intentional.
+    # shellcheck disable=SC2059
+    local command="$(printf "$template" "$name" "$code")";
+    eval "$command"
+}
+# Set color functions
+color green  "0;32"
+color red    "0;31"
+color yellow "1;33"
 
 ## Usage: show-result description result
 # Shows the result iff the description is non-empty.
@@ -57,7 +69,7 @@ test-true() {
 	((num_pass++))
 	return 0
     else
-	show-result "$desc" "$(red Fail)" # - $(yellow "$pred") is false."
+	show-result "$desc" "$(red Fail): $(yellow "$pred") is false."
 	((num_fail++))
 	return 1
     fi
@@ -66,11 +78,7 @@ test-true() {
 ## Usage: test-equal description string1 string2
 # Use test-true to check if two strings are equal.
 test-equal() {
-    if ! test-true "$1" "[ '$2' = '$3' ]"
-    then
-	echo "'$2' not equal to '$3'"
-	echo
-    fi
+    test-true "$1" "[ '$2' = '$3' ]"
 }
 
 ## Usage: reset-config config-name [value]
@@ -79,43 +87,66 @@ test-equal() {
 reset-config() {
     local name="$1"
     local value="$2"
-    if [ -f "$config_dir/$name" ]
-    then
+    if [ -f "$config_dir/$name" ]; then
 	rm "$config_dir/$name"
     fi
-    if [ -n "$value" ]
-    then
-	echo -e "$value" > "$defaults_dir/$name"
+    if [ -n "$value" ]; then
+        mkdir -p "$defaults_dir"
+	echo "$value" > "$defaults_dir/$name"
+    elif [ -f "$defaults_dir/$name" ]; then
+        rm "$defaults_dir/$name"
     fi
 }
 
-# Config variables
+## Test cases
 # shellcheck disable=SC2034
-foo="one-word_config"
+test_simple="one-word_config"
 # shellcheck disable=SC2034
-bar="one-line config with spaces"
+test_spaces="one-line config with spaces"
 # shellcheck disable=SC2034
-baz="multi\nline\nconfig"
+test_lines="multi\nline\nconfig"
 # shellcheck disable=SC2034
-quux="s p a c e s\nt\ta\tb\ts\nand newlines"
-tests=(foo bar baz quux)
+test_mixed_separators="s p a c e s\nt\ta\tb\ts\nand newlines"
+# shellcheck disable=SC2034
+test_var_rep_one_line="\$H/foo/bar"
+# shellcheck disable=SC2034
+test_var_rep_multi_line="host=\"\$HOSTNAME\"\nhome=\"\$HOME\"\nroot=\"/\""
+## List of test case variables
 
-echo "Testing $this...."
+tests=(test_simple test_spaces test_lines test_mixed_separators
+       test_var_rep_one_line test_var_rep_multi_line)
+
+echo -n "Testing get-config with: "
 
 # Reset config, test abort option, test default config option, test no
 # option, and reset config again.
 for cfg in "${tests[@]}"
 do
+    echo -n "$cfg ... "
     val="$(echo -e "${!cfg}")" # Get normalized test case contents
+    val_var_rep="$(eval "echo \"$val\"")"
     reset-config "$cfg" "$val"
     test-equal "Abort: $cfg" "$(echo a | get-config "$this/$cfg" 2>/dev/null)" ""
     test-equal "Default: $cfg" "$(echo d | get-config "$this/$cfg" 2>/dev/null)" "$val"
     test-equal "Already set, >&1: $cfg" "$(get-config "$this/$cfg" >&1)" "$val"
     test-equal "Already set: $cfg" "$(get-config "$this/$cfg")" "$val"
-    reset-config "$cfg" "$val"
+    test-equal "Path only: $cfg" "$(get-config "$this/$cfg" -path)" "$config_dir/$cfg"
+    test-equal "-var-rep: $cfg" "$(get-config "$this/$cfg" -var-rep)" "$val_var_rep"
+    bad_arg_output="$(get-config "$this/$cfg" -bad-arg 2>/dev/null)"
+    # 3-stream redirection followed by stderr redirection, as
+    # described at http://stackoverflow.com/a/13299397
+    bad_arg_errors="$((get-config "$this/$cfg" -bad-arg 3>&2 2>&1 1>&3) 2>/dev/null)"
+    bad_arg_result="$?"
+    test-equal "No config on bad arg output: $cfg" "$bad_arg_output" ""
+    test-true "Non-zero status on bad arg: $cfg" "[ '$bad_arg_result' != '0' ]"
+    test-true "Error message on bad arg: $cfg" "[ '$bad_arg_errors' != '' ]"
+    reset-config "$cfg"
 done
+echo
 
+# cleanup
 rmdir "$config_dir"
+rmdir "$defaults_dir"
 
 show-results
 if [ ! "$num_pass" = "$num_tests" ]
