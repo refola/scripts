@@ -1,11 +1,8 @@
-@chakra
-@fedora
-@kubuntu
-@suse
+@distro-name
+@other-distro
 @home
-@home/gaming
 @home/guest
-@home/mark
-@home/minecraft
 @home/shared
-@home/shared/media
+@home/user1
+@home/user2
+@whatever-subvolume
