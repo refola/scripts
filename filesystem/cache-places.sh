@@ -1,9 +1,11 @@
 #!/bin/bash
 # Cache a bunch of regularly-used folders for faster future access
 
+# The IFS and extra parentheses turn $folders into an array.
+IFS=$'\n'
 folders=( $(get-config "cache-places/folders" \
                        -what-do "list of folders to cache" \
-                       -var-rep ) )
+                       -var-rep ) ) || exit 1
 
 sec=15
 if [ -z "$1" ]
