@@ -4,26 +4,24 @@
 # time a packet is lost, and produce a more annoying warning and exit
 # when the maximum number of consecutive lost packets is reached.
 
-max="5"
-host="google.com"
-delay="5"
+# Shortcut function for config-getting.
+get() { get-config "packet-loss-alerter/$1" -what-do "$2" || exit 1; }
+max="$(get "max-lost" "number of packets lost in a row before giving up (0 = never give up)")"
+host="$(get "host" "server to ping")"
+delay="$(get "delay" "delay between pings (default seconds)")"
 
-usage="Usage: $(basename "$0") [max]
+usage="Usage: $(basename "$0") [quiet]
 
 Repeatedly pings $host to check network connectivity, speaking a
-warning if there's a disruption. If max consecutive packets are lost,
+warning if there's a disruption. If $max consecutive packets are lost,
 say that we're giving up, send a message to all users, and stop the
 script.
 
-Without max being passed, this script defaults to a limit of $max
-consecutive lost packets. Setting max to anything that isn't a
-positive integer disables the excessive packet loss check, making this
-script act like packet-loss-logger, only speaking instead of saving
-the messages."
+If 'quiet' is passed, don't echo usage or say anything before giving
+up."
 
-if [ -n "$1" ]
-then
-    max="$1"
+if [ "$1" = "quiet" ]; then
+    quiet="true"
 else
     echo "$usage" >&2
 fi
@@ -31,12 +29,12 @@ fi
 streak="0"
 while true
 do
-    if ! ping -c1 "$host" &>/dev/null && sleep "$delay"
-    then
+    if ! ping -c1 "$host" &>/dev/null && sleep "$delay"; then
         ((streak++))
-        say "We lost packet number $streak."
-        if [ "$streak" = "$max" ]
-        then
+        if [ -z "$quiet" ]; then
+            say "We lost packet number $streak."
+        fi
+        if [ "$streak" = "$max" ]; then
             msg="We lost $max packets in a row. We're giving up!"
             echo "$msg" | wall
             say "$msg"
