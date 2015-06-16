@@ -8,25 +8,22 @@ usage="Usage: $(basename "$0") [quiet]
 Repeatedly pings $host to check network connectivity, logging each
 time there's a disruption.
 
-If 'quiet' is passed, don't display anything unneccessary; only log."
+If 'quiet' is passed, don't display anything; only log."
 
-this="packet-loss-logger" # namespace for this script's configs
-host="$(get-config "$this/host" -what-do "server to ping")" || exit 1
-delay="$(get-config "$this/delay" \
-                           -what-do "delay between pings (default seconds)")" || exit 1
-log_location="$(get-config "$this/log-location" \
-                           -what-do "where to save the log" \
-                           -var-rep )" || exit 1
+# Shortcut function for config-getting.
+get() { get-config "packet-loss-logger/$1" -what-do "$2" || exit 1; }
+host="$(get "host" "server to ping")"
+delay="$(get "delay" "delay between pings (default seconds)")"
+log_location="$(get "log-location" "where to save the log")"
 
 # Default to verbose, unless set otherwise by main.
 verbose="true"
 
 # Prepends arguments with current date and time, then saves to log.
 log() {
-    local msg="$(date "+%F_%H%M:%S UTC%:::z"): $*"
+    local msg="$(date -Iseconds): $*"
     echo "$msg" >> "$log_location"
-    if [ -n "$verbose" ]
-    then
+    if [ -n "$verbose" ]; then
         echo "$msg"
     fi
 }
@@ -45,12 +42,12 @@ main() {
 
     # Record losses.
     count="0"
-    while true
-    do
+    lost="0"
+    while true; do
         ((count++))
-        if ! ping -c1 "$host" &>/dev/null && sleep "$delay"
-        then
-            log "We lost packet number $count."
+        if ! ping -c1 "$host" &>/dev/null && sleep "$delay"; then
+            ((lost++))
+            log "We've lost $lost/$count packets."
         fi
     done
 }
