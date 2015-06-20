@@ -45,6 +45,7 @@ main() {
     lost="0"
     while true; do
         ((count++))
+        sleep "$delay"
         if ! ping -c1 "$host" &>/dev/null && sleep "$delay"; then
             ((lost++))
             log "We've lost $lost/$count packets."
