@@ -28,8 +28,8 @@ cache-one() {
     then
         size="$(du -sh "$folder" 2>/dev/null)"
         size="${size%$'\t'$folder}"
-	duration="$( (time cache-folder "$folder" > /dev/null) 2>&1 | egrep -v 'user|sys|^$|Permission denied')"
-        duration="${duration#real$'\t'}"
+        export TIMEFORMAT="%Es" # Make Bash's time command show only ellapsed time.
+	duration="$( (time cache-folder "$folder" > /dev/null) 2>&1 | grep -v 'Permission denied')"
         echo -e "Took $duration to cache $size in $folder."
     else
         if [ -h "$folder" ]
