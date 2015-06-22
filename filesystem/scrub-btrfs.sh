@@ -3,15 +3,12 @@
 # Run btrfs scrub for pre-determined locations and save output to
 # date-based filenames.
 
-place="/home/mark/doc/text/tech/hardware/core-plus/btrfs-info"
+get() { get-config "scrub-btrfs/$1" -what-do "$2" || exit 1; }
+place="$(get "log-dir" "directory where results are logged")"
+# Split disk list on newlines.
+IFS=$'\n'
+disks=( $(get "disk-list" "list of locations to scrub, each line formatted as 'name location'") )
 today="$(date --utc +%F)" # Get current UTC date
-
-# List of scrubs to run, in the "name location" format.
-disks="
-internal /mnt
-external /run/media/mark/OT4P
-external /run/media/sampla/OT4P
-"
 
 ## Usage: scrubit name location
 # Runs btrfs scrub on location and saves results to file based on name.
@@ -22,6 +19,8 @@ scrubit() {
     local disp="$name at $location"
     if [ -d "$location" ]
     then
+        # Ensure log folder exists.
+        mkdir -p "$(dirname "$file")"
 	echo "Starting btrfs scrub for $disp."
 	# We only want sudo for btrfs scrub, not for writing $file.
 	# shellcheck disable=SC2024
@@ -37,8 +36,7 @@ scrubit() {
 # Before starting, make sure that sudo is freshly validated.
 echo "Entering sudo mode."
 sudo -v
-IFS=$'\n' # split disks on newline
-for line in $disks
+for line in "${disks[@]}"
 do
     IFS=' ' # split line on space
     # We want $line split into its components.
