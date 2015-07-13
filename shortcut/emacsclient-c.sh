@@ -8,5 +8,18 @@
 if ! (pidsof emacs &> /dev/null && emacsclient -c "$@")
 then
     # Otherwise fall back to emacs.
-    emacs "$@"
+    echo "Could not connect to emacs daemon. Trying to start new instance."
+    if emacs --daemon
+    then
+	echo "Emacs daemon started. Now trying to connect."
+	if ! emacsclient -c "$@"
+	then
+	    echo "Could not connect to freshly started emacs daemon."
+	    echo "Something's seriously wrong. Giving up."
+	fi
+    else
+	echo "Could not start emacs in daemon mode. Starting it in slow mode."
+	emacs "$@"
+	echo "Try running 'emacs --daemon' for faster startup."
+    fi
 fi
