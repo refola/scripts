@@ -3,6 +3,14 @@
 # Read and output the requested configuration file if found. Otherwise
 # copy the default and prompt the user to edit it.
 
+# TODO: Support removal of comments. Without using a parser, this
+# requires reading config files line-by-line to do 'eval "echo $x"'
+# without accidentally trying to eval the line itself. At this point,
+# the mode should be called "fancy" because it's full of conveniences
+# that open up arbitrary code execution from a carefully malformed
+# config file. As-is, I'm not entirely convinced of the safety of the
+# current 'eval "echo \"$x\""'.
+
 # Sanity check
 if ! which cmdir dirname > /dev/null
 then
