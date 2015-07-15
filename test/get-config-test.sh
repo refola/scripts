@@ -98,7 +98,7 @@ reset-config() {
     fi
 }
 
-## Situations to test
+## Situations to test (the shellcheck disables are for "unused variable")
 # shellcheck disable=SC2034
 test_simple="one-word_config"
 # shellcheck disable=SC2034
@@ -111,8 +111,8 @@ test_mixed_separators="s p a c e s\nt\ta\tb\ts\nand newlines"
 test_var_rep_one_line="\$H/foo/bar"
 # shellcheck disable=SC2034
 test_var_rep_multi_line="host=\"\$HOSTNAME\"\nhome=\"\$HOME\"\nroot=\"/\""
-## List of test case variables
 
+## List of test case variables
 tests=(test_simple test_spaces test_lines test_mixed_separators
        test_var_rep_one_line test_var_rep_multi_line)
 
@@ -137,6 +137,9 @@ do
 
     # Test basic cases without extra arguments
     test-equal "Abort: $cfg" "$(echo a | get 2>/dev/null)" ""
+    $(echo a | get 2>/dev/null)
+    exit_code=$?
+    test-true "Abort gives non-zero exit code: $cfg" "[ '$exit_code' != '0' ]"
     test-equal "Default: $cfg" "$(echo d | get 2>/dev/null)" "$evald"
     test-equal "Already set, >&1: $cfg" "$(get >&1)" "$evald"
     test-equal "Already set: $cfg" "$(get)" "$evald"
