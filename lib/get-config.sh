@@ -49,7 +49,36 @@ non-zero if there was an unresolved error.
 
 Config paths are as follows.
 Defaults:     $defaults_prefix
-Live configs: $config_prefix"
+Live configs: $config_prefix
+
+NOTE: Your script must exit if $(basename "$0") exits with a non-zero
+status. Otherwise it will run with an almost-certainly-invalid blank
+config. Here's a helper function that you can use. Yes, it's a lot of
+boilerplate code. But it's the best available until finding a satisfactory way
+of reusing common code that must be sourced to have the desired effect. Maybe
+an updated $(basename "0") will allow something like '. \"\$(`basename "$0"`
+-helper prefix fn_name)\"' to generate a sourcable script for getting configs
+with given prefix via a function of given fn_name.
+
+# Shortcut function to get a config with description, exiting on fail.
+_script_name=\"foo\"
+get() {
+    local var_name=\"\$1\"
+    local cfg_name=\"\$2\"
+    local cfg_desc=\"\$3\"
+    local result
+    result=\"\$(get-config \"\$_script_name/\$cfg_name\" -what-do \"\$cfg_desc\")\"
+    if [ \$? != \"0\" ]; then
+	echo \"Error getting config \$cfg_name. Exiting.\" >&2
+	exit 1
+    else
+        # Save config to variable.
+	eval \"\$var_name='\$result'\"
+    fi
+}
+# Get the config.
+get var_name config_name \"config description\"
+"
 
 # Global variables: Set by main, but defined here for clarity.
 config_name=""           # The full config name, including the script,
@@ -118,6 +147,11 @@ can_read_config() {
 	    [dD] ) copy_default_config
 		   ;;
 	    [eE] ) copy_default_config
+		   if [ -z "$EDITOR" ]
+		   then
+		       echo -e "$(red "Your \$EDITOR is undefined.") Falling back to $(yellow "nano")."
+		       EDITOR="nano"
+		   fi
 		   "$EDITOR" "$config_path"
 		   ;;
 	    *    ) echo -e "$(red "$config_name has not been configured. The script will not run.")"
