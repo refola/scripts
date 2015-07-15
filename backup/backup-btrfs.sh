@@ -42,16 +42,28 @@ fi
 ### get configuration, exiting on error ###
 
 # Shortcut function to get a config with description, exiting on fail.
-get() { get-config "backup-btrfs/$1" -what-do "$2" || exit 1; }
-internal_root="$(get "internal-root" \
-   "where btrfs partition\'s root is mounted")"
-internal_snapshot_dir="$(get "internal-snapshot-directory" \
-   "name of internal snapshot directory, relative to internal-root")"
+_script_name="backup-btrfs"
+get() {
+    local var_name="$1"
+    local cfg_name="$2"
+    local cfg_desc="$3"
+    local result
+    result="$(get-config "$_script_name/$cfg_name" -what-do "$cfg_desc")"
+    if [ $? != "0" ]; then
+        echo "Error getting config $cfg_name. Exiting." >&2
+        exit 1
+    else
+        # Save config to variable.
+        eval "$var_name='$result'"
+    fi
+}
+get internal_root "internal-root" \
+    "where btrfs partition's root is mounted"
+get internal_snapshot_dir "internal-snapshot-directory" \
+    "internal snapshot directory, relative to internal-root"
 internal_snapshot_dir="$internal_root/$internal_snapshot_dir"
-externs="$(get "external-roots" \
-   "list of places to search for external backup drive")"
-vols="$(get "subvolumes" \
-   "list of subvolumes that should be snapshotted")"
+get externs "external-roots" "list of external backup drive locations"
+get vols "subvolumes" "list of subvolumes that should be snapshotted"
 
 
 ### derived global variables ###
