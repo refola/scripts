@@ -2,22 +2,24 @@
 # Edit the file referred to by a command. No more manual, nested,
 # "basename of readlink of which" invocations.
 
-CMD="$EDITOR"
-if [ "$1" = "-v" ]
-then
-    CMD="$VISUAL"
+cmd="${EDITOR:-nano}" # Fallback to nano if $EDITOR unset
+if [ "$1" = "-v" ]; then
+    cmd="${VISUAL:-$cmd}" # Only use $VISUAL if set
     shift
 fi
 
-if [ -z "$1" ]
-then
-    echo "Usage: \"$(basename "$(readlink -f "$0")")\" [-v] command"
-    echo "Edits a command."
+if [ -z "$1" ]; then
+    echo "Usage: \"$(basename "$(readlink -f "$0")")\" [-v] command [cmd2 [cmd3 [...]]]"
+    echo "Edit one or more commands."
     echo "Option:"
     echo "    -v    Use $VISUAL instead of $EDITOR."
     exit 1
 else
-    # convert symlinks into canonical paths and take directory
-    # name
-    $CMD "$(cmpath "$1")"
+    unset files # Is there a cleaner way of ensuring an array variable has no elements?
+    for arg in "$@"; do
+        # cmpath gets the command's path.
+        files=( "${files[@]}" "$(cmpath "$arg")" )
+    done
+    # Run editor command with all files as arguments.
+    $cmd "${files[@]}"
 fi
