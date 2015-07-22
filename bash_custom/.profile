@@ -13,9 +13,11 @@ EDITOR="emacsclient-t" # Custom commands for running emacsclient
 VISUAL="emacsclient-c" # since arguments don't work here.
 # Enable pretty things like the Zenburn theme in terminal Emacs
 TERM="xterm-256color"
+# less > more
+PAGER="less"
 
 # EXPORT CUSTOM
-export H PATH EDITOR VISUAL TERM
+export H PATH EDITOR VISUAL TERM PAGER
 
 
 ## GO STUFF
