@@ -46,15 +46,10 @@ cache-em-all() {
     echo "Caching configured list of commonly-used folders. This may take a while...."
     for folder in "${folders[@]}"
     do
-        # On the developer's dual-spinning-platter-disk btrfs RAID 1
-        # setup, everything at once has been tested as faster than
-        # doing it serially or with forking two serial processes that
-        # each handle half the work. Note that HDD I/O is at only a
-        # trickle during this time, so the disks are spending most of
-        # the time waiting for the right data to be under the heads
-        # and there's tons of room for performance improvement (e.g.,
-        # something system-level that puts the files in sequence).
-        cache-one "$folder" &
+        # Until the developer learns how to set this to lowest disk
+        # I/O priority, it's done serially to take longer and thus be
+        # less performance-intensive.
+        cache-one "$folder" #&
     done
     wait # ... for background caching to finish
     echo "Done! ^.^"
