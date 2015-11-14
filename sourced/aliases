@@ -34,3 +34,6 @@ alias make='make -j6' # Parallelize make with 6 cores.
 # Return values have been used in literally zero cases where
 # ShellCheck catches them being potentially masked in my scripts.
 alias shellcheck='shellcheck --exclude=SC2155'
+
+# gofmt recursively, but only on .go files
+alias gofmtr="find . -type f | grep '\.go$' | xargs -r -n1 gofmt -w"
