@@ -23,7 +23,7 @@ echo "$(get description)" || exit 1
 
 # The IFS and extra parentheses turn $commands into an array.
 IFS=$'\n'
-commands=( get commands ) || exit 1
+commands=( $(get commands) ) || exit 1
 
 for cmd in "${commands[@]}"
 do
