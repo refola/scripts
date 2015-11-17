@@ -1,0 +1,4 @@
+echo "$(date -Iseconds) login" >> $H/skami/log/session
+redshift-control -
+emacs --daemon
+cache-places

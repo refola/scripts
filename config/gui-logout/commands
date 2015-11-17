@@ -1,0 +1,2 @@
+echo "$(date -Iseconds) logout" >> $H/skami/log/session
+killall --user $USER emacs
