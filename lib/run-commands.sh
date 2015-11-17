@@ -4,8 +4,7 @@
 # supporting Bash syntax.
 
 default_name="run-commands"
-name="${0/%.sh/}" # strip any trailing .sh
-name="${name/#*\//}" # strip any leading path syntax
+name="$(basename "${0/%.sh/}")" # get only the name of the script
 
 if [ "$name" = "$default_name" ]; then
     echo "Please symlink your script to here and set the commands to"
