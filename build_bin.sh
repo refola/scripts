@@ -84,8 +84,8 @@ process() {
 	do
 	    process "$1/$item"
 	done
-	# If $1 is a regular file, and $1 is executable, and $1 isn't a link
-    elif [ -f "$1" -a -x "$1" -a ! -h "$1" ]
+	# If $1 is a regular file and is executable
+    elif [ -f "$1" -a -x "$1" ]
     then
 	local TARGET="$(target "$1")"
 	local NAME="$(name "$1")"
