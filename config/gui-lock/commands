@@ -1,0 +1,1 @@
+echo "$(date -Iseconds) lock" >> $H/skami/log/session
