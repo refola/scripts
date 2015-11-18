@@ -24,18 +24,18 @@ fi
 
 # Caches a single folder, wrapping the "cache-folder" command for prettiness.
 cache-one() {
-    if [ -d "$folder" -a ! -h "$folder" ]
+    if [ -d "$folder" -a ! -h "$folder" ] # check that it's a folder and not a symlink
     then
         size="$(du -sh "$folder" 2>/dev/null)"
         size="${size%$'\t'$folder}"
         export TIMEFORMAT="%Es" # Make Bash's time command show only ellapsed time.
-	duration="$( (time cache-folder "$folder" > /dev/null) 2>&1 | grep -v 'Permission denied')"
+	      duration="$( (time cache-folder "$folder" > /dev/null) 2>&1 | grep -v 'Permission denied')"
         echo -e "Took $duration to cache $size in $folder."
     else
         if [ -h "$folder" ]
         then
             echo "Skipping symlink: $folder"
-        else
+        else # the "! -d" case
             echo "Folder doesn't exist: $folder"
         fi
     fi
