@@ -56,9 +56,10 @@ status. Otherwise it will run with an almost-certainly-invalid blank
 config. Here's a helper function that you can use. Yes, it's a lot of
 boilerplate code. But it's the best available until finding a satisfactory way
 of reusing common code that must be sourced to have the desired effect. Maybe
-an updated $(basename "0") will allow something like '. \"\$(`basename "$0"`
--helper prefix fn_name)\"' to generate a sourcable script for getting configs
-with given prefix via a function of given fn_name.
+an updated $(basename "$0") will allow something like:
+	. \"\$($(basename "$0") -helper prefix fn_name)\"
+to generate a sourcable script for getting configs with given prefix
+via a function of given fn_name.
 
 # Shortcut function to get a config with description, exiting on fail.
 _script_name=\"foo\"
