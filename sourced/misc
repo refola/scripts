@@ -5,10 +5,16 @@
 # Set $LS_COLORS so ls is properly pretty.
 eval "$(dircolors --bourne-shell)"
 
-# What do these do?
-complete -cf sudo # Probably making command completion work with sudo.
+# Completions
+complete -cf sudo # Makes sudo auto-complete with command and file names
+# Make cm* auto-complete with command names
+complete -c cmcd
+complete -c cmdir
+complete -c cmedit
+complete -c cmls
+complete -c cmpath
 
-# And these?
+# Options that are apparently useful?
 shopt -s cdspell
 shopt -s checkwinsize
 shopt -s dotglob
