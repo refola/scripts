@@ -1,11 +1,46 @@
 #!/bin/bash
 ## pidsof.sh
-# Clone the Linux pidof command in a cross-*nix way.
+# Approximately clone the Linux pidof command in a cross-*nix way.
 
-usage="Usage: $(basename "$0") program_name
+usage="Usage: $(basename "$0") [--me] program_name
 
 Searches for processes corresponding to program_name and outputs the
-PIDs of any results."
+PIDs of any results.
+
+If '--me' is passed, then only output PIDs owned by $USER."
+
+maybe-filter() {
+    if [ -z "$filter" ]
+    then
+        echo "$1"
+        return 0
+    fi
+
+    local pids
+    IFS=$'\n'
+    for pid in $1
+    do
+        ps x | egrep " *^$pid " >/dev/null
+        if [ "$?" = "0" ]
+        then
+            pids=("${pids[@]}" "$pid")
+        fi
+    done
+    pids="${pids[*]}"
+    if [ -n "$pids" ]
+    then
+        echo "$pids"
+        return 0
+    else
+        return 1
+    fi
+}
+
+if [ "$1" = "--me" ]
+then
+    filter="true"
+    shift
+fi
 
 if [ -z "$1" ]
 then
@@ -13,6 +48,7 @@ then
     exit 1
 else
     pids="$(ps --no-headers -o pid -C "$1")"
+    pids="$(maybe-filter "$pids")"
     if [ "$?" = "0" ]
     then
         echo "$pids"
