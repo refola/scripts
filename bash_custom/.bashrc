@@ -38,7 +38,7 @@ $custom_sourced
 "
 
 # Usage: source_them base thing1 [thing2 [...]]
-# Source every thingn in base, maximally recursively.
+# Source everything in base, maximally recursively.
 source_them() {
 	local base="$1"
 	local IFS=$'\n'
