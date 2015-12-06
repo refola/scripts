@@ -9,6 +9,16 @@ then
     echo "Outputs the path's location after resolving symlinks."
     exit 1
 else
+    path="$(which -- "$1")"
+    if [ "$?" != "0" ]
+    then
+        exit 1
+    fi
+    real="$(readlink -f "$path")"
+    if [ "$?" != "0" ]
+    then
+        exit 1
+    fi
     # get command's path and convert symlinks into canonical paths
-    echo -n "$(readlink -f "$(which -- "$1")")"
+    echo -n "$real"
 fi
