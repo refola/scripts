@@ -17,8 +17,14 @@ if [ -z "$1" ]; then
 else
     unset files # Is there a cleaner way of ensuring an array variable has no elements?
     for arg in "$@"; do
-        # cmpath gets the command's path.
-        files=( "${files[@]}" "$(cmpath "$arg")" )
+        path="$(cmpath "$arg")" # cmpath gets the command's path.
+        if [ "$?" = "0" ]
+        then
+            files=( "${files[@]}" "$path")
+        else
+            echo "Command not found: $arg" >&2
+            exit 1
+        fi
     done
     # Run editor command with all files as arguments.
     $cmd "${files[@]}"
