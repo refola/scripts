@@ -1,19 +1,35 @@
 #!/bin/bash
 # Cache a bunch of regularly-used folders for faster future access
 
+cfg="cache-places/folders"
 # The IFS and extra parentheses turn $folders into an array.
 IFS=$'\n'
-folders=( $(get-config "cache-places/folders" \
+folders=( $(get-config "$cfg" \
                        -what-do "list of folders to cache" \
                        -var-rep ) ) || exit 1
 
 sec=15
+fork=''
+cfg_path="$(get-config "$cfg" -path)"
+usage="$(basename "$0") [delay] [-fork]
+
+Caches everything listed in ${cfg_path/#$HOME/'~'},
+waiting 'delay' seconds before starting (default=$sec), and forking if
+'-fork' is passed."
+
 if [ -z "$1" ]
 then
-    echo "You can optionally tell this script how long to wait before"
-    echo "caching things. Try 0 for instant gratification."
+    echo "$usage"
 else
     sec="$1"
+    if [ -n "$2" -a "$2" != "-fork" ]
+    then
+        echo "$usage"
+        exit 1
+    elif [ "$2" = "-fork" ]
+    then
+        fork="true"
+    fi
 fi
 
 if [ "$sec" != "0" ]
@@ -46,10 +62,12 @@ cache-em-all() {
     echo "Caching configured list of commonly-used folders. This may take a while...."
     for folder in "${folders[@]}"
     do
-        # Until the developer learns how to set this to lowest disk
-        # I/O priority, it's done serially to take longer and thus be
-        # less performance-intensive.
-        cache-one "$folder" #&
+        if [ -z "$fork" ]
+        then
+            cache-one "$folder"
+        else
+            cache-one "$folder" &
+        fi
     done
     wait # ... for background caching to finish
     echo "Done! ^.^"
