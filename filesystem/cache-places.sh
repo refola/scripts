@@ -8,38 +8,53 @@ folders=( $(get-config "$cfg" \
                        -what-do "list of folders to cache" \
                        -var-rep ) ) || exit 1
 
-sec=15
+delay="15s"
 fork=''
 cfg_path="$(get-config "$cfg" -path)"
 usage="$(basename "$0") [delay] [-fork]
 
-Caches everything listed in ${cfg_path/#$HOME/'~'},
-waiting 'delay' seconds before starting (default=$sec), and forking if
-'-fork' is passed."
+Caches everything listed in ${cfg_path/#$HOME/'~'}, waiting 'delay'
+(as accepted by the 'sleep' command; default is seconds) before
+starting (default=$delay), and forking if '-fork' is passed."
 
+# Parse arguments
 if [ -z "$1" ]
 then
-    echo "$usage"
+    echo "$usage" # Accept no-arg default, but notify user.
 else
-    sec="$1"
-    if [ -n "$2" -a "$2" != "-fork" ]
-    then
-        echo "$usage"
-        exit 1
-    elif [ "$2" = "-fork" ]
-    then
-        fork="true"
-    fi
+    while [ -n "$1" ]
+    do
+        if [ "$1" = "$(echo "$1" | egrep "^[0-9]+[smhd]?$")" ]
+        then
+            delay="$1"
+        elif [ "$1" = "-fork" ]
+        then
+            fork="true"
+        else
+            echo "Unknown argument '$1'. Aborting."
+            echo "$usage"
+            exit 1
+        fi
+        shift
+    done
 fi
 
-if [ "$sec" != "0" ]
+# Make implicit unit of seconds explicit.
+if [ "${delay/%[smhd]/}" = "$delay" ]
 then
-    echo "Waiting $sec seconds before caching stuff...."
-    sleep "$sec"
+    delay="${delay}s"
+fi
+
+# Notify of delay iff delay happens.
+if [ "${delay/%[smhd]/}" != "0" ]
+then
+    echo "Waiting $delay before caching stuff...."
+    sleep "$delay"
 fi
 
 # Caches a single folder, wrapping the "cache-folder" command for prettiness.
 cache-one() {
+    local folder="$1"
     if [ -d "$folder" -a ! -h "$folder" ] # check that it's a folder and not a symlink
     then
         size="$(du -sh "$folder" 2>/dev/null)"
