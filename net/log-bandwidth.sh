@@ -25,11 +25,19 @@ log() {
 get-bytes() {
     local if="$1"
     local dir="$2"
-    ip -s link show "$if" | \ # Get stats
-        grep -E -A1 "^ *$dir: bytes .*\$" | \ # Find right line
-        tail -n1 | \ # Strip preceding wrong line
-        grep -E -o -m1 "[0-9]+" | \ # Get just the nmubers
-        head -n1 # Limit to first match (byte count)
+    local result
+    # Get stats
+    result="$(ip -s link show "$if")"
+    # Find right line
+    result="$(echo "$result" | grep -E -A1 "^ *$dir: bytes .*\$")"
+    # Strip preceding wrong line
+    result="$(echo "$result" | tail -n1)"
+    # Get just the numbers
+    result="$(echo "$result" | grep -E -o -m1 "[0-9]+")"
+    # Limit to first match (byte count)
+    result="$(echo "$result" | head -n1)"
+    # Finally output result
+    echo "$result"
 }
 
 log "$(date -Iseconds)"
