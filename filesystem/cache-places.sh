@@ -5,8 +5,8 @@ cfg="cache-places/folders"
 # The IFS and extra parentheses turn $folders into an array.
 IFS=$'\n'
 folders=( $(get-config "$cfg" \
-                       -what-do "list of folders to cache" \
-                       -var-rep ) ) || exit 1
+    -what-do "list of folders to cache" \
+    -var-rep ) ) || exit 1
 
 delay="15s"
 fork=''
@@ -57,10 +57,10 @@ cache-one() {
     local folder="$1"
     if [ -d "$folder" -a ! -h "$folder" ] # check that it's a folder and not a symlink
     then
-        size="$(du -sh "$folder" 2>/dev/null)"
-        size="${size%$'\t'$folder}"
-        export TIMEFORMAT="%Es" # Make Bash's time command show only ellapsed time.
-	      duration="$( (time cache-folder "$folder" > /dev/null) 2>&1 | grep -v 'Permission denied')"
+    size="$(du -sh "$folder" 2>/dev/null)"
+    size="${size%$'\t'$folder}"
+    export TIMEFORMAT="%Es" # Make Bash's time command show only ellapsed time.
+        duration="$( (time cache-folder "$folder" > /dev/null) 2>&1 | grep -v 'Permission denied')"
         echo -e "Took $duration to cache $size in $folder."
     else
         if [ -h "$folder" ]
