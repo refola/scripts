@@ -31,4 +31,4 @@ running ${MACHTYPE}, not Ubuntu! This script is just a convenience to
 run \"$cmd -o $dest\" for you. To keep it from being too convenient,
 you still have to get root your own way for $(basename "$0")."
 
-"$cmd" -o "$dest"
+"$cmd" -o "$dest" "$@"
