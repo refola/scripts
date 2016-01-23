@@ -13,3 +13,5 @@ source_command() {
 # Here are the commands to source.
 cdh() { source_command cdh "$@" ; }
 cmcd() { source_command cmcd "$@" ; }
+cds() { source_command cds "$@" ; }
+cdl() { source_command cdl "$@" ; }
