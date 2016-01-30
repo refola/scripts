@@ -1,0 +1,6 @@
+# Make cm* auto-complete with command names
+complete -c cmcd
+complete -c cmdir
+complete -c cmedit
+complete -c cmls
+complete -c cmpath
