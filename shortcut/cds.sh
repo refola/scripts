@@ -10,7 +10,7 @@ then
     echo "Saves \$PWD and \$H with given name, to be restored by cdl."
 else
     # Get place to save variables to.
-    path="$(get-config "var-save/$1" -path)"
+    path="$(get-config "var-save/$*" -path)"
     mkdir -p "$path"
     # Save them.
     echo "$PWD" > "$path/PWD"

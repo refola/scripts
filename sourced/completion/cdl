@@ -1,0 +1,9 @@
+# Bash completion for cdl
+
+_cdl() {
+    local IFS=$'\n'
+    local files="$(ls -1 "$(get-config "var-save" -path)")"
+    COMPREPLY=( $(compgen -W "${files[@]}" -- "${COMP_WORDS[COMP_CWORD]}") )
+}
+complete -F _cdl cdl
+complete -F _cdl cds # Easily change saved directories

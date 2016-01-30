@@ -13,7 +13,7 @@ then
     ls -m "$path"
 else
     # Get place to load variables from.
-    path="$(get-config "var-save/$1" -path)"
+    path="$(get-config "var-save/$*" -path)"
     # Load them implicitly with appropriate commands.
     cdh "$(cat "$path/H")"
     cd "$(cat "$path/PWD")"
