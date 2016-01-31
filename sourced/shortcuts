@@ -1,17 +1,16 @@
 #!/bin/bash
 
-# Single sourcable file for all "must be dotted" commands.
-
-## Usage: source_command command [args]
-# Sources command, passing it args.
-source_command() {
-    local cmd="$1"
-    shift
-    . "$(cmpath "$cmd")" "$@"
+## Usage: _mk_cmd_fns cmd1 [cmd2 [...]]
+# Make functions that source given commands, enabling things like "cd"
+# in the commands to have the desired effects in interactive shells.
+_mk_cmd_fns() {
+    local cmd
+    while [ -n "$1" ]; do
+        # Example if $1="cmd-foo": cmd-foo() { . "/path/to/cmd-foo" "$@"; }
+        eval "$1() { . \"$(cmpath "$1")\" \"\$@\"; }"
+        shift
+    done
 }
 
-# Here are the commands to source.
-cdh() { source_command cdh "$@" ; }
-cmcd() { source_command cmcd "$@" ; }
-cds() { source_command cds "$@" ; }
-cdl() { source_command cdl "$@" ; }
+# Make the functions.
+_mk_cmd_fns cdh cmcd cds cdl
