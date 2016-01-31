@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Unset any and all OS-set aliases for a predictable shell.
+unalias -a
+
 # Gitting
 alias ga='git add'
 alias gaa='git add -a'
