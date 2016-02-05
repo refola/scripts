@@ -1,17 +1,11 @@
 #!/bin/bash
 
+
 # Unset any and all OS-set aliases for a predictable shell.
 unalias -a
 
-# Gitting
-alias ga='git add'
-alias gaa='git add -a'
-alias gc='git commit'
-alias gca='git commit -a'
-alias gd='git diff'
-alias gda='git diff -a'
-alias gpom='git push origin master'
-alias gs='git status'
+
+## General shell use ##
 
 # Prettiness
 alias ls='ls --group-directories-first --time-style=+"%Y-%m-%d_%H%M:%S" --color=auto'
@@ -21,22 +15,35 @@ alias grep='grep --color=tty'
 alias fgrep='fgrep --color=tty'
 alias egrep='egrep --color=tty'
 
-# Always use $EDITOR for editing
-alias emac="$EDITOR"
-alias nano="$EDITOR"
-alias vi="$EDITOR"
-alias vim="$EDITOR"
-alias ed="$EDITOR"
-
 # Safety
 alias cp='cp -i' # Prompt before overwriting
+alias mv='mv -i' # Ditto
 
-# Performance
-alias make='make -j6' # Parallelize make with 6 cores.
+# Shortcut for $EDITOR
+alias emac="$EDITOR"
 
-# Return values have been used in literally zero cases where
-# ShellCheck catches them being potentially masked in my scripts.
-alias shellcheck='shellcheck --exclude=SC2155'
+# Quickly retract Yakuake when it gets stuck (bug workaround)
+alias a='qdbus org.kde.yakuake /yakuake/window org.kde.yakuake.toggleWindowState'
 
-# gofmt recursively, but only on .go files
+
+## Coding ##
+
+# Git shortcuts
+alias ga='git add'
+alias gaa='git add -a'
+alias gc='git commit'
+alias gca='git commit -a'
+alias gd='git diff'
+alias gda='git diff -a'
+alias gpom='git push origin master'
+alias gs='git status'
+
+# Format an entire Go project at once.
 alias gofmtr="find . -type f | grep '\.go$' | xargs -r -n1 gofmt -w"
+
+# Parallelize make with 6 cores.
+alias make='make -j6'
+
+# Ignore return values being _potentially_ masked. I'm that tired of
+# that false positive.
+alias shellcheck='shellcheck --exclude=SC2155'
