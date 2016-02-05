@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# Do not rename this file! It must come before the others in shell
+# expansion order, otherwise earlier aliases will be lost!
+unalias -a # Make the shell predictable across distros.

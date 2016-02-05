@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# Quickly retract Yakuake when it gets stuck (bug workaround)
+alias a='qdbus org.kde.yakuake /yakuake/window org.kde.yakuake.toggleWindowState'
+
+# Ignore return values being _potentially_ masked. I'm that tired of
+# that false positive.
+alias shellcheck='shellcheck --exclude=SC2155'

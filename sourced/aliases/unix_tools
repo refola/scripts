@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# Aliases to make Unix tools prettier and safer
+
+# Make things more colorful, use human-usable units, and ISO 8601 time format.
+alias ls='ls --group-directories-first --time-style=+"%Y-%m-%dT%H:%M:%S%z" --color=auto'
+alias df='df -h'
+alias free='free -m'
+alias grep='grep --color=tty'
+alias fgrep='fgrep --color=tty'
+alias egrep='egrep --color=tty'
+
+# Prompt before losing data
+alias cp='cp -i'
+alias mv='mv -i'
