@@ -27,9 +27,11 @@ Exit status is 0 if successful, 1 otherwise. But this should only be
 used interactively, so this really really shouldn't matter.
 "
 
-# The list of package managers supported by this script, sorted with
-# front-ends first.
-pms=(ccr pacman)
+# Package managers, split by frontend status
+pms_frontend=(ccr)
+pms_main=(pacman)
+# Frontends before the main ones for fancier behavior
+pms=("${pms_frontend[@]}" "${pms_main[@]}")
 
 ## Usage: bad-pm pm
 # Reports to the user that the given package manager is not supported
@@ -46,10 +48,14 @@ pm-sudo() {
     if [ "$EUID" = "0" ]; then
         return 0
     else
-        case "$1" in
-            ccr)    return 1 ;;
-            pacman) return 0 ;;
-            *)      bad-pm "$1" ;;
+        local front="${pms_frontend[*]}"
+        local main="${pms_main[*]}"
+        local test
+        test="$(echo -e "$front\n$main" | grep -e "$1")"
+        case "$test" in
+            "$front") return 1 ;;
+            "$main")  return 0 ;;
+            *)        bad-pm "$1" ;;
         esac
     fi
 }
