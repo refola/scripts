@@ -20,7 +20,7 @@ _mode="$1"
 function repo_loop() {
     for repo in $_repos
     do
-	$1 "$repo" &
+	      $1 "$repo" &
     done
     wait # ... until all the per-repo function forks have finished
 }
@@ -38,7 +38,7 @@ function download_or_error() {
     wget "$1" -O "$2" &> /dev/null
     if [ "$?" != "0" ]
     then
-	echo -n "$3"
+	      echo -n "$3"
     fi
 }
 ## Usage: get_databases repo
@@ -52,7 +52,7 @@ function get_databases() {
     local mirror="$(grep '^[^#]erver' /etc/pacman.d/mirrorlist | head -1 | cut -d' ' -f3 | sed 's,$repo.*,'"${repo}/x86_64/${repo}.db.tar.gz,")"
     for place in main mirror
     do
-	download_or_error "${!place}" "$(db_file "$repo" $place)" "Could not download $place database for $repo. " &
+	      download_or_error "${!place}" "$(db_file "$repo" $place)" "Could not download $place database for $repo. " &
     done
     wait # ... until the wgets finish
 }
@@ -71,7 +71,7 @@ function is_synced() {
     diff "$main" "$mirror" > /dev/null
     if [ "$?" = 0 ]
     then
-	echo "$1"
+	      echo "$1"
     fi
 }
 ## Usage: is_synced repo
@@ -81,7 +81,7 @@ function is_unsynced() {
     # If is_synced didn't echo it back
     if [ "$synced" != "$1" ]
     then
-	echo "$1"
+	      echo "$1"
     fi
 }
 
@@ -101,11 +101,11 @@ function cli_message() {
 function cli_results() {
     for synced in $1
     do
-	echo -e "\e[01;37m[$synced]\e[00m \e[00;32mis synced\e[00m."
+	      echo -e "\e[01;37m[$synced]\e[00m \e[00;32mis synced\e[00m."
     done
     for unsynced in $2
     do
-	echo -e "\e[01;37m[$unsynced]\e[00m \e[00;31mis not synced\e[00m."
+	      echo -e "\e[01;37m[$unsynced]\e[00m \e[00;31mis not synced\e[00m."
     done
 }
 
@@ -127,9 +127,9 @@ function gui_fmt_repos() {
     local fmt="$2"
     for repo in $1
     do
-	# Tell shellcheck that we really want $fmt in printf's format string.
-	# shellcheck disable=SC2059
-	printf "<li>$fmt</li>" "$repo"
+	      # Tell shellcheck that we really want $fmt in printf's format string.
+	      # shellcheck disable=SC2059
+	      printf "<li>$fmt</li>" "$repo"
     done
 }
 ## Usage: gui_results synced unsynced
@@ -177,16 +177,16 @@ function runit() {
     local close_fn="$4"
     if [ ! -f "/etc/pacman.conf" ]
     then
-	$error_fn "Could not find '/etc/pacman.conf'. Are you sure you're running a pacman-based distro?"
-	exit 1
+	      $error_fn "Could not find '/etc/pacman.conf'. Are you sure you're running a pacman-based distro?"
+	      exit 1
     fi
     $msg_fn "Checking $_repos..."
     local error="$(repo_loop get_databases)"
     $close_fn
     if [ ! -z "$error" ]
     then
-	$error_fn "$error"
-	exit 1
+	      $error_fn "$error"
+	      exit 1
     fi
     local synced="$(repo_loop is_synced | sort)"
     local unsynced="$(repo_loop is_unsynced | sort)"
@@ -199,12 +199,12 @@ function runit() {
 function main() {
     if [ "${_mode}" == "--help" ]
     then
-	usage
+	      usage
     elif [ "${_mode}" == "--gui" ]
     then
-	runit gui_error gui_message gui_results gui_close_window
+	      runit gui_error gui_message gui_results gui_close_window
     else
-	runit cli_error cli_message cli_results true # "true" is a no-op replacement for closing a cli window
+	      runit cli_error cli_message cli_results true # "true" is a no-op replacement for closing a cli window
     fi
 }
 
