@@ -22,6 +22,7 @@ up, upgrade     Upgrade the system.
 Currently supported package managers:
 * ccr (Chakra community repository tool and pacman frontend)
 * pacman (package manager for Arch, Chakra, Kaos, etc)
+* zypper (openSUSE)
 
 Exit status is 0 if successful, 1 otherwise. But this should only be
 used interactively, so this really really shouldn't matter.
@@ -29,7 +30,7 @@ used interactively, so this really really shouldn't matter.
 
 # Package managers, split by frontend status
 pms_frontend=(ccr)
-pms_main=(pacman)
+pms_main=(pacman zypper)
 # Frontends before the main ones for fancier behavior
 pms=("${pms_frontend[@]}" "${pms_main[@]}")
 
@@ -96,6 +97,7 @@ install() {
     local pm_args
     case "$pm" in
         ccr|pacman) pm_args=("-S" "$@") ;;
+        zypper)     pm_args=("in" "$@") ;;
         *)          bad-pm "$pm" ;;
     esac
     echo "Installing packages."
@@ -111,7 +113,8 @@ remove() {
     case "$pm" in
         ccr|pacman) pm="pacman" # Don't use ccr for remove.
                     pm_args=("-Rcns" "$@") ;;
-        *) bad-pm "$pm" ;;
+        zypper)     pm_args=("rm" "-u" "$@") ;;
+        *)          bad-pm "$pm" ;;
     esac
     echo "Removing packages."
     pm-run "$pm" "${pm_args[@]}"
@@ -125,9 +128,10 @@ search() {
     local pm_args
     case "$pm" in
         ccr|pacman) pm_args=("-Ss" "$@") ;;
-        *) bad-pm "$pm"
+        zypper)     pm_args=("se" "$@") ;;
+        *)          bad-pm "$pm"
     esac
-    pm-run "$pm" "${pm_args[@]}"
+    "$pm" "${pm_args[@]}"
 }
 
 ## Usage: upgrade
@@ -135,18 +139,29 @@ search() {
 upgrade() {
     local pm
     pm="$(detect)"
-    local pm_check
-    local pm_dl_args
-    local pm_up_args
+    local pm_check # Command to check repo state, if applicable
+    local pm_ref_args # Args to refresh the repos
+    local pm_dl_args  # Args to download updates
+    local pm_up_args  # Args to do the update
     case "$pm" in
-        ccr) pm_check=mirror-check
-             pm_dl_args="-Syuw"
-             pm_up_args="-Su"
-             ;;
-        pacman) unset pm_check # no known universal "mirror-check"
-                pm_dl_args="-Syuw"
-                pm_up_args="-Su"
-                ;;
+        ccr)
+            pm_check=mirror-check
+            pm_ref_args="-Sy"
+            pm_dl_args="-Suw"
+            pm_up_args="-Su"
+            ;;
+        pacman)
+            unset pm_check
+            pm_ref_args="-Sy"
+            pm_dl_args="-Suw"
+            pm_up_args="-Su"
+            ;;
+        zypper)
+            unset pm_check
+            pm_ref_args="ref"
+            pm_dl_args=("up" "-d")
+            pm_up_args="up"
+            ;;
         *) bad-pm "$pm" ;;
     esac
     if [ -n "$pm_check" ]; then
@@ -155,8 +170,10 @@ upgrade() {
     else
         echo "No known mirror synchronization tool for $pm. Continuing."
     fi
+    echo "Refreshing repos"
+    pm-run "$pm" "${pm_ref_args[@]}" || return 1
     echo "Downloading updates."
-    pm-run "$pm" "${pm_dl_args[@]}" || return 1
+    pm-run "$pm" "${pm_dl_args[@]}"  || return 1
     echo "Upgrading system."
     pm-run "$pm" "${pm_up_args[@]}"
 }
