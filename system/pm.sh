@@ -20,8 +20,9 @@ s, search       Search for packages.
 up, upgrade     Upgrade the system.
 
 Currently supported package managers:
-* ccr (Chakra community repository tool and pacman frontend)
-* pacman (package manager for Arch, Chakra, Kaos, etc)
+* apt-get (Debian, *buntu, Mint, etc)
+* ccr (Chakra)
+* pacman (Arch, Chakra, Kaos, etc)
 * zypper (openSUSE)
 
 Exit status is 0 if successful, 1 otherwise. But this should only be
@@ -30,7 +31,7 @@ used interactively, so this really really shouldn't matter.
 
 # Package managers, split by frontend status
 pms_frontend=(ccr)
-pms_main=(pacman zypper)
+pms_main=(apt-get pacman zypper)
 # Frontends before the main ones for fancier behavior
 pms=("${pms_frontend[@]}" "${pms_main[@]}")
 
@@ -54,9 +55,12 @@ pm-sudo() {
         local test
         test="$(echo -e "$front\n$main" | grep -e "$1")"
         case "$test" in
-            "$front") return 1 ;;
-            "$main")  return 0 ;;
-            *)        bad-pm "$1" ;;
+            "$front")
+                return 1 ;;
+            "$main")
+                return 0 ;;
+            *)
+                bad-pm "$1" ;;
         esac
     fi
 }
@@ -96,9 +100,14 @@ install() {
     pm="$(detect)"
     local pm_args
     case "$pm" in
-        ccr|pacman) pm_args=("-S" "$@") ;;
-        zypper)     pm_args=("in" "$@") ;;
-        *)          bad-pm "$pm" ;;
+        apt-get)
+            pm_args=("install" "$@") ;;
+        ccr|pacman)
+            pm_args=("-S" "$@") ;;
+        zypper)
+            pm_args=("in" "$@") ;;
+        *)
+            bad-pm "$pm" ;;
     esac
     echo "Installing packages."
     pm-run "$pm" "${pm_args[@]}"
@@ -111,10 +120,15 @@ remove() {
     pm="$(detect)"
     local pm_args
     case "$pm" in
-        ccr|pacman) pm="pacman" # Don't use ccr for remove.
-                    pm_args=("-Rcns" "$@") ;;
-        zypper)     pm_args=("rm" "-u" "$@") ;;
-        *)          bad-pm "$pm" ;;
+        apt-get)
+            pm_args=("remove" "$@") ;;
+        ccr|pacman)
+            pm="pacman" # Don't use ccr for remove.
+            pm_args=("-Rcns" "$@") ;;
+        zypper)
+            pm_args=("rm" "-u" "$@") ;;
+        *)
+            bad-pm "$pm" ;;
     esac
     echo "Removing packages."
     pm-run "$pm" "${pm_args[@]}"
@@ -127,9 +141,15 @@ search() {
     pm="$(detect)"
     local pm_args
     case "$pm" in
-        ccr|pacman) pm_args=("-Ss" "$@") ;;
-        zypper)     pm_args=("se" "$@") ;;
-        *)          bad-pm "$pm"
+        apt-get)
+            pm="apt-cache" # apt-get doesn't search
+            pm_args=("search" "$@") ;;
+        ccr|pacman)
+            pm_args=("-Ss" "$@") ;;
+        zypper)
+            pm_args=("se" "$@") ;;
+        *)
+            bad-pm "$pm" ;;
     esac
     "$pm" "${pm_args[@]}"
 }
@@ -144,25 +164,28 @@ upgrade() {
     local pm_dl_args  # Args to download updates
     local pm_up_args  # Args to do the update
     case "$pm" in
+        apt-get)
+            unset pm_check
+            pm_ref_args="update"
+            pm_dl_args=("upgrade" "-d")
+            pm_up_args="upgrade" ;;
         ccr)
             pm_check=mirror-check
             pm_ref_args="-Sy"
             pm_dl_args="-Suw"
-            pm_up_args="-Su"
-            ;;
+            pm_up_args="-Su" ;;
         pacman)
             unset pm_check
             pm_ref_args="-Sy"
             pm_dl_args="-Suw"
-            pm_up_args="-Su"
-            ;;
+            pm_up_args="-Su" ;;
         zypper)
             unset pm_check
             pm_ref_args="ref"
             pm_dl_args=("up" "-d")
-            pm_up_args="up"
-            ;;
-        *) bad-pm "$pm" ;;
+            pm_up_args="up" ;;
+        *)
+            bad-pm "$pm" ;;
     esac
     if [ -n "$pm_check" ]; then
         echo "Checking mirror synchronization."
@@ -190,15 +213,22 @@ main() {
     local op="${1:-help}"
     shift
     case "$op" in
-        detect)     echo "Package manager: $(detect)" ;;
-        in|install) install "$@" ;;
-        rm|remove)  remove "$@" ;;
-        s|search)   search "$@" ;;
-        up|upgrade) upgrade ;;
-        help)       usage ;;
-        *)          echo "Unknown operation $op."
-                    usage
-                    return 1 ;;
+        detect)
+            echo "Package manager: $(detect)" ;;
+        in|install)
+            install "$@" ;;
+        rm|remove)
+            remove "$@" ;;
+        s|search)
+            search "$@" ;;
+        up|upgrade)
+            upgrade ;;
+        help)
+            usage ;;
+        *)
+            echo "Unknown operation $op."
+            usage
+            return 1 ;;
     esac
 }
 
