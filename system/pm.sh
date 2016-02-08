@@ -121,7 +121,7 @@ remove() {
     local pm_args
     case "$pm" in
         apt-get)
-            pm_args=("remove" "$@") ;;
+            pm_args=("autoremove" "$@") ;;
         ccr|pacman)
             pm="pacman" # Don't use ccr for remove.
             pm_args=("-Rcns" "$@") ;;
