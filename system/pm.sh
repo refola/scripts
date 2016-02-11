@@ -171,8 +171,8 @@ upgrade() {
             pm_up_args="upgrade" ;;
         ccr)
             pm_check=mirror-check
-            pm_ref_args="-Sy"
-            pm_dl_args="-Suw"
+            unset pm_ref_args
+            pm_dl_args="-Syuw"
             pm_up_args="-Su" ;;
         pacman)
             unset pm_check
@@ -193,10 +193,14 @@ upgrade() {
     else
         echo "No known mirror synchronization tool for $pm. Continuing."
     fi
-    echo "Refreshing repos"
-    pm-run "$pm" "${pm_ref_args[@]}" || return 1
-    echo "Downloading updates."
-    pm-run "$pm" "${pm_dl_args[@]}"  || return 1
+    if [ -n "$pm_ref_args" ]; then
+        echo "Refreshing repos"
+        pm-run "$pm" "${pm_ref_args[@]}" || return 1
+    fi # No "else"; assume the function's included below
+    if [ -n "$pm_dl_args" ]; then
+        echo "Downloading updates."
+        pm-run "$pm" "${pm_dl_args[@]}"  || return 1
+    fi # No "else"; assume the function's included below
     echo "Upgrading system."
     pm-run "$pm" "${pm_up_args[@]}"
 }
