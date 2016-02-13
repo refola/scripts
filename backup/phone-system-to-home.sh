@@ -36,12 +36,12 @@ vendor
 
 # Places that shouldn't be backed up with this script
 UNSAFE="
-dev	# Contains raw SD card data.
-mnt	# Contains SD card.
-proc	# Running stuff.
-sdcard	# Points to SD card.
-storage	# Contains SD card.
-sys	# Makes phone reboot at \"sys/devices/platform/s5pv210-uart.0/clock_source\".
+dev     # Contains raw SD card data.
+mnt     # Contains SD card.
+proc    # Running stuff.
+sdcard  # Points to SD card.
+storage # Contains SD card.
+sys     # Makes phone reboot at \"sys/devices/platform/s5pv210-uart.0/clock_source\".
 "
 
 pull() {
@@ -54,20 +54,20 @@ backup() {
     sleep 5 # let adb have some time....
     if [ -d "$TO.bak" ]
     then
-	echo "Deleting backup at $TO.bak"
-	rm -r "$TO.bak"
+        echo "Deleting backup at $TO.bak"
+        rm -r "$TO.bak"
     fi
     if [ -d "$TO" ]
     then
-	echo "Backing up existing $TO to $TO.bak"
-	mv "$TO" "$TO.bak"
+        echo "Backing up existing $TO to $TO.bak"
+        mv "$TO" "$TO.bak"
     fi
     echo "Backing up system to $TO."
     mkdir "$TO"
 
     for PLACE in $SAFE
     do
-	pull "$PLACE"
+        pull "$PLACE"
     done
 }
 

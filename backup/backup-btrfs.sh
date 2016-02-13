@@ -72,8 +72,8 @@ get vols "subvolumes" "list of subvolumes that should be snapshotted"
 IFS=$'\n'
 for external_root in $externs; do
     if [ -d "$external_root" ]; then
-	# backup to the root of the external drive.
-	external_snapshot_dir="$external_root"
+        # backup to the root of the external drive.
+        external_snapshot_dir="$external_root"
     fi
 done
 if [ -z "$external_snapshot_dir" ]; then
@@ -127,7 +127,7 @@ sync-em() {
     sync
     btrfs filesystem sync "$internal_root" > /dev/null
     if [ -n "$external_snapshot_dir" ]; then
-	btrfs filesystem sync "$external_snapshot_dir" > /dev/null
+        btrfs filesystem sync "$external_snapshot_dir" > /dev/null
     fi
 }
 
@@ -188,9 +188,9 @@ last-backup-name() {
     # NOTE: This assumes that the snapshot directory is empty iff
     # backups have been made with this script before.
     if [ -n "$(ls "$dir")" ]; then
-	# get list of existing snapshots, get last one, and remove leading './'
-	cd "$dir" # make the leading part of find's results a deterministic "./"
-	find . -maxdepth 1 -mindepth 1 | sort | tail -n 1 | cut -c3-
+        # get list of existing snapshots, get last one, and remove leading './'
+        cd "$dir" # make the leading part of find's results a deterministic "./"
+        find . -maxdepth 1 -mindepth 1 | sort | tail -n 1 | cut -c3-
     fi
 }
 
@@ -240,7 +240,7 @@ volume-dir() {
     local vol=$(sanitize "$1")
     sudo mkdir -p "$internal_snapshot_dir/$vol"
     if [ -n "$external_snapshot_dir" ]; then
-	mkdir -p "$external_snapshot_dir/$vol"
+        mkdir -p "$external_snapshot_dir/$vol"
     fi
 }
 
@@ -258,27 +258,27 @@ for vol in $vols; do
     # Set up internal snapshot, ensuring that it's from today.
     int_last_backup_name="$(last-backup-name "$vol" "$internal_snapshot_dir")"
     if [ "$int_last_backup_name" != "$time" ]; then
-	internal "$vol"
+        internal "$vol"
     else
-	echo "There's already a snapshot from $time for $vol"
+        echo "There's already a snapshot from $time for $vol"
     fi
 
     # Skip external snapshotting if the directory couldn't be found.
     if [ -z "$external_snapshot_dir" ]; then
-	continue
+        continue
     fi
 
     # Set up external snapshot, making sure we end up with a clone of
     # the most recent internal snapshot.
     external_last_backup_name="$(last-backup-name "$vol" "$external_snapshot_dir")"
     if [ -z "$external_last_backup_name" ]; then
-	bootstrap "$vol"
+        bootstrap "$vol"
     else
-	if [ "$external_last_backup_name" != "$time" ]; then
-	    incremental "$vol" "$external_last_backup_name"
-	else
-	    echo "There's already a backup from $time for $vol."
-	fi
+        if [ "$external_last_backup_name" != "$time" ]; then
+            incremental "$vol" "$external_last_backup_name"
+        else
+            echo "There's already a backup from $time for $vol."
+        fi
     fi
 done
 
