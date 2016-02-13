@@ -9,8 +9,8 @@ makedirs() {
     echo "Making directory tree $1 levels deep."
     for ((num=0; num<$1; num++));
     do
-	cur="$cur/$num"
-	mkdir $cur
+        cur="$cur/$num"
+        mkdir $cur
     done
 }
 

@@ -21,9 +21,9 @@ replace() {
     local CODE="1"
     while [ $CODE != "0" ]
     do
-	perl -p -i.bak -e "s/${1}/${2}/;" $OUTPUT
-	diff $OUTPUT $OUTPUT.bak > /dev/null
-	CODE=$?
+        perl -p -i.bak -e "s/${1}/${2}/;" $OUTPUT
+        diff $OUTPUT $OUTPUT.bak > /dev/null
+        CODE=$?
     done
     rm $OUTPUT.bak
 }

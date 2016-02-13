@@ -20,18 +20,18 @@ if [ -z "$2" ] ; then
     div=100
     for ((x=0; x<$times/$div; x++));
     do
-	for ((y=0; y<$div/5; y++));
-	do
-	    xte -x $server "mouseclick 1" "mouseclick 1" "mouseclick 1" "mouseclick 1" "mouseclick 1" #"mouseclick 1" "mouseclick 1" "mouseclick 1" "mouseclick 1" "mouseclick 1"
-	done
-	sleep 1
+        for ((y=0; y<$div/5; y++));
+        do
+            xte -x $server "mouseclick 1" "mouseclick 1" "mouseclick 1" "mouseclick 1" "mouseclick 1" #"mouseclick 1" "mouseclick 1" "mouseclick 1" "mouseclick 1" "mouseclick 1"
+        done
+        sleep 1
     done
 else
     echo "Clicking $times times, waiting 0.$wait seconds between clicks, and sending clicks to X server $server."
     for ((x=0; x<$times; x++));
     do
-	xte -x $server "mouseclick 1"
-	sleep 0.$wait
+        xte -x $server "mouseclick 1"
+        sleep 0.$wait
     done
 fi
 

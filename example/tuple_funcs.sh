@@ -30,9 +30,9 @@ column() {
     local IFS=$'\n' # We're interested in the newline-separated tuples here.
     for TUPLE in $TUPLES
     do
-	local IFS=" " # Now we want space-separated items.
-	set $TUPLE
-	echo -n "${!N} "
+        local IFS=" " # Now we want space-separated items.
+        set $TUPLE
+        echo -n "${!N} "
     done
     echo
 }
@@ -46,7 +46,7 @@ transpose() {
     local IFS=$'\n'
     for n in $(seq $N)
     do
-	column "$MATRIX" "$n"
+        column "$MATRIX" "$n"
     done
 }
 
@@ -66,7 +66,7 @@ tail() {
     shift
     for i in $*
     do
-	echo "$i"
+        echo "$i"
     done
 }
 

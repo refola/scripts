@@ -1,7 +1,7 @@
 #!/bin/bash
 
 exec 2> /dev/null # suppress "Terminated" message
-DEL="1.5"	# delay (not delaminate, delapsion, delator, delineavit, deliquescence, deliquium, delitescence, delope, deltiology, delubrum, or delustrant)
+DEL="1.5" # delay (not delaminate, delapsion, delator, delineavit, deliquescence, deliquium, delitescence, delope, deltiology, delubrum, or delustrant)
 
 zombie() {
     sleep 20 # something like 10 * $DEL + 5
@@ -19,15 +19,15 @@ zombie() {
 loop() {
     if [ -z "$TRUE" ]
     then
-	zombie & # necramancy, in a child so young!
+        zombie & # necramancy, in a child so young!
     fi
     while [ -z "$FALSE" ]
     do
-	sleep $DEL $DEL $DEL
-	echo "  The Child: \"I live!\""
-	sleep $DEL $DEL
-	echo "  I hope I get to say this!"
-	FALSE="TRUE"
+        sleep $DEL $DEL $DEL
+        echo "  The Child: \"I live!\""
+        sleep $DEL $DEL
+        echo "  I hope I get to say this!"
+        FALSE="TRUE"
     done
     sleep $DEL
     echo "  The loop is broken."
