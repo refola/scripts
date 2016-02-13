@@ -1,12 +1,18 @@
 #!/bin/bash
 
-if [ -z "$1" ]
-then
+if [ -z "$1" ]; then
     echo "Usage: $(basename "$0") words that you want spoken"
     echo "Uses a speech synthesizer to speak words that you want spoken."
-    echo
-    echo "Note: This depends on the 'spd-say' command. In Chakra Linux,"
-    echo "this command is found in the 'speech-dispatcher' package."
+    exit 1
+fi
+
+if [ ! -e "$(which spd-say)" ]; then
+    echo "Error: This command depends on 'spd-say' command."
+    pkg="speech-dispatcher"
+    echo "Now searching for a '$pkg' package."
+    if pm s "$pkg"; then
+        echo "Run 'pm in [package-name]' to install a package."
+    fi
     exit 1
 fi
 
