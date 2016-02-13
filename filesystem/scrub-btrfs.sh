@@ -21,15 +21,15 @@ scrubit() {
     then
         # Ensure log folder exists.
         mkdir -p "$(dirname "$file")"
-	echo "Starting btrfs scrub for $disp."
-	# We only want sudo for btrfs scrub, not for writing $file.
-	# shellcheck disable=SC2024
-	sudo btrfs scrub start -B -d "$location" > "$file"
-	echo
-	echo "Scrub finished for $disp. Results are as follows:"
-	cat "$file"
+        echo "Starting btrfs scrub for $disp."
+        # We only want sudo for btrfs scrub, not for writing $file.
+        # shellcheck disable=SC2024
+        sudo btrfs scrub start -B -d "$location" > "$file"
+        echo
+        echo "Scrub finished for $disp. Results are as follows:"
+        cat "$file"
     else
-	echo "Could not find disk $name at $location."
+        echo "Could not find disk $name at $location."
     fi
 }
 

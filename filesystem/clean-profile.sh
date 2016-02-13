@@ -47,13 +47,13 @@ folders() {
     local IFS=$'\n'
     for folder in $1
     do
-	if [ -d "$HOME/$folder" ]
-	then
-	    echo "Removing folder: $folder"
-	    rm -r "${HOME:?}/${folder:?}/"
-	    #	else
-	    #		echo "Folder doesn't exist: $folder"
-	fi
+        if [ -d "$HOME/$folder" ]
+        then
+            echo "Removing folder: $folder"
+            rm -r "${HOME:?}/${folder:?}/"
+            # else
+            #    echo "Folder doesn't exist: $folder"
+        fi
     done
 }
 
@@ -61,13 +61,13 @@ files() {
     local IFS=$'\n'
     for file in $1
     do
-	if [ -f "$HOME/$file" ]
-	then
-	    echo "Removing file: $file"
-	    rm "${HOME:?}/${file:?}"
-	    #	else
-	    #		echo "File doesn't exist: $file"
-	fi
+        if [ -f "$HOME/$file" ]
+        then
+            echo "Removing file: $file"
+            rm "${HOME:?}/${file:?}"
+            # else
+            #    echo "File doesn't exist: $file"
+        fi
     done
 }
 
