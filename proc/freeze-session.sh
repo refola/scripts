@@ -25,7 +25,7 @@ pause(){
     echo "Pausing process(es)."
     for pid in $procs
     do
-	kill -s SIGSTOP $pid
+        kill -s SIGSTOP $pid
     done
 }
 unpause(){
@@ -35,7 +35,7 @@ unpause(){
     echo "Unpausing process(es)."
     for pid in $procs
     do
-	kill -s SIGCONT $pid
+        kill -s SIGCONT $pid
     done
 }
 lock(){
@@ -49,14 +49,14 @@ pauseapps(){
     echo "Pausing common apps to conserve CPU and bandwidth"
     for app in $apps
     do
-	pause $app
+        pause $app
     done
 }
 resumeapps(){
     echo "Unpausing apps"
     for app in $apps
     do
-	unpause $app
+        unpause $app
     done
 }
 

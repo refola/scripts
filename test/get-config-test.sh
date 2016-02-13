@@ -41,7 +41,7 @@ color yellow "1;33"
 show-result() {
     if [ -n "$1" ]
     then
-	echo -e "$1: $2"
+        echo -e "$1: $2"
     fi
 }
 
@@ -65,13 +65,13 @@ test-true() {
     ((num_tests++))
     if eval "$pred"
     then
-	#show-result "$desc" "$(green Pass)"
-	((num_pass++))
-	return 0
+        #show-result "$desc" "$(green Pass)"
+        ((num_pass++))
+        return 0
     else
-	show-result "$desc" "$(red Fail): $(yellow "$pred") is false."
-	((num_fail++))
-	return 1
+        show-result "$desc" "$(red Fail): $(yellow "$pred") is false."
+        ((num_fail++))
+        return 1
     fi
 }
 
@@ -88,11 +88,11 @@ reset-config() {
     local name="$1"
     local value="$2"
     if [ -f "$config_dir/$name" ]; then
-	rm "$config_dir/$name"
+        rm "$config_dir/$name"
     fi
     if [ -n "$value" ]; then
         mkdir -p "$defaults_dir"
-	echo "$value" > "$defaults_dir/$name"
+        echo "$value" > "$defaults_dir/$name"
     elif [ -f "$defaults_dir/$name" ]; then
         rm "$defaults_dir/$name"
     fi

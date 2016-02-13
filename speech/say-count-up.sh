@@ -11,7 +11,7 @@ else
     say "Now counting to $max in increments of $delta."
     for ((n="$delta"; n<="$max"; n+="$delta"))
     do
-	say "$n"
+        say "$n"
     done
     say "That was fun."
 fi
