@@ -37,9 +37,9 @@ fi
 tint() {
     if (( "$1" == 0 ))
     then
-	echo "1"
+        echo "1"
     else
-	echo "0.$1"
+        echo "0.$1"
     fi
 }
 
@@ -53,30 +53,30 @@ for arg in "$@"
 do
     if [ "$arg" == "-" ]
     then
-	shift # skipping "-" if it's the only arg leaves things default
-    elif (( arg < 10 ))	# Tint, not temperature
+        shift # skipping "-" if it's the only arg leaves things default
+    elif (( arg < 10 )) # Tint, not temperature
     then
-	if [ -z "$tint_day" ]
-	then
-	    tint_day="$arg"
-	elif [ -z "$tint_night" ]
-	then
-	    tint_night="$arg"
-	else
-	    echo "Invalid to have more than 2 tints! Exiting."
-	    exit 1
-	fi
-    else	# We're assuming here that the user won't pass any invalid parameters even though we assumed 3 lines up that they might pass too many....
-	if [ -z "$temp_day" ]
-	then
-	    temp_day="$arg"
-	elif [ -z "$temp_night" ]
-	then
-	    temp_night="$arg"
-	else
-	    echo "Invalid to have more than 2 temperatures! Exiting."
-	    exit 1
-	fi
+        if [ -z "$tint_day" ]
+        then
+            tint_day="$arg"
+        elif [ -z "$tint_night" ]
+        then
+            tint_night="$arg"
+        else
+            echo "Invalid to have more than 2 tints! Exiting."
+            exit 1
+        fi
+    else # We're assuming here that the user won't pass any invalid parameters even though we assumed 3 lines up that they might pass too many....
+        if [ -z "$temp_day" ]
+        then
+            temp_day="$arg"
+        elif [ -z "$temp_night" ]
+        then
+            temp_night="$arg"
+        else
+            echo "Invalid to have more than 2 temperatures! Exiting."
+            exit 1
+        fi
     fi
 done
 
