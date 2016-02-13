@@ -52,7 +52,7 @@ then
     # but discard the saved grab if not already running and mode other than 0
     if [ -z "$wasrunning"  -a $mode -ne 0 ]
     then
-	qdbus org.kde.ksnapshot-$pid /KSnapshot org.kde.ksnapshot.setURL "$url"
+        qdbus org.kde.ksnapshot-$pid /KSnapshot org.kde.ksnapshot.setURL "$url"
     fi
 fi
 
@@ -65,7 +65,7 @@ then
     modified=""
     while [ -z "$modified" ]
     do
-	modified="`xprop -id $win_id | grep 'NET_WM_NAME.*modified'`"    sleep 1
+        modified="`xprop -id $win_id | grep 'NET_WM_NAME.*modified'`"    sleep 1
     done
 
     # save that shot in the preselected directory/format

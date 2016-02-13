@@ -37,7 +37,7 @@ Usage: In the following \"id\" indicates either a torrent hash or index.
        kt sdu [n] set download rate to n.
        kt suspend   suspend all torrents.
        kt resume    resume all torrents."
-	exit ;;
+        exit ;;
 esac
 pid=$(pidof ktorrent)
 if [ ! $pid ]; then
@@ -54,19 +54,19 @@ loc="org.ktorrent.ktorrent"
 cmd="qdbus $loc"
 case "$1" in
     stu)
-	if [ "$2" ]; then
-	    qdbus org.ktorrent.ktorrent /settings setMaxUploadRate $2
-	    qdbus org.ktorrent.ktorrent /settings apply
-	else echo "upload rate missing!" ;  fi ;;
+        if [ "$2" ]; then
+            qdbus org.ktorrent.ktorrent /settings setMaxUploadRate $2
+            qdbus org.ktorrent.ktorrent /settings apply
+        else echo "upload rate missing!" ;  fi ;;
     std)
-	if [ "$2" ]; then
-	    qdbus org.ktorrent.ktorrent /settings setMaxDownloadRate $2
-	    qdbus org.ktorrent.ktorrent /settings apply
-	else echo "download rate missing!" ;  fi ;;
+        if [ "$2" ]; then
+            qdbus org.ktorrent.ktorrent /settings setMaxDownloadRate $2
+            qdbus org.ktorrent.ktorrent /settings apply
+        else echo "download rate missing!" ;  fi ;;
     suspend)
-	qdbus org.ktorrent.ktorrent /core org.ktorrent.core.setSuspended true ;;
+        qdbus org.ktorrent.ktorrent /core org.ktorrent.core.setSuspended true ;;
     resume)
-	qdbus org.ktorrent.ktorrent /core org.ktorrent.core.setSuspended false ;;
+        qdbus org.ktorrent.ktorrent /core org.ktorrent.core.setSuspended false ;;
     load)
         res=$($cmd /core loadSilently "$2" 1) ;;
     list|ls)
@@ -157,22 +157,22 @@ case "$1" in
                         for (( i=0; i < $m; i++ )); do
                             res=$($cmd /torrent/$torrent setFilePriority $i $(((6-$i)*10)))
                         done
-                        for (( i=3; i < $n; i++ )) do
+                        for (( i=3; i < $n; i++ )); do
                             res=$($cmd /torrent/$torrent setFilePriority $i 30)
                         done ;;
-			    *)
-				res=$($cmd /torrent/$torrent setPriority $3) ;;
-			esac
-		fi
-		    else echo Too few arguments!; fi ;;
-		    clear)
-			torrents=$($cmd /core torrents)
-			for torrent in $torrents; do
-			    res=$(dbus-send --type=method_call --dest=$loc /core org.ktorrent.core.remove string:"$torrent" boolean:false)
-			done ;;
-		    quit)
-			res=$($cmd /MainApplication quit) ;;
-		    *)
-			echo "Unrecognized command: '$1'" ;;
-		esac
+                    *)
+                        res=$($cmd /torrent/$torrent setPriority $3) ;;
+                esac
+            fi
+        else echo Too few arguments!; fi ;;
+    clear)
+        torrents=$($cmd /core torrents)
+        for torrent in $torrents; do
+            res=$(dbus-send --type=method_call --dest=$loc /core org.ktorrent.core.remove string:"$torrent" boolean:false)
+        done ;;
+    quit)
+        res=$($cmd /MainApplication quit) ;;
+    *)
+        echo "Unrecognized command: '$1'" ;;
+esac
 
