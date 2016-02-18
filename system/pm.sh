@@ -2,7 +2,7 @@
 
 # pm.sh - package manager frontend for multiple distros
 
-usage="Usage: $(basename "$0") operation [packages]
+usage="Usage: $(basename "$0") [operation] [packages]
 
 pm is an interactive frontend for multiple distros' package managers,
 with the goal of enabling a single set of commands to handle common
@@ -12,8 +12,8 @@ operation.
 
 Valid operations are as follows.
 
-detect          Output which package manager this script detected.
-help            Display this help message and exit.
+det, detect     Output which package manager this script detected.
+h, help         Display this help message and exit.
 in, install     Install listed package(s) and dependencies.
 rm, remove      Remove listed package(s).
 s, search       Search for packages.
@@ -25,8 +25,8 @@ Currently supported package managers:
 * pacman (Arch, Chakra, Kaos, etc)
 * zypper (openSUSE)
 
-Exit status is 0 if successful, 1 otherwise. But this should only be
-used interactively, so this really really shouldn't matter.
+Exit status is 0 if successful, 1 otherwise. But this script should
+only be used interactively, so exit status really shouldn't matter.
 "
 
 # Package managers, split by frontend status
@@ -39,8 +39,26 @@ pms=("${pms_frontend[@]}" "${pms_main[@]}")
 # Reports to the user that the given package manager is not supported
 # and exits the script.
 bad-pm() {
-    echo "Unsupported package manager: $1"
+    err "Unsupported package manager: \e[1m$1\e[0m"
     exit 1
+}
+
+## Usage: err args ...
+# Echos args to stderr, prefixed with "Error: "
+err() {
+    echo -e "\e[1;4;91mError\e[0m: $1" 1>&2
+}
+
+## Usage: msg args ...
+# Echos args in fancy style, so it's clear that it's from pm.
+msg() {
+    echo -e "\e[1;34mpm: \e[0;32m$1\e[0m"
+}
+
+## Usage: my_text="$(bold args ...)"
+# Returns given text, formatted so 'echo -e' prints it bolded.
+bold() {
+    echo -n "\e[0;1m$*\e[0m"
 }
 
 ## Usage: pm-sudo package_manager
@@ -53,7 +71,7 @@ pm-sudo() {
         local front="${pms_frontend[*]}"
         local main="${pms_main[*]}"
         local test
-        test="$(echo -e "$front\n$main" | grep -e "$1")"
+        test="$(echo -e "$front\n$main" | grep -e "\b$1\b")"
         case "$test" in
             "$front")
                 return 1 ;;
@@ -65,15 +83,23 @@ pm-sudo() {
     fi
 }
 
-## Usage: pm-run pm args
+## Usage: cmd args ...
+# Runs command cmd with given args, first telling the user what
+# command is being ran.
+cmd() {
+    msg "Running $(bold "'$*'")"
+    "$@"
+}
+
+## Usage: pm-run pm args ...
 # Runs pm with args, prefixing it with sudo if needed.
 pm-run() {
     local pm="$1"
     shift
     if pm-sudo "$pm"; then
-        sudo "$pm" "$@"
+        cmd sudo "$pm" "$@"
     else
-        "$pm" "$@"
+        cmd "$pm" "$@"
     fi
 }
 
@@ -94,7 +120,7 @@ detect() {
 ## Usage: install package1 [package2 [...]]
 # Install listed package(s).
 install() {
-    echo "Upgrading system before install."
+    msg "Upgrading system before install."
     upgrade || return 1
     local pm
     pm="$(detect)"
@@ -109,7 +135,7 @@ install() {
         *)
             bad-pm "$pm" ;;
     esac
-    echo "Installing packages."
+    msg "Installing packages."
     pm-run "$pm" "${pm_args[@]}"
 }
 
@@ -130,7 +156,7 @@ remove() {
         *)
             bad-pm "$pm" ;;
     esac
-    echo "Removing packages."
+    msg "Removing packages."
     pm-run "$pm" "${pm_args[@]}"
 }
 
@@ -151,7 +177,7 @@ search() {
         *)
             bad-pm "$pm" ;;
     esac
-    "$pm" "${pm_args[@]}"
+    cmd "$pm" "${pm_args[@]}"
 }
 
 ## Usage: upgrade
@@ -188,20 +214,23 @@ upgrade() {
             bad-pm "$pm" ;;
     esac
     if [ -n "$pm_check" ]; then
-        echo "Checking mirror synchronization."
-        "$pm_check" || return 1
+        msg "Checking mirror synchronization."
+        if ! cmd "$pm_check"; then
+            err "Mirrors not synchronized."
+            return 1
+        fi
     else
-        echo "No known mirror synchronization tool for $pm. Continuing."
+        msg "No known mirror synchronization tool for $pm. Continuing."
     fi
-    if [ -n "$pm_ref_args" ]; then
-        echo "Refreshing repos"
+    if [ -n "${pm_ref_args[@]}" ]; then
+        msg "Refreshing repos"
         pm-run "$pm" "${pm_ref_args[@]}" || return 1
     fi # No "else"; assume the function's included below
-    if [ -n "$pm_dl_args" ]; then
-        echo "Downloading updates."
+    if [ -n "${pm_dl_args[@]}" ]; then
+        msg "Downloading updates."
         pm-run "$pm" "${pm_dl_args[@]}"  || return 1
     fi # No "else"; assume the function's included below
-    echo "Upgrading system."
+    msg "Upgrading system."
     pm-run "$pm" "${pm_up_args[@]}"
 }
 
@@ -217,22 +246,24 @@ main() {
     local op="${1:-help}"
     shift
     case "$op" in
-        detect)
-            echo "Package manager: $(detect)" ;;
-        in|install)
+        det|detect)
+            local manager
+            manager="$(detect)" || exit 1
+            msg "Package manager: $(bold "$manager")" ;;
+        'in'|install)
             install "$@" ;;
-        rm|remove)
+        'rm'|remove)
             remove "$@" ;;
         s|search)
             search "$@" ;;
         up|upgrade)
             upgrade ;;
-        help)
+        h|'help')
             usage ;;
         *)
-            echo "Unknown operation $op."
+            err "Unknown operation: $op"
             usage
-            return 1 ;;
+            exit 1 ;;
     esac
 }
 
