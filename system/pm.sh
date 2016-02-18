@@ -222,11 +222,11 @@ upgrade() {
     else
         msg "No known mirror synchronization tool for $pm. Continuing."
     fi
-    if [ -n "${pm_ref_args[@]}" ]; then
+    if [ -n "${pm_ref_args[*]}" ]; then
         msg "Refreshing repos"
         pm-run "$pm" "${pm_ref_args[@]}" || return 1
     fi # No "else"; assume the function's included below
-    if [ -n "${pm_dl_args[@]}" ]; then
+    if [ -n "${pm_dl_args[*]}" ]; then
         msg "Downloading updates."
         pm-run "$pm" "${pm_dl_args[@]}"  || return 1
     fi # No "else"; assume the function's included below
