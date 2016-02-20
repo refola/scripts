@@ -57,7 +57,7 @@ config. Here's a helper function that you can use. Yes, it's a lot of
 boilerplate code. But it's the best available until finding a satisfactory way
 of reusing common code that must be sourced to have the desired effect. Maybe
 an updated $(basename "$0") will allow something like:
-	. \"\$($(basename "$0") -helper prefix fn_name)\"
+ . \"\$($(basename "$0") -helper prefix fn_name)\"
 to generate a sourcable script for getting configs with given prefix
 via a function of given fn_name.
 
@@ -70,11 +70,11 @@ get() {
     local result
     result=\"\$(get-config \"\$_script_name/\$cfg_name\" -what-do \"\$cfg_desc\")\"
     if [ \$? != \"0\" ]; then
-	echo \"Error getting config \$cfg_name. Exiting.\" >&2
-	exit 1
+ echo \"Error getting config \$cfg_name. Exiting.\" >&2
+ exit 1
     else
         # Save config to variable.
-	eval \"\$var_name='\$result'\"
+ eval \"\$var_name='\$result'\"
     fi
 }
 # Get the config.
@@ -105,9 +105,9 @@ copy_default_config() {
     mkdir -p "$(dirname "$config_path")"
     if [ -f "$default_config_path" ]
     then
-	cp "$default_config_path" "$config_path"
+        cp "$default_config_path" "$config_path"
     else
-	touch "$config_path"
+        touch "$config_path"
     fi
 }
 
@@ -121,13 +121,13 @@ yellow() { color '1;33' "$@"; }
 # Explains to the user everything we know about the config.
 explain_config() {
     if [ -n "$what_do" ]; then
-	echo -e "$config_name: $(yellow "$what_do")"
+        echo -e "$config_name: $(yellow "$what_do")"
     fi
     if [ -f "$default_config_path" ]; then
-	echo "Here's the default configuration for $config_name."
-	echo -e "$(yellow "$(cat "$default_config_path")")"
+        echo "Here's the default configuration for $config_name."
+        echo -e "$(yellow "$(cat "$default_config_path")")"
     else
-	echo "No default configuration found for $config_name. Using blank config."
+        echo "No default configuration found for $config_name. Using blank config."
     fi
 }
 
@@ -137,29 +137,29 @@ explain_config() {
 # retrievable and non-zero if the script should be aborted.
 can_read_config() {
     if [ -f "$config_path" ]; then
-	return 0
+        return 0
     else
         explain_config
-	# Echo question separately because 'read' does not support color codes.
-	echo -e -n "[$(yellow A)]bort (default) / use [$(yellow D)]efault config / [$(yellow E)]dit config? "
-	local ans; read -n1 ans
-	echo # because 'read' doesn't
-	case "$ans" in
-	    [dD] ) copy_default_config
-		   ;;
-	    [eE] ) copy_default_config
-		   if [ -z "$EDITOR" ]
-		   then
-		       echo -e "$(red "Your \$EDITOR is undefined.") Falling back to $(yellow "nano")."
-		       EDITOR="nano"
-		   fi
-		   "$EDITOR" "$config_path"
-		   ;;
-	    *    ) echo -e "$(red "$config_name has not been configured. The script will not run.")"
-		   return 1
-		   ;;
-	esac
-	return 0
+        # Echo question separately because 'read' does not support color codes.
+        echo -e -n "[$(yellow A)]bort (default) / use [$(yellow D)]efault config / [$(yellow E)]dit config? "
+        local ans; read -n1 ans
+        echo # because 'read' doesn't
+        case "$ans" in
+            [dD] ) copy_default_config
+                   ;;
+            [eE] ) copy_default_config
+                   if [ -z "$EDITOR" ]
+                   then
+                       echo -e "$(red "Your \$EDITOR is undefined.") Falling back to $(yellow "nano")."
+                       EDITOR="nano"
+                   fi
+                   "$EDITOR" "$config_path"
+                   ;;
+            *    ) echo -e "$(red "$config_name has not been configured. The script will not run.")"
+                   return 1
+                   ;;
+        esac
+        return 0
     fi
 }
 
@@ -223,21 +223,21 @@ main() {
         # If no config name is passed, then this cannot run.
         error "Missing mandatory argument: configuration name."
         echo "$usage" >&2
-	exit 1
+        exit 1
     elif [ -n "$path_only" ]; then
         # Just echo the path and exit.
         echo "$config_path"
         exit 0
     else
         # Do the normal config-getting stuff.
-	if ! can_read_config >&2
-	then
+        if ! can_read_config >&2
+        then
             error "Could not get config."
-	    exit 1
-	else
-	    output-config
-	    exit $?
-	fi
+            exit 1
+        else
+            output-config
+            exit $?
+        fi
     fi
 }
 
