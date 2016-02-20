@@ -3,7 +3,7 @@
 ## General aliases ##
 
 # Shortcut for $EDITOR
-alias emac="$EDITOR"
+alias emac="\$EDITOR"
 
 # Format an entire Go project at once.
 alias gofmtr="find . -type f -name '*.go' -print0 | xargs -0 -r -n1 gofmt -w"

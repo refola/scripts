@@ -1,4 +1,5 @@
-# Bash completion for cdl
+#!/bin/bash
+# Bash completion for cdl.sh
 
 _cdl() {
     local IFS=$'\n'

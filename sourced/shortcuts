@@ -4,7 +4,6 @@
 # Make functions that source given commands, enabling things like "cd"
 # in the commands to have the desired effects in interactive shells.
 _mk_cmd_fns() {
-    local cmd
     while [ -n "$1" ]; do
         # Example if $1="cmd-foo": cmd-foo() { . "/path/to/cmd-foo" "$@"; }
         eval "$1() { . \"$(cmpath "$1")\" \"\$@\"; }"
