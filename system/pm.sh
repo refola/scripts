@@ -14,6 +14,7 @@ Valid operations are as follows.
 
 det, detect     Output which package manager this script detected.
 h, help         Display this help message and exit.
+if, info        Display information about listed package(s).
 in, install     Install listed package(s) and dependencies.
 rm, remove      Remove listed package(s).
 s, search       Search for packages.
@@ -24,6 +25,13 @@ Currently supported package managers:
 * ccr (Chakra)
 * pacman (Arch, Chakra, Kaos, etc)
 * zypper (openSUSE)
+
+Functions implemented:
+pkg mgr   if   in   rm    s   up
+apt-get   no  yes  yes  yes  yes
+ccr      yes  yes  yes  yes  yes
+pacman   yes  yes  yes  yes  yes
+zypper    no  yes  yes  yes  yes
 
 Exit status is 0 if successful, 1 otherwise. But this script should
 only be used interactively, so exit status really shouldn't matter.
@@ -117,13 +125,30 @@ detect() {
     bad-pm "No package manager found"
 }
 
+## Usage: info package ...
+# List information about given package(s).
+info() {
+    local pm
+    pm="$(detect)" || return 1
+    local pm_args
+    case "$pm" in
+        ccr|pacman)
+            pm="pacman" # ccr doesn't do queries.
+            pm_args=("-Qi" "$@") ;;
+        *)
+            bad-pm "$pm" ;;
+    esac
+    msg "Listing package info."
+    cmd "$pm" "${pm_args[@]}"
+}
+
 ## Usage: install package1 [package2 [...]]
 # Install listed package(s).
 install() {
     msg "Upgrading system before install."
     upgrade || return 1
     local pm
-    pm="$(detect)"
+    pm="$(detect)" || return 1
     local pm_args
     case "$pm" in
         apt-get)
@@ -143,7 +168,7 @@ install() {
 # Remove listed package(s).
 remove() {
     local pm
-    pm="$(detect)"
+    pm="$(detect)" || return 1
     local pm_args
     case "$pm" in
         apt-get)
@@ -164,7 +189,7 @@ remove() {
 # Search for packages with given expression.
 search() {
     local pm
-    pm="$(detect)"
+    pm="$(detect)" || return 1
     local pm_args
     case "$pm" in
         apt-get)
@@ -184,7 +209,7 @@ search() {
 # Upgrade the distro to the latest packages available.
 upgrade() {
     local pm
-    pm="$(detect)"
+    pm="$(detect)" || return 1
     local pm_check # Command to check repo state, if applicable
     local pm_ref_args # Args to refresh the repos
     local pm_dl_args  # Args to download updates
@@ -250,6 +275,8 @@ main() {
             local manager
             manager="$(detect)" || exit 1
             msg "Package manager: $(bold "$manager")" ;;
+        'if'|info)
+            info "$@" ;;
         'in'|install)
             install "$@" ;;
         'rm'|remove)
