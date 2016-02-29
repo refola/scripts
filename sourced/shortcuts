@@ -5,11 +5,11 @@
 # in the commands to have the desired effects in interactive shells.
 _mk_cmd_fns() {
     while [ -n "$1" ]; do
-        # Example if $1="cmd-foo": cmd-foo() { . "/path/to/cmd-foo" "$@"; }
+        # Example "cmd-foo" -> cmd-foo() { . "/path/to/cmd-foo" "$@"; }
         eval "$1() { . \"$(cmpath "$1")\" \"\$@\"; }"
         shift
     done
 }
 
 # Make the functions.
-_mk_cmd_fns cdh cmcd cds cdl
+_mk_cmd_fns cdh cmcd cds cdl mkcd

@@ -5,3 +5,6 @@ complete -c cmdir
 complete -c cmedit
 complete -c cmls
 complete -c cmpath
+
+# mkcd's arg is close enough to what cd's completion suggests
+complete -o nospace -F _cd mkcd
