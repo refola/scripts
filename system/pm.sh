@@ -132,6 +132,9 @@ info() {
     pm="$(detect)" || return 1
     local pm_args
     case "$pm" in
+        apt-get)
+            pm="apt-cache" # apt-get doesn't do queries.
+            pm_args=("--no-all-versions" "show" "$@") ;;
         ccr|pacman)
             pm="pacman" # ccr doesn't do queries.
             pm_args=("-Qi" "$@") ;;
