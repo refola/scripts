@@ -28,7 +28,7 @@ Currently supported package managers:
 
 Functions implemented:
 pkg mgr   if   in   rm    s   up
-apt-get   no  yes  yes  yes  yes
+apt-get  yes  yes  yes  yes  yes
 ccr      yes  yes  yes  yes  yes
 pacman   yes  yes  yes  yes  yes
 zypper    no  yes  yes  yes  yes
