@@ -33,6 +33,7 @@ SKIP_DIRS="
 bash_custom
 bin
 config
+data
 example
 fun
 sourced
