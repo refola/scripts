@@ -1,12 +1,18 @@
 #!/bin/bash
-# List details of the file referred to by a command.
+# List details of a command's file.
 
-if [ -z "$1" ]
-then
-    echo "Usage: \"$(basename "$(readlink -f "$0")")\" command"
-    echo "Runs ls -l on a command's file."
+if [ "$#" = "0" ]; then
+    # Assumes a function sources this
+    echo "Usage: cmls command ..."
+    echo
+    echo "Runs ls -l on given commands' files."
     exit 1
 else
-    # get command's path and run ls on it
-    ls -l "$(cmpath "$1")"
+    local commands
+    while [ "$#" != "0" ]; do
+        # get command's path and run ls on it
+        commands+=("$(cmpath "$1")")
+        shift
+    done
+    ls -l "${commands[@]}"
 fi

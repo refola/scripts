@@ -12,4 +12,4 @@ _mk_cmd_fns() {
 }
 
 # Make the functions.
-_mk_cmd_fns cdh cmcd cds cdl mkcd
+_mk_cmd_fns cdh cmcd cmls cds cdl mkcd
