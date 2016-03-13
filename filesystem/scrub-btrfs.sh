@@ -22,12 +22,14 @@ scrubit() {
         # Ensure log folder exists.
         mkdir -p "$(dirname "$file")"
         echo "Starting btrfs scrub for $disp."
+        # ionice -c3: workaround for btrfs-progs not honoring its -c3
         # -B: don't background
         # -d: per-device stats
-        # -c3: lowest priority
+        # -c3: lowest priority (doesn't do anything as of btrfs-progs 4.3.1)
         # We only want sudo for btrfs scrub, not for writing $file.
         # shellcheck disable=SC2024
-        sudo btrfs scrub start -B -d -c3 "$location" > "$file"
+        sudo ionice -c3 btrfs scrub start -B -d -c3 "$location" > "$file"
+        # Back to regularly-scheduled code
         echo
         echo "Scrub finished for $disp. Results are as follows:"
         cat "$file"
