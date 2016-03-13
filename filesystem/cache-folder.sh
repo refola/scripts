@@ -1,16 +1,17 @@
 #!/bin/bash
-# Cache a single folder, either what's passed as an argument or the
-# current working directory.
-if [ -n "$1" ]
-then
-    cd "$1"
-    if [ "$?" != "0" ]; then
-        echo "Folder doesn't exist. Aborting!"
-        exit 1
-    fi
-else
-    echo "No folder passed, so caching \$PWD=$PWD."
-fi
+# Cache the given folder(s) or $PWD.
 
-echo "Caching folder $PWD."
-find . -type f -exec cat {} > /dev/null +
+# Cache a single folder.
+cache-one() {
+    echo "Caching folder $1."
+    find "$1" -type f -exec cat {} > /dev/null +
+}
+
+if [ "$#" = "0" ]; then
+    echo "No folder passed, so caching \$PWD."
+    cache-one "$PWD"
+else
+    for dir in "$@"; do
+        cache-one "$dir"
+    done
+fi
