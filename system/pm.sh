@@ -100,7 +100,6 @@ pm-op() {
     local raw_cmds
     raw_cmds="$(get-data "pm/$op/$pm")" ||
         fatal "Can't $op with $pm."
-    msg "Using $pm to $op."
     local IFS=$'\n'
     for line in $raw_cmds; do
         # TODO: Eval is evil! The Devil is in the details! Be careful
@@ -133,24 +132,22 @@ main() {
             local manager
             manager="$(detect)" || exit 1
             msg "Package manager: $manager" ;;
-        'if'|info)
-            pm-op info "$@" ;;
         'in'|install)
             msg "Upgrading system before install."
-            pm-op upgrade
-            pm-op install "$@" ;;
-        'rm'|remove)
-            pm-op remove "$@" ;;
-        s|search)
-            pm-op search "$@" ;;
-        up|upgrade)
-            pm-op upgrade ;;
+            pm-op up
+            pm-op 'in' "$@" ;;
         h|'help')
             usage ;;
         *)
-            msg "Unknown operation: $op"
-            echo "$usage"
-            exit 1 ;;
+            # Most commands don't need anything special. Just gotta
+            # check that they exist.
+            if [ -d "$(get-data "pm/$op" -path)" ]; then
+                pm-op "$op" "$@"
+            else
+                msg "Unknown operation: $op"
+                echo "$usage"
+                exit 1
+            fi ;;
     esac
 }
 
