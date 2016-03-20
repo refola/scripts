@@ -2,7 +2,7 @@
 
 # pm.sh - package manager frontend for multiple distros
 
-usage="Usage: $(basename "$0") [operation] [packages]
+usage="Usage: $(basename "$0") [operation [package ...]]
 
 pm is an interactive frontend for multiple distros' package managers,
 with the goal of enabling a single set of commands to handle common
@@ -26,15 +26,8 @@ Currently supported package managers:
 * pacman (Arch, Chakra, Kaos, etc)
 * zypper (openSUSE)
 
-Functions implemented:
-pkg mgr   if   in   rm    s   up
-apt-get  yes  yes  yes  yes  yes
-ccr      yes  yes  yes  yes  yes
-pacman   yes  yes  yes  yes  yes
-zypper    no  yes  yes  yes  yes
-
-Exit status is 0 if successful, 1 otherwise. But this script should
-only be used interactively, so exit status really shouldn't matter.
+Incomplete functionality:
+* The info command doesn't yet support zypper.
 "
 
 # Package managers, split by frontend status
@@ -43,16 +36,10 @@ pms_main=(apt-get pacman zypper)
 # Frontends before the main ones for fancier behavior
 pms=("${pms_frontend[@]}" "${pms_main[@]}")
 
-## Usage: err args ...
-# Echos args to stderr, prefixed with "Error: "
-err() {
-    echo -e "\e[1;4;91mError\e[0m: $1" 1>&2
-}
-
 ## Usage: fatal args ...
 # Runs err with given args and exits the script.
 fatal() {
-    err "$@"
+    echo -e "\e[1;4;91mError\e[0m: $*" 1>&2
     exit 1
 }
 
@@ -60,12 +47,6 @@ fatal() {
 # Echos args in fancy style, so it's clear that it's from pm.
 msg() {
     echo -e "\e[1;34mpm: \e[0;32m$1\e[0m"
-}
-
-## Usage: my_text="$(bold args ...)"
-# Returns given text, formatted so 'echo -e' prints it bolded.
-bold() {
-    echo -n "\e[0;1m$*\e[0m"
 }
 
 ## Usage: maybe-sudo command
@@ -118,7 +99,7 @@ pm-op() {
     local args="$*"
     local raw_cmds
     raw_cmds="$(get-data "pm/$op/$pm")" ||
-        fatal "Can't $(bold "$op") with $(bold "$pm")."
+        fatal "Can't $op with $pm."
     msg "Using $pm to $op."
     local IFS=$'\n'
     for line in $raw_cmds; do
@@ -137,7 +118,7 @@ pm-op() {
         if maybe-sudo "${cmd[0]}"; then
             cmd=("sudo" "${cmd[@]}")
         fi
-        msg "Running $(bold "'${cmd[*]}'")"
+        msg "Running ${cmd[*]}"
         "${cmd[@]}" || fatal "Command did not complete successfully."
     done
 }
@@ -151,7 +132,7 @@ main() {
         det|detect)
             local manager
             manager="$(detect)" || exit 1
-            msg "Package manager: $(bold "$manager")" ;;
+            msg "Package manager: $manager" ;;
         'if'|info)
             pm-op info "$@" ;;
         'in'|install)
@@ -167,7 +148,7 @@ main() {
         h|'help')
             usage ;;
         *)
-            err "Unknown operation: $op"
+            msg "Unknown operation: $op"
             echo "$usage"
             exit 1 ;;
     esac
