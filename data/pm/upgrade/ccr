@@ -1,0 +1,4 @@
+mirror-check
+pacman -Syuw
+pacman -Su
+ccr -Syu --ccronly

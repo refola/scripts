@@ -13,12 +13,12 @@ operation.
 Valid operations are as follows.
 
 det, detect     Output which package manager this script detected.
-h, help         Display this help message and exit.
-if, info        Display information about listed package(s).
-in, install     Install listed package(s) and dependencies.
-rm, remove      Remove listed package(s).
-s, search       Search for packages.
-up, upgrade     Upgrade the system.
+h,   help       Display this help message and exit.
+if,  info       Display information about listed package(s).
+in,  install    Install listed package(s) and dependencies.
+rm,  remove     Remove listed package(s).
+s,   search     Search for packages.
+up,  upgrade    Upgrade the system.
 
 Currently supported package managers:
 * apt-get (Debian, *buntu, Mint, etc)
@@ -43,18 +43,17 @@ pms_main=(apt-get pacman zypper)
 # Frontends before the main ones for fancier behavior
 pms=("${pms_frontend[@]}" "${pms_main[@]}")
 
-## Usage: bad-pm pm
-# Reports to the user that the given package manager is not supported
-# and exits the script.
-bad-pm() {
-    err "Unsupported package manager: \e[1m$1\e[0m"
-    exit 1
-}
-
 ## Usage: err args ...
 # Echos args to stderr, prefixed with "Error: "
 err() {
     echo -e "\e[1;4;91mError\e[0m: $1" 1>&2
+}
+
+## Usage: fatal args ...
+# Runs err with given args and exits the script.
+fatal() {
+    err "$@"
+    exit 1
 }
 
 ## Usage: msg args ...
@@ -72,7 +71,7 @@ bold() {
 ## Usage: maybe-sudo command
 # Returns 0 if calls to command should be prefixed with "sudo",
 # otherwise returns 1.
-pm-sudo() {
+maybe-sudo() {
     if [ "$EUID" = "0" ]; then
         return 0
     else
@@ -81,33 +80,13 @@ pm-sudo() {
         local test
         test="$(echo -e "$front\n$main" | grep -e "\b$1\b")"
         case "$test" in
-            "$front")
-                return 1 ;;
             "$main")
                 return 0 ;;
+            "$front")
+                return 1 ;;
             *) # Blindly assume that unknown commands don't need sudo.
                 return 1 ;;
         esac
-    fi
-}
-
-## Usage: cmd args ...
-# Runs command cmd with given args, first telling the user what
-# command is being ran.
-cmd() {
-    msg "Running $(bold "'$*'")"
-    "$@"
-}
-
-## Usage: pm-run pm args ...
-# Runs pm with args, prefixing it with sudo if needed.
-pm-run() {
-    local pm="$1"
-    shift
-    if pm-sudo "$pm"; then
-        cmd sudo "$pm" "$@"
-    else
-        cmd "$pm" "$@"
     fi
 }
 
@@ -122,137 +101,45 @@ detect() {
         fi
     done
     # If package manager not found, exit with error.
-    bad-pm "No package manager found"
+    fatal "No package manager found"
+    exit 1
 }
 
-## Usage: pm-try-run-one "cmd with args ..."
-# Tries to run a single command, with sudo as applicable, and with
-# arguments as applicable, returning 1 on failure.
-pm-try-run-one() {
-    local IFS=' ' # Split on spaces ...
-    ## ... and let set have the intended space-separated args
-    ## contained in $1 without shellcheck complaining.
-    # shellcheck disable=SC2086
-    set $1
-    local cmd="$1"
+## Usage: pm-op operation [args ...]
+# Get and run the appropriate commands for the system's package
+# manager to do the requested operation with the given arguments.
+pm-op() {
+    local pm
+    pm="$(detect)" || return 1
+    local op="$1"
     shift
-    local args=("$@")
-    pm-run "$cmd" "${args[@]}"
-}
-
-## Usage: pm-try-run "cmd1 with args ..." [...]
-# Tries to run each command, with sudo as applicable, and with
-# arguments as applicable, returning 1 on failure.
-pm-try-run() {
-    for cmd in "$@"; do
-        pm-try-run-one "$cmd" || return 1
+    # $args is used in the eval.
+    # shellcheck disable=SC2034
+    local args="$*"
+    local raw_cmds
+    raw_cmds="$(get-data "pm/$op/$pm")" ||
+        fatal "Can't $(bold "$op") with $(bold "$pm")."
+    msg "Using $pm to $op."
+    local IFS=$'\n'
+    for line in $raw_cmds; do
+        # TODO: Eval is evil! The Devil is in the details! Be careful
+        # what you wish for! (Double-check that this correctly
+        # converts $vars without doing anything more dangerous.)
+        local cmd
+        cmd="$(eval "echo \"$line\"")" ||
+            fatal "Could not convert '$cmd'"
+        local IFS=' ' # Split on spaces ...
+        ## ... and let set have the intended space-separated args
+        ## contained in $1 without shellcheck complaining.
+        # shellcheck disable=SC2086
+        set $cmd
+        cmd=("$@")
+        if maybe-sudo "${cmd[0]}"; then
+            cmd=("sudo" "${cmd[@]}")
+        fi
+        msg "Running $(bold "'${cmd[*]}'")"
+        "${cmd[@]}" || fatal "Command did not complete successfully."
     done
-}
-
-## Usage: info package ...
-# List information about given package(s).
-info() {
-    local pm
-    pm="$(detect)" || return 1
-    msg "Listing package info."
-    case "$pm" in
-        apt-get)
-            pm-try-run "apt-cache --no-all-versions show $*" ;;
-        ccr|pacman)
-            pm-try-run "pacman -Qi $*" ;;
-        *)
-            bad-pm "$pm" ;;
-    esac
-}
-
-## Usage: install package1 [package2 [...]]
-# Install listed package(s).
-install() {
-    msg "Upgrading system before install."
-    upgrade || return 1
-    local pm
-    pm="$(detect)" || return 1
-    msg "Installing packages."
-    case "$pm" in
-        apt-get)
-            pm-try-run "$pm install $*" ;;
-        ccr|pacman)
-            pm-try-run "$pm -S $*" ;;
-        zypper)
-            pm-try-run "$pm in $*" ;;
-        *)
-            bad-pm "$pm" ;;
-    esac
-}
-
-## Usage: remove package1 [package2 [...]]
-# Remove listed package(s).
-remove() {
-    local pm
-    pm="$(detect)" || return 1
-    msg "Removing packages."
-    case "$pm" in
-        apt-get)
-            pm-try-run "$pm autoremove $*" ;;
-        ccr|pacman)
-            pm-try-run "pacman -Rcns $*" ;;
-        zypper)
-            pm-try-run "$pm rm -u $*" ;;
-        *)
-            bad-pm "$pm" ;;
-    esac
-}
-
-## Usage: search expression [expression2 [...]]
-# Search for packages with given expression.
-search() {
-    local pm
-    pm="$(detect)" || return 1
-    case "$pm" in
-        apt-get)
-            pm-try-run "apt-cache search $*" ;;
-        ccr|pacman)
-            pm-try-run "$pm -Ss $*" ;;
-        zypper)
-            pm-try-run "$pm se $*" ;;
-        *)
-            bad-pm "$pm" ;;
-    esac
-}
-
-## Usage: upgrade
-# Upgrade the distro to the latest packages available.
-upgrade() {
-    local pm
-    pm="$(detect)" || return 1
-    msg "Running all commands to properly upgrade the system."
-    case "$pm" in
-        apt-get)
-            pm-try-run "$pm update"\
-                       "$pm upgrade -d"\
-                       "$pm upgrade" ;;
-        ccr)
-            pm-try-run "mirror-check"\
-                       "pacman -Syuw"\
-                       "pacman -Su"\
-                       "ccr -Syu --ccronly" ;;
-        pacman)
-            pm-try-run "$pm -Sy"\
-                       "$pm -Suw"\
-                       "$pm -Su" ;;
-        zypper)
-            pm-try-run "$pm ref"\
-                       "$pm up -d"\
-                       "$pm up" ;;
-        *)
-            bad-pm "$pm" ;;
-    esac
-}
-
-## Usage: usage
-# Show the usage message.
-usage() {
-    echo "$usage"
 }
 
 ## Usage: main "$@"
@@ -266,20 +153,22 @@ main() {
             manager="$(detect)" || exit 1
             msg "Package manager: $(bold "$manager")" ;;
         'if'|info)
-            info "$@" ;;
+            pm-op info "$@" ;;
         'in'|install)
-            install "$@" ;;
+            msg "Upgrading system before install."
+            pm-op upgrade
+            pm-op install "$@" ;;
         'rm'|remove)
-            remove "$@" ;;
+            pm-op remove "$@" ;;
         s|search)
-            search "$@" ;;
+            pm-op search "$@" ;;
         up|upgrade)
-            upgrade ;;
+            pm-op upgrade ;;
         h|'help')
             usage ;;
         *)
             err "Unknown operation: $op"
-            usage
+            echo "$usage"
             exit 1 ;;
     esac
 }

@@ -1,0 +1,3 @@
+$pm update
+$pm upgrade -d
+$pm upgrade
