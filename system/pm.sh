@@ -69,9 +69,9 @@ bold() {
     echo -n "\e[0;1m$*\e[0m"
 }
 
-## Usage: pm-sudo package_manager
-# Returns 0 if calls to package_manager should be prefixed with
-# "sudo", otherwise returns 1.
+## Usage: maybe-sudo command
+# Returns 0 if calls to command should be prefixed with "sudo",
+# otherwise returns 1.
 pm-sudo() {
     if [ "$EUID" = "0" ]; then
         return 0
@@ -85,8 +85,8 @@ pm-sudo() {
                 return 1 ;;
             "$main")
                 return 0 ;;
-            *)
-                bad-pm "$1" ;;
+            *) # Blindly assume that unknown commands don't need sudo.
+                return 1 ;;
         esac
     fi
 }
@@ -125,24 +125,44 @@ detect() {
     bad-pm "No package manager found"
 }
 
+## Usage: pm-try-run-one "cmd with args ..."
+# Tries to run a single command, with sudo as applicable, and with
+# arguments as applicable, returning 1 on failure.
+pm-try-run-one() {
+    local IFS=' ' # Split on spaces ...
+    ## ... and let set have the intended space-separated args
+    ## contained in $1 without shellcheck complaining.
+    # shellcheck disable=SC2086
+    set $1
+    local cmd="$1"
+    shift
+    local args=("$@")
+    pm-run "$cmd" "${args[@]}"
+}
+
+## Usage: pm-try-run "cmd1 with args ..." [...]
+# Tries to run each command, with sudo as applicable, and with
+# arguments as applicable, returning 1 on failure.
+pm-try-run() {
+    for cmd in "$@"; do
+        pm-try-run-one "$cmd" || return 1
+    done
+}
+
 ## Usage: info package ...
 # List information about given package(s).
 info() {
     local pm
     pm="$(detect)" || return 1
-    local pm_args
+    msg "Listing package info."
     case "$pm" in
         apt-get)
-            pm="apt-cache" # apt-get doesn't do queries.
-            pm_args=("--no-all-versions" "show" "$@") ;;
+            pm-try-run "apt-cache --no-all-versions show $*" ;;
         ccr|pacman)
-            pm="pacman" # ccr doesn't do queries.
-            pm_args=("-Qi" "$@") ;;
+            pm-try-run "pacman -Qi $*" ;;
         *)
             bad-pm "$pm" ;;
     esac
-    msg "Listing package info."
-    cmd "$pm" "${pm_args[@]}"
 }
 
 ## Usage: install package1 [package2 [...]]
@@ -152,19 +172,17 @@ install() {
     upgrade || return 1
     local pm
     pm="$(detect)" || return 1
-    local pm_args
+    msg "Installing packages."
     case "$pm" in
         apt-get)
-            pm_args=("install" "$@") ;;
+            pm-try-run "$pm install $*" ;;
         ccr|pacman)
-            pm_args=("-S" "$@") ;;
+            pm-try-run "$pm -S $*" ;;
         zypper)
-            pm_args=("in" "$@") ;;
+            pm-try-run "$pm in $*" ;;
         *)
             bad-pm "$pm" ;;
     esac
-    msg "Installing packages."
-    pm-run "$pm" "${pm_args[@]}"
 }
 
 ## Usage: remove package1 [package2 [...]]
@@ -172,20 +190,17 @@ install() {
 remove() {
     local pm
     pm="$(detect)" || return 1
-    local pm_args
+    msg "Removing packages."
     case "$pm" in
         apt-get)
-            pm_args=("autoremove" "$@") ;;
+            pm-try-run "$pm autoremove $*" ;;
         ccr|pacman)
-            pm="pacman" # Don't use ccr for remove.
-            pm_args=("-Rcns" "$@") ;;
+            pm-try-run "pacman -Rcns $*" ;;
         zypper)
-            pm_args=("rm" "-u" "$@") ;;
+            pm-try-run "$pm rm -u $*" ;;
         *)
             bad-pm "$pm" ;;
     esac
-    msg "Removing packages."
-    pm-run "$pm" "${pm_args[@]}"
 }
 
 ## Usage: search expression [expression2 [...]]
@@ -193,19 +208,16 @@ remove() {
 search() {
     local pm
     pm="$(detect)" || return 1
-    local pm_args
     case "$pm" in
         apt-get)
-            pm="apt-cache" # apt-get doesn't search
-            pm_args=("search" "$@") ;;
+            pm-try-run "apt-cache search $*" ;;
         ccr|pacman)
-            pm_args=("-Ss" "$@") ;;
+            pm-try-run "$pm -Ss $*" ;;
         zypper)
-            pm_args=("se" "$@") ;;
+            pm-try-run "$pm se $*" ;;
         *)
             bad-pm "$pm" ;;
     esac
-    cmd "$pm" "${pm_args[@]}"
 }
 
 ## Usage: upgrade
@@ -213,53 +225,28 @@ search() {
 upgrade() {
     local pm
     pm="$(detect)" || return 1
-    local pm_check # Command to check repo state, if applicable
-    local pm_ref_args # Args to refresh the repos
-    local pm_dl_args  # Args to download updates
-    local pm_up_args  # Args to do the update
+    msg "Running all commands to properly upgrade the system."
     case "$pm" in
         apt-get)
-            unset pm_check
-            pm_ref_args="update"
-            pm_dl_args=("upgrade" "-d")
-            pm_up_args="upgrade" ;;
+            pm-try-run "$pm update"\
+                       "$pm upgrade -d"\
+                       "$pm upgrade" ;;
         ccr)
-            pm_check=mirror-check
-            unset pm_ref_args
-            pm_dl_args="-Syuw"
-            pm_up_args="-Su" ;;
+            pm-try-run "mirror-check"\
+                       "pacman -Syuw"\
+                       "pacman -Su"\
+                       "ccr -Syu --ccronly" ;;
         pacman)
-            unset pm_check
-            pm_ref_args="-Sy"
-            pm_dl_args="-Suw"
-            pm_up_args="-Su" ;;
+            pm-try-run "$pm -Sy"\
+                       "$pm -Suw"\
+                       "$pm -Su" ;;
         zypper)
-            unset pm_check
-            pm_ref_args="ref"
-            pm_dl_args=("up" "-d")
-            pm_up_args="up" ;;
+            pm-try-run "$pm ref"\
+                       "$pm up -d"\
+                       "$pm up" ;;
         *)
             bad-pm "$pm" ;;
     esac
-    if [ -n "$pm_check" ]; then
-        msg "Checking mirror synchronization."
-        if ! cmd "$pm_check"; then
-            err "Mirrors not synchronized."
-            return 1
-        fi
-    else
-        msg "No known mirror synchronization tool for $pm. Continuing."
-    fi
-    if [ -n "${pm_ref_args[*]}" ]; then
-        msg "Refreshing repos"
-        pm-run "$pm" "${pm_ref_args[@]}" || return 1
-    fi # No "else"; assume the function's included below
-    if [ -n "${pm_dl_args[*]}" ]; then
-        msg "Downloading updates."
-        pm-run "$pm" "${pm_dl_args[@]}"  || return 1
-    fi # No "else"; assume the function's included below
-    msg "Upgrading system."
-    pm-run "$pm" "${pm_up_args[@]}"
 }
 
 ## Usage: usage
