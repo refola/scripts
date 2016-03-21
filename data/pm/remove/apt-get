@@ -1,1 +1,1 @@
-$pm autoremove $args
+apt-get autoremove $args

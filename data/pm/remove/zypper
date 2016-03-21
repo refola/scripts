@@ -1,1 +1,1 @@
-$pm rm -u $args
+zypper rm -u $args

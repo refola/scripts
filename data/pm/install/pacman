@@ -1,1 +1,1 @@
-$pm -S $args
+pacman -S $args

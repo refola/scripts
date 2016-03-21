@@ -1,1 +1,1 @@
-$pm -S $args
+ccr -S $args

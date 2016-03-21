@@ -1,3 +1,3 @@
-$pm -Sy
-$pm -Suw
-$pm -Su
+pacman -Sy
+pacman -Suw
+pacman -Su
