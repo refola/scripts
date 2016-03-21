@@ -34,18 +34,20 @@ Developer information:
   operations are defined.
 "
 
-# Package managers, split by frontend status
-pms_frontend=(ccr)
-pms_main=(apt-get pacman zypper)
-# Frontends before the main ones for fancier behavior
-pms=("${pms_frontend[@]}" "${pms_main[@]}")
-
 ## Usage: fatal args ...
 # Runs err with given args and exits the script.
 fatal() {
     echo -e "\e[1;4;91mError\e[0m: $*" 1>&2
     exit 1
 }
+
+# Package managers, split by sudo-using status
+non_sudo_pms=($(get-data "pm/non-sudo-pms")) ||
+    fatal "Could not get list of non-sudo package managers."
+sudo_pms=($(get-data "pm/sudo-pms")) ||
+    fatal "Could not get list of sudo-using package managers."
+# Non-sudo pms first to minimize directly calling sudo.
+pms=("${non_sudo_pms[@]}" "${sudo_pms[@]}")
 
 ## Usage: msg args ...
 # Echos args in fancy style, so it's clear that it's from pm.
@@ -60,14 +62,14 @@ maybe-sudo() {
     if [ "$EUID" = "0" ]; then
         return 0
     else
-        local front="${pms_frontend[*]}"
-        local main="${pms_main[*]}"
+        local zero="${sudo_pms[*]}"
+        local one="${non_sudo_pms[*]}"
         local test
-        test="$(echo -e "$front\n$main" | grep -e "\b$1\b")"
+        test="$(echo -e "$zero\n$one" | grep -e "\b$1\b")"
         case "$test" in
-            "$main")
+            "$zero")
                 return 0 ;;
-            "$front")
+            "$one")
                 return 1 ;;
             *) # Blindly assume that unknown commands don't need sudo.
                 return 1 ;;

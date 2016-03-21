@@ -1,8 +1,7 @@
 This folder contains the package manager operations for the 'pm'
 multi-distro package manager front-end. It is hoped that this system
-will eventually be comprehensive enough to extend pm support to
-additional package managers (and maybe even additional operations!)
-without having to modify or reference pm's code.
+is comprehensive enough to extend pm support to additional package
+managers and operations without having to modify pm's code.
 
 
 ##### Operations #####
@@ -17,15 +16,47 @@ where $pm is the detected package manager name.
 
 ##### Sudo #####
 
-Normally, pm will determine based on $EUID and the name of a command
-whether or not it should prefix a command's invocation with
-"sudo". However, if an operation folder contains a .no-sudo file, then
-the commands for that operation are guaranteed not to use sudo, even
-if they normally would.
+### Determining Which Package Manager To Use Sudo With ###
+
+The "sudo-pms" and "non-sudo-pms" files respectively list the package
+managers for pm to support with and without sudo. Most package
+managers need to be ran with sudo explicitly, though some have that
+functionality built-in akin to how pm works. These files tell pm which
+package manager is which of which type.
+
+For example, "ccr" is in the non-sudo-pms file, so pm will not prefix
+any ccr commands with sudo. However, pacman is in the sudo-pms file,
+so pm will generally run pacman commands with sudo.
+
+### Skipping Possible Sudo Use Based On The Operation ###
+
+Normally, pm will determine based on the name of a command whether or
+not it should prefix a command's invocation with "sudo". However, if
+an operation folder contains a .no-sudo file, then the commands for
+that operation are guaranteed not to use sudo, even if they normally
+would.
 
 For example, the "search" folder contains a .no-sudo file, so "pm
 search pkg-name" will not use sudo, even if it runs a command like
 pacman or apt-get that's usually used with sudo.
+
+### Package Manager Preference ###
+
+pm prefers non-sudo package managers. This is based on the assumption
+that they are package manager front-ends that provide additional
+functionality not found in their distros' corresponding sudo-using
+package managers.
+
+For example, even though Chakra Linux has the pacman command, pm will
+run operations on Chakra via the commands found in ccr ("Chakra
+Community Repository") files instead.
+
+This still works even for operations not supported by pm's chosen
+package manager, since pm just runs a list of commands in a file named
+after the package manager it's nominally using.
+
+For example, the info/ccr file contains "pacman -Qi $args", since the
+ccr front-end doesn't support querying package info, but pacman does.
 
 
 ##### Package Manager Commands #####
