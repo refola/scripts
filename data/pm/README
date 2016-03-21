@@ -1,0 +1,43 @@
+This folder contains the package manager operations for the 'pm'
+multi-distro package manager front-end. It is hoped that this system
+will eventually be comprehensive enough to extend pm support to
+additional package managers (and maybe even additional operations!)
+without having to modify or reference pm's code.
+
+
+##### Operations #####
+
+Each folder corresponds to an operation that pm supports. The symlinks
+are for shorcut commands.
+
+For example, "pm up" will check "up", find that it's a symlink
+pointing to "upgrade", and then run the commands in "upgrade/$pm"
+where $pm is the detected package manager name.
+
+
+##### Sudo #####
+
+Normally, pm will determine based on $EUID and the name of a command
+whether or not it should prefix a command's invocation with
+"sudo". However, if an operation folder contains a .no-sudo file, then
+the commands for that operation are guaranteed not to use sudo, even
+if they normally would.
+
+For example, the "search" folder contains a .no-sudo file, so "pm
+search pkg-name" will not use sudo, even if it runs a command like
+pacman or apt-get that's usually used with sudo.
+
+
+##### Package Manager Commands #####
+
+Within each operation folder are several files named after the package
+managers that pm runs. If pm is invoked with operation $op and finds
+package manager $pm, then pm will run the commands found in the file
+at $op/$pm.
+
+In order to allow per-package-manager control over how pm's arguments
+are handled, the variable "$args" in a command will be replaced with
+any arguments that pm was passed after its operation. For example, if
+pm is ran with "pm in shiny-package" and detects that your system's
+package manager is ccr, then it will read the file at in/ccr, find
+that it contains "ccr -S $args", and then run "ccr -S shiny-package".
