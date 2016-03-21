@@ -97,6 +97,10 @@ pm-op() {
     # $args is used in the eval.
     # shellcheck disable=SC2034
     local args="$*"
+    local no_sudo
+    if [ -f "$(get-data "pm/$op/.no-sudo" -path)" ]; then
+        no_sudo="true"
+    fi
     local raw_cmds
     raw_cmds="$(get-data "pm/$op/$pm")" ||
         fatal "Can't $op with $pm."
@@ -114,7 +118,7 @@ pm-op() {
         # shellcheck disable=SC2086
         set $cmd
         cmd=("$@")
-        if maybe-sudo "${cmd[0]}"; then
+        if [ -z "$no_sudo" ] && maybe-sudo "${cmd[0]}"; then
             cmd=("sudo" "${cmd[@]}")
         fi
         msg "Running ${cmd[*]}"
