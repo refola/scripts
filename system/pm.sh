@@ -28,6 +28,10 @@ Currently supported package managers:
 
 Incomplete functionality:
 * The info command doesn't yet support zypper.
+
+Developer information:
+* Please see $(get-data pm/README -path) for how package manager
+  operations are defined.
 "
 
 # Package managers, split by frontend status
@@ -141,7 +145,7 @@ main() {
             pm-op up
             pm-op 'in' "$@" ;;
         h|'help')
-            usage ;;
+            echo "$usage" ;;
         *)
             # Most commands don't need anything special. Just gotta
             # check that they exist.
