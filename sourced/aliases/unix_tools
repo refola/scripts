@@ -11,5 +11,5 @@ alias fgrep='fgrep --color=tty'
 alias egrep='egrep --color=tty'
 
 # Prompt before losing data
-alias cp='cp -i'
+alias cp='cp -i --reflink=auto' # and be CoW-efficient
 alias mv='mv -i'
