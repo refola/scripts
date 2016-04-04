@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# Output the path of a command. Useful for, e.g., editing the command
-# without typing a bunch of recursive subshell stuff.
+# Output the actual path of a command, resolving symlinks.
 
 if [ -z "$1" ]
 then
@@ -20,5 +19,5 @@ else
         exit 1
     fi
     # get command's path and convert symlinks into canonical paths
-    echo -n "$real"
+    echo "$real"
 fi
