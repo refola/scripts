@@ -1,3 +1,2 @@
-pacman -Sy
-pacman -Suw
+pacman -Syuw --noconfirm
 pacman -Su
