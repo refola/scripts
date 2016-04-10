@@ -240,7 +240,7 @@ volume-dir() {
     local vol=$(sanitize "$1")
     sudo mkdir -p "$internal_snapshot_dir/$vol"
     if [ -n "$external_snapshot_dir" ]; then
-        mkdir -p "$external_snapshot_dir/$vol"
+        sudo mkdir -p "$external_snapshot_dir/$vol"
     fi
 }
 
