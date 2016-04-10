@@ -14,5 +14,5 @@ while true; do
         echo "Low memory! We're down to $available_mb MB!" | write "$USER"
         sleep 10
     fi
-    sleep 0.1
+    sleep 1
 done
