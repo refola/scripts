@@ -16,6 +16,31 @@
 echo "NOTE: This script is meant to be a temporary interim hack. It will be replaced soon."
 echo "NOTE: See scripts/data/ssd2hdds for running this automatically via systemd."
 
+# Set up trapping things to run on exit.
+exit_traps=()
+run-exit-traps() {
+    for i in "${exit_traps[@]}"; do
+        eval "$i"
+    done
+}
+trap run-exit-traps EXIT
+add-exit-trap() {
+    exit_traps+=("$@")
+}
+
+# Make sure this isn't running twice at once
+lockdir="/tmp/.ssd2hdds.sh.lock"
+if mkdir "$lockdir"; then
+    echo "Lock directory created at $lockdir."
+    # Trap lock deletion to exit of script -- make sure nowhere else
+    # uses the same trap.
+    add-exit-trap "rmdir '$lockdir'"
+else
+    echo "Lock directory at $lockdir already exists. Exiting."
+    exit 1
+fi
+
+# Set variables (almost all hard-coded for now...)
 internal_root="/ssd"
 internal_snapshot_dir="@snapshots"
 internal_snapshot_dir="$internal_root/$internal_snapshot_dir"
@@ -31,6 +56,8 @@ external_snapshot_dir="/hdds/@ssd-snaps"
 time="$(date --utc +%F_%H-%M-%S)"
 
 ##### EVERYTHING BELOW THIS IS ORIGINAL backup-btrfs.sh CONTENT #####
+### ... except for the sudo loop code using add-exit-trap and not
+### needing manual cleanup later #####
 
 
 ### btrfs functions ###
@@ -146,26 +173,15 @@ sanitize() {
     echo -n "$1" | tr / -
 }
 
-## Usage: start-sudo; stuff; stop-sudo
+## Usage: start-sudo
 # Activates sudo mode, starts a sudo-refreshing loop, saves the loop's
 # process number to $sudo_pid, and sets a trap to stop the loop when
 # the script exits (e.g., from the user pressing ^C).
-##
-# Note: Failure to run stop-sudo after running this may leave a stray
-# sudo-refreshing process running. I'm don't really understand on
-# which signals `trap` should activate stop-sudo
 start-sudo() {
     sudo -v
     ( while true; do sudo -v; sleep 50; done; ) &
     sudo_pid="$!"
-    trap stop-sudo SIGINT SIGTERM
-}
-
-## Usage: stop-sudo
-# Kills the sudo-refreshing loop and cancels the ^C trap.
-stop-sudo() {
-    kill "$sudo_pid"
-    trap - SIGINT SIGTERM
+    add-exit-trap "kill $sudo_pid"
 }
 
 ## Usage: time_including_volume_path="$(timed-vol volume)"
@@ -228,7 +244,4 @@ for vol in $vols; do
     fi
 done
 
-# Cleanup forked subshell and exit.
-echo "Killing sudo refresher before exiting."
-stop-sudo
 exit
