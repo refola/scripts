@@ -118,8 +118,7 @@ fatal() {
 # features like unix pipes.
 cmd() {
     msg "\e[33msudo $*"
-    ## TODO: uncomment this after checking that everything looks good.
-    #sudo "$@"
+    sudo "$@"
 }
 
 ## Usage: cmd-eval "string to evaluate" [...]
@@ -128,8 +127,7 @@ cmd() {
 # required.
 cmd-eval() {
     msg "\e[33m$*"
-    ## TODO: uncomment this after checking that everything looks good.
-    # eval "$*"
+    eval "$*"
 }
 
 
@@ -176,7 +174,7 @@ clone-or-update() {
         cmd-eval "sudo btrfs send '$from' | sudo btrfs receive '$to_dir'"
     else
         msg "Using mutual parent '$last_parent' to clone '$from'→'$to_dir'"
-        cmd-eval "sudo btrfs send -p '$last_parent' '$from' | sude btrfs receive '$to_dir'"
+        cmd-eval "sudo btrfs send -p '$last_parent' '$from' | sudo btrfs receive '$to_dir'"
     fi
 }
 
