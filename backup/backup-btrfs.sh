@@ -101,20 +101,6 @@ clone-sub() {
     sudo btrfs send "$from" | sudo btrfs receive "$to_dir"
 }
 
-## Usage: clone-up from-parent from-new to-dir
-# Update existing btrfs clone from newer snapshot version.
-##
-# Assumption: to-dir/part_of_from-parent_after_slash is already a
-# clone of from-parent
-##
-# Result: to-dir/part_of_from-new_after_slash is a clone of from-new
-clone-up() {
-    local from_parent=$1
-    local from_new=$2
-    local to_dir=$3
-    sudo btrfs send -p "$from_parent" "$from_new" | sudo btrfs receive "$to_dir"
-}
-
 ## Usage: sync-em
 # Sync, then do "btrfs filesystem sync" for both internal_snapshot_dir
 # and external_snapshot_dir.  It's called "sync-em" as a contraction
