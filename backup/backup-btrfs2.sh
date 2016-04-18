@@ -85,6 +85,9 @@ run-exit-traps() {
         eval "$i"
     done
 }
+# Trapping only on EXIT might not be portable across shells and
+# unices, but btrfs is Linux-only and the shebang at the top of this
+# script ensures it's Bash.
 trap run-exit-traps EXIT
 
 ## Usage: add-exit-trap "quoted commands" "to run with args"
@@ -119,7 +122,59 @@ cmd() {
 }
 
 
-### pre-run sanity checks ###
+### btrfs functions ###
+
+
+
+
+### high-level snapshot actions ###
+
+## Usage: snap action from to subvolumes ...
+# Does the indicated snapshot action with given 'from' and 'to'
+# locations and given subvolume(s). Valid actions are "create" and
+# "copy-latest", respectively creating snapshots within a partition
+# and copying the latest snapshot to another partition.
+snap() {
+    local action="$1"
+    if [ "$action" != "create" -a "$action" != "copy-latest" ]; then
+        fatal "Invalid snap action: '$action'"
+    fi
+    local from="$2"
+    local to="$3"
+    shift 3
+    local subvols=("$@")
+    local sv
+    for sv in "${subvols[@]}"; do
+        sanSv="$(sanitize "$sv")"
+        if [ ! -d "$to/$savSv" ]; then
+            cmd mkdir "$to/$sanSv"
+            if [ "$action" = "copy-latest" ]; then
+                clone "$from/$sanSv/$timestamp" "$to/$sanSv" #TODO
+            fi
+        elif [ "$action" = "copy-latest" ]; then
+            latestThere= #TODO
+            update "$from/$sanSv/$timestamp" "$to/$sanSv" "$latestThere" #TODO
+        fi
+        if [ "$action" = "create" ]; then
+            snapshot "$from/$sv" "$to/$sanSv/$timestamp" #TODO
+        fi
+    done
+}
+
+## Usage: make-snaps from to subvolume [...]
+# Make a btrfs snapshot at 'to' for each given subvolume in 'from'.
+make-snaps() {
+    snap create "$@"
+}
+
+## Usage: copy-latest from to subvolume [...]
+# Copy the latest snapshot(s) for each subvolume in 'from' to 'to'.
+copy-latest() {
+    snap copy-latest "$@"
+}
+
+
+### initial checks and setup ###
 
 # Check that required programs are installed.
 if ! which btrfs get-config > /dev/null; then
@@ -136,14 +191,28 @@ else
     fatal "Could not acquire lock: $lockdir"
 fi
 
+# Make sure sudo doesn't time out.
+sudo -v # activate
+( while true; do sudo -v; sleep 50; done; ) & # keep it running
+add-exit-trap "kill $!" # make sure it stops with the script
 
-### btrfs functions ###
+# Get timestamp for new snapshots.
+timestamp="$(date --utc --iso-8601=seconds)"
 
-## Usage: make-snaps from to subvolume [...]
-# Make a btrfs snapshot at 'to' for each given subvolume in 'from'.
-make-snaps() {
-    ## TODO
-}
 
-## Usage: copy-latest from to subvolume [...]
-# Copy the latest snapshot(s) in 'from' to 
+### main stuff ###
+
+# Still hard-coded, for now...."
+ssd_root="/ssd"
+ssd_snap_dir="$sdd_root/@snapshots"
+ssd_vals=(@chakra @home @home/kelci @home/mark @kubuntu @suse)
+hdds_root="/hdds"
+hdds_snap_dir="$hdds_root/@snapshots"
+hdds_vols=(@fedora @shared)
+ext_root="/run/media/$USER/OT4P"
+hdds_to_ext_vols=("${ssd_vols[@]}" "${hdds_vols[@]}")
+
+make-snaps "$ssd_root" "$ssd_snap_dir" "${ssd_vols[@]}"
+copy-latest "$ssd_snap_dir" "$hdds_snap_dir" "${ssd_vols[@]}"
+make-snaps "$hdds_root" "$hdds_snap_dir" "${hdds_vols[@]}"
+copy-latest "$hdds_snap_dir" "$ext_root" "${hdds_to_ext_vols[@]}"
