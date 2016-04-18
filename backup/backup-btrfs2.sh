@@ -1,6 +1,4 @@
 #!/bin/bash
-echo "THIS ISN'T READY YET!"
-exit 2
 ##
 # backup-btrfs2.sh # TODO: rename to replace backup-btrfs.sh after
 # this is mature.
@@ -82,6 +80,7 @@ exit 2
 # exit trap setup
 exit_traps=()
 run-exit-traps() {
+    local i
     for i in "${exit_traps[@]}"; do
         eval "$i"
     done
@@ -108,7 +107,7 @@ msg() {
 # Outputs the given error message, with a bit of formatting, to
 # stderr, and then exits the script.
 fatal() {
-    echo -e "\e[31mError:\e[0;1m$*\e[0m"
+    echo -e "\e[31mError:\e[0;1m $*\e[0m"
     exit 1
 }
 
@@ -118,7 +117,7 @@ fatal() {
 # script should be ran via cmd. Use 'cmd-eval' if you need shell
 # features like unix pipes.
 cmd() {
-    msg "Running 'sudo $*'"
+    msg "\e[33msudo $*"
     ## TODO: uncomment this after checking that everything looks good.
     #sudo "$@"
 }
@@ -128,7 +127,7 @@ cmd() {
 # variant of cmd, intended for cases where things like unix pipes are
 # required.
 cmd-eval() {
-    msg "Running '$*'"
+    msg "\e[33m$*"
     ## TODO: uncomment this after checking that everything looks good.
     # eval "$*"
 }
@@ -136,18 +135,16 @@ cmd-eval() {
 
 ### not-so-super-top-level utility functions ###
 
-## Usage: last_backup="$(last-backup volume snap-dir)"
-# Get name of last backup for volume in snap-dir, or empty string if
-# there is no backup.
+## Usage: last_backup="$(last-backup backup-dir)"
+# Get name of last backup in given backup directory, or empty string
+# if there is no backup.
 last-backup() {
-    local sanVol="$(sanitize "$1")"
-    local snap_dir="$2"
-    local dir="$snap_dir/$sanVol"
+    local dir="$1"
     # NOTE: This assumes that this script is the only source of items
     # in the snapshot directory
     if [ -n "$(ls "$dir")" ]; then
         # get list of existing snapshots and get last one
-        last="$(find "$dir" -maxdepth 1 -mindepth 1 | sort | tail -n1)"
+        local last="$(find "$dir" -maxdepth 1 -mindepth 1 | sort | tail -n1)"
         # get rid of leading */ and output it
         echo "${last/*\//}"
     fi
@@ -171,12 +168,15 @@ sanitize() {
 clone-or-update() {
     local from="$1"
     local to_dir="$2"
-    latest_there="$(last-backup "$sv" "$to")"
-    if [ -z "$latest_there" ]; then
+    local from_dir="$(dirname "$from")"
+    local last_parent="$from_dir/$(last-backup "$to_dir")"
+
+    if [ -z "$last_parent" ]; then
+        msg "Cloning '$from'→'$to_dir'"
         cmd-eval "sudo btrfs send '$from' | sudo btrfs receive '$to_dir'"
     else
-        from_parent="${from/*\//}"
-        cm-eval "sudo btrfs send -p '$from_parent' '$from' | sude btrfs receive '$to_dir'"
+        msg "Using mutual parent '$last_parent' to clone '$from'→'$to_dir'"
+        cmd-eval "sudo btrfs send -p '$last_parent' '$from' | sude btrfs receive '$to_dir'"
     fi
 }
 
@@ -186,8 +186,8 @@ clone-or-update() {
 snapshot() {
     local from="$1"
     local to="$2"
+    msg "Snapshotting '$from'→'$to'"
     cmd btrfs subvolume snapshot -r "$from" "$to"
-
     # It's currently necessary to sync after snapshotting before using
     # 'btrfs send' for cross-partition snapshot clone/update. See:
     # https://btrfs.wiki.kernel.org/index.php/Incremental_Backup#Initial_Bootstrapping
@@ -199,43 +199,46 @@ snapshot() {
 
 ## Usage: snap action from to subvolumes ...
 # Does the indicated snapshot action with given 'from' and 'to'
-# locations and given subvolume(s). Valid actions are "create" and
+# locations and given subvolume(s). Valid actions are "snapshot" and
 # "copy-latest", respectively creating snapshots within a partition
 # and copying the latest snapshot to another partition.
 snap() {
     local action="$1"
-    if [ "$action" != "create" ] && [ "$action" != "copy-latest" ]; then
+    if [ "$action" != "snapshot" ] && [ "$action" != "copy-latest" ]; then
         fatal "Invalid snap action: '$action'"
     fi
     local from="$2"
     local to="$3"
-    if [ ! -d "$from" ] && [ ! -d "$to" ]; then
-        msg "Missing '$action' origin/destination. Skipping snapshot/clone: '$from'→'$to'."
+    if [ ! -d "$from" ] || [ ! -d "$to" ]; then
+        msg "\e[32mMissing origin/destination for '$from'→'$to', so skipping it."
         return
+    else
+        msg "\e[32mRunning '$action' for '$from'→'$to'."
     fi
     shift 3
     local subvols=("$@")
     local sv
     for sv in "${subvols[@]}"; do
-        sanSv="$(sanitize "$sv")"
+        local sanSv="$(sanitize "$sv")"
         if [ ! -d "$to/$sanSv" ]; then
             cmd mkdir "$to/$sanSv"
         fi
         case "$action" in
             "copy-latest")
                 clone-or-update "$from/$sanSv/$timestamp" "$to/$sanSv" ;;
-            "create")
+            "snapshot")
                 snapshot "$from/$sv" "$to/$sanSv/$timestamp" ;;
             *) # Error...
                 fatal "Invalid action '$action' snuck through check." ;;
         esac
     done
+    echo
 }
 
 ## Usage: make-snaps from to subvolume [...]
 # Make a btrfs snapshot at 'to' for each given subvolume in 'from'.
 make-snaps() {
-    snap create "$@"
+    snap snapshot "$@"
 }
 
 ## Usage: copy-latest from to subvolume [...]
@@ -263,8 +266,8 @@ else
 fi
 
 # Make sure sudo doesn't time out.
-sudo -v # activate
-( while true; do sudo -v; sleep 50; done; ) & # keep it running
+cmd sudo -v # activate
+( while true; do cmd sudo -v; sleep 50; done; ) & # keep it running
 add-exit-trap "kill $!" # make sure it stops with the script
 
 # Get timestamp for new snapshots.
@@ -278,7 +281,7 @@ ssd_root="/ssd"
 ssd_snap_dir="$ssd_root/@snapshots"
 ssd_vols=(@chakra @home @home/kelci @home/mark @kubuntu @suse)
 hdds_root="/hdds"
-hdds_snap_dir="$hdds_root/@snapshots"
+hdds_snap_dir="$hdds_root/snapshots"
 hdds_vols=(@fedora @shared)
 ext_root="/run/media/$USER/OT4P"
 hdds_to_ext_vols=("${ssd_vols[@]}" "${hdds_vols[@]}")
