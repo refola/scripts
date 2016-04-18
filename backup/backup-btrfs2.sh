@@ -167,12 +167,13 @@ clone-or-update() {
     local from="$1"
     local to_dir="$2"
     local from_dir="$(dirname "$from")"
-    local last_parent="$from_dir/$(last-backup "$to_dir")"
+    local last_parent_name="$(last-backup "$to_dir")"
 
-    if [ -z "$last_parent" ]; then
+    if [ -z "$last_parent_name" ]; then
         msg "Cloning '$from'→'$to_dir'"
         cmd-eval "sudo btrfs send '$from' | sudo btrfs receive '$to_dir'"
     else
+        last_parent="$from_dir/$last_parent_name"
         msg "Using mutual parent '$last_parent' to clone '$from'→'$to_dir'"
         cmd-eval "sudo btrfs send -p '$last_parent' '$from' | sudo btrfs receive '$to_dir'"
     fi
@@ -279,12 +280,12 @@ ssd_root="/ssd"
 ssd_snap_dir="$ssd_root/@snapshots"
 ssd_vols=(@chakra @home @home/kelci @home/mark @kubuntu @suse)
 hdds_root="/hdds"
-hdds_snap_dir="$hdds_root/snapshots"
+hdds_snaps="$hdds_root/snapshots"
 hdds_vols=(@fedora @shared)
-ext_root="/run/media/$USER/OT4P"
-hdds_to_ext_vols=("${ssd_vols[@]}" "${hdds_vols[@]}")
+ext_backups="/run/media/$USER/OT4P/backups"
+all_vols=("${ssd_vols[@]}" "${hdds_vols[@]}")
 
 make-snaps "$ssd_root" "$ssd_snap_dir" "${ssd_vols[@]}"
-copy-latest "$ssd_snap_dir" "$hdds_snap_dir" "${ssd_vols[@]}"
-make-snaps "$hdds_root" "$hdds_snap_dir" "${hdds_vols[@]}"
-copy-latest "$hdds_snap_dir" "$ext_root" "${hdds_to_ext_vols[@]}"
+copy-latest "$ssd_snap_dir" "$hdds_snaps" "${ssd_vols[@]}"
+make-snaps "$hdds_root" "$hdds_snaps" "${hdds_vols[@]}"
+copy-latest "$hdds_snaps" "$ext_backups" "${all_vols[@]}"
