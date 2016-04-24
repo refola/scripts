@@ -1,13 +1,9 @@
 #!/bin/bash
 ##
-# backup-btrfs2.sh # TODO: rename to replace backup-btrfs.sh after
-# this is mature.
+# backup-btrfs.sh
 ##
-# This is a rewrite of backup-btrfs.sh, intended to be more-easily
-# composable for more-complex btrfs snapshot/backup goals. In
-# particular, it now has decoupled supports two btrfs uses: making
-# snapshots within a filesystem and efficiently transferring the
-# snapshots to another filesystem.
+# This script snapshots btrfs subvolumes and (incrementally) clones
+# them to other drives.
 ##
 # Please check out this link for underlying btrfs commands used and
 # alternative btrfs backup scripts (which are probably more-advanced
@@ -37,13 +33,13 @@
 
 # Snapshots are stored within the btrfs root in folders named after
 # the subvolumes, with '@' converted to '-' so nested subvolumes work
-# correctly (hopefully you're not using '-' in your subvolume names in
+# correctly (assuming you're not using '-' in your subvolume names in
 # a conflicting way). Within a subvolume's snapshot folder are the
 # actual snapshots, which are named by the ISO-8601-formatted UTC time
-# of script invocation, to second precision, as given by the command
+# of script invocation, to 1-second precision, as given by the command
 # 'date --utc --iso-8601=seconds'.
 
-# On backup filesydstems, snapshots are cloned with the same structure
+# On backup filesystems, snapshots are cloned with the same structure
 # as the snapshots directory.
 
 # Example: Suppose you have subvolumes @distro, @home, and @home/user
@@ -75,28 +71,27 @@
 # /backup/@home-user/2016-04-18T01:24:20+00:00
 
 
-### super-top-level utility functions ###
+### generic utility functions ###
 
-# exit trap setup
+# list of commands to run on exit
 exit_traps=()
+## Usage: trap run-exit-traps EXIT
+# Run everything in ${exit_traps[@]}.
 run-exit-traps() {
     local i
     for i in "${exit_traps[@]}"; do
         eval "$i"
     done
 }
-# Trapping only on EXIT might not be portable across shells and
-# unices, but btrfs is Linux-only and the shebang at the top of this
-# script ensures it's Bash.
-trap run-exit-traps EXIT
+trap run-exit-traps EXIT # Might only work on Linux+Bash.
 
-## Usage: add-exit-trap "quoted commands" "to run with args"
-# Adds a command to the list of things to run on script exit.
+## Usage: add-exit-trap "command1 [arg1 ...]" ...
+# Adds given command(s) to the list of things to run on script exit.
 add-exit-trap() {
     exit_traps+=("$@")
 }
 
-## Usage: msg things to show the user
+## Usage: msg text to display
 # Outputs a message with a bit of formatting. This should be used
 # instead of echo almost everywhere in this script.
 msg() {
@@ -107,7 +102,7 @@ msg() {
 # Outputs the given error message, with a bit of formatting, to
 # stderr, and then exits the script.
 fatal() {
-    echo -e "\e[31mError:\e[0;1m $*\e[0m"
+    echo -e "\e[31mError:\e[0;1m $*\e[0m" >&2
     exit 1
 }
 
@@ -125,38 +120,39 @@ cmd() {
 # Outputs and evals the given string. This is the less-automatic
 # variant of cmd, intended for cases where things like unix pipes are
 # required.
+##
+# NOTE: You need to manually add "sudo" to commands ran with this.
 cmd-eval() {
     msg "\e[33m$*"
     eval "$*"
 }
 
 
-### not-so-super-top-level utility functions ###
+### btrfs utility functions ###
 
-## Usage: last_backup="$(last-backup backup-dir)"
+## Usage: last_backup_time="$(last-backup backup-dir)"
 # Get name of last backup in given backup directory, or empty string
 # if there is no backup.
 last-backup() {
     local dir="$1"
     # NOTE: This assumes that this script is the only source of items
-    # in the snapshot directory
+    # in the snapshot directory.
     if [ -n "$(ls "$dir")" ]; then
-        # get list of existing snapshots and get last one
+        # Get list of existing snapshots and get last one.
         local last="$(find "$dir" -maxdepth 1 -mindepth 1 | sort | tail -n1)"
-        # get rid of leading */ and output it
+        # Get rid of leading */ and output it.
         echo "${last/*\//}"
     fi
 }
 
-## Usage: sanitized="$(sanitize volume)"
-# Sanitize volume's name by turning each '/' into a '-', resulting in
-# a valid folder name.
+## Usage: sanitized="$(sanitize subvolume)"
+# Sanitize a btrfs subvolume's name by turning each '/' into a '-'.
 sanitize() {
     echo -n "$1" | tr / -
 }
 
 
-### basic btrfs functions ###
+### btrfs actions ###
 
 ## Usage: clone-or-update from-snap to-dir
 # Use appropriate btrfs commands to make it so that to-dir contains a
@@ -169,7 +165,7 @@ clone-or-update() {
     local from_dir="$(dirname "$from")"
     local last_parent_name="$(last-backup "$to_dir")"
 
-    if [ -z "$last_parent_name" ]; then
+    if [ -z "$last_parent_name" ]; then # No subvol's found, so bootstrap.
         msg "Cloning '$from'→'$to_dir'"
         cmd-eval "sudo btrfs send '$from' | sudo btrfs receive '$to_dir'"
     else
@@ -187,8 +183,8 @@ snapshot() {
     local to="$2"
     msg "Snapshotting '$from'→'$to'"
     cmd btrfs subvolume snapshot -r "$from" "$to"
-    # It's currently necessary to sync after snapshotting before using
-    # 'btrfs send' for cross-partition snapshot clone/update. See:
+    # It's necessary to sync after snapshotting so that 'btrfs send'
+    # works correctly. See:
     # https://btrfs.wiki.kernel.org/index.php/Incremental_Backup#Initial_Bootstrapping
     sync
 }
@@ -202,26 +198,32 @@ snapshot() {
 # "copy-latest", respectively creating snapshots within a partition
 # and copying the latest snapshot to another partition.
 snap() {
+    # Get variables.
     local action="$1"
+    local from="$2"
+    local to="$3"
+    shift 3
+    local subvols=("$@")
+    # Verify action validity.
     if [ "$action" != "snapshot" ] && [ "$action" != "copy-latest" ]; then
         fatal "Invalid snap action: '$action'"
     fi
-    local from="$2"
-    local to="$3"
+    # Check if the origin and destination are there.
     if [ ! -d "$from" ] || [ ! -d "$to" ]; then
         msg "\e[32mMissing origin/destination for '$from'→'$to', so skipping it."
         return
     else
         msg "\e[32mRunning '$action' for '$from'→'$to'."
     fi
-    shift 3
-    local subvols=("$@")
+    # Loop through all subvolumes.
     local sv
     for sv in "${subvols[@]}"; do
         local sanSv="$(sanitize "$sv")"
+        # Make sure the destination directory exists.
         if [ ! -d "$to/$sanSv" ]; then
-            cmd mkdir "$to/$sanSv"
+            cmd mkdir "$to/$sanSv" # No '-p': $to must already exist.
         fi
+        # Do the applicable action.
         case "$action" in
             "copy-latest")
                 clone-or-update "$from/$sanSv/$timestamp" "$to/$sanSv" ;;
@@ -261,19 +263,26 @@ if cmd mkdir "$lockdir"; then
     # clean up at the end.
     add-exit-trap "cmd rmdir '$lockdir'"
 else
+    # Another copy of the script's probably running. Exit with error.
     fatal "Could not acquire lock: $lockdir"
 fi
 
 # Make sure sudo doesn't time out.
-cmd sudo -v # activate
-( while true; do cmd sudo -v; sleep 50; done; ) & # keep it running
-add-exit-trap "kill $!" # make sure it stops with the script
+msg "Enabling sudo mode."
+cmd sudo -v # Activate.
+( while true; do sudo -v; sleep 50; done; ) & # Keep it running.
+add-exit-trap "kill $!" # Make sure it stops with the script.
 
 # Get timestamp for new snapshots.
 timestamp="$(date --utc --iso-8601=seconds)"
 
 
 ### main stuff ###
+
+# TODO: Figure out a graceful way to handle config. Maybe a handful of
+# lines of Bash as sourced "controller script" is the best way, but
+# I'd really like to figure out a more config-like way to do it if
+# possible.
 
 # Still hard-coded, for now...."
 ssd_root="/ssd"
