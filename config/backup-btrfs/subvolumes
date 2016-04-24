@@ -1,8 +1,0 @@
-@distro-name
-@other-distro
-@home
-@home/guest
-@home/shared
-@home/user1
-@home/user2
-@whatever-subvolume
