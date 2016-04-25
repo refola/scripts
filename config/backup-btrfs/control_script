@@ -1,0 +1,59 @@
+#!/bin/bash
+
+# This is a control script to be ran within backup-btrfs.sh. It should
+# not be ran directly, but the shebang above is useful to tell
+# sufficiently advanced text editors that Bash syntax applies.
+
+# This example covers the author's case of having 3 different btrfs
+# partitions and moving data in an 'A→B→C' pattern between them.
+
+## Here's the flow of data.
+# A's subvolumes are snapshotted to A.
+# A's snapshots are sent to B.
+# B's subvolumes are snapshotted to B.
+# B's snapshots, including its copies of A's snapshots, are sent to C.
+
+## Here's what each drive is.
+### A: SSD
+## This is the fast-but-small solid-state drive that contains most
+## stuff. Because there's no redundancy in case of drive failure, it's
+## important to clone all data from here to the HDDs on a frequent
+## basis.
+### B: HDDs
+## This is a pair of large spinning platter drives in a btrfs RAID1
+## array. Even though B consists of two physical disks, it is treated
+## as a single volume. This is regularly updated to have fresh copies
+## of A, and also has some subvolumes of its own that don't fit on the
+## SSD.
+### C: External drive
+## This is an old USB 2.0 drive that is only used for backups. USB 2.0
+## is slow, so it's important for backups to be as efficiently
+## incremental as possible.
+
+# Where the SSD data starts
+ssd_root="/ssd"
+# Where the SSD subvolumes are meant to be snapshotted to
+ssd_snap_dir="$ssd_root/@snapshots"
+# All the subvolumes in the SSD
+ssd_vols=(@chakra @home @home/kelci @home/mark @kubuntu @suse)
+
+# Where the HDD data starts
+hdds_root="/hdds"
+# Where the SSD->HDDs backups and HDDs backups are stored
+hdds_snaps="$hdds_root/snapshots"
+# HDDs-specific subvolumes
+hdds_vols=(@fedora @shared)
+
+# Where the backups are stored on the external drive
+ext_backups="/run/media/$USER/OT4P/backups"
+# Every subvolume to be transferred from HDDs to external drive
+all_vols=("${ssd_vols[@]}" "${hdds_vols[@]}")
+
+# Snapshot data on the SSD
+make-snaps "$ssd_root" "$ssd_snap_dir" "${ssd_vols[@]}"
+# Copy latest snapshots from the SSD to the HDDs
+copy-latest "$ssd_snap_dir" "$hdds_snaps" "${ssd_vols[@]}"
+# Snapshot HDDs-specific data
+make-snaps "$hdds_root" "$hdds_snaps" "${hdds_vols[@]}"
+# Copy everything to the external drive
+copy-latest "$hdds_snaps" "$ext_backups" "${all_vols[@]}"

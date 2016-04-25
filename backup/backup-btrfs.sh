@@ -279,22 +279,29 @@ timestamp="$(date --utc --iso-8601=seconds)"
 
 ### main stuff ###
 
-# TODO: Figure out a graceful way to handle config. Maybe a handful of
-# lines of Bash as sourced "controller script" is the best way, but
-# I'd really like to figure out a more config-like way to do it if
-# possible.
+# TODO: Rewrite to use command line arguments: backup, install, uninstall
 
-# Still hard-coded, for now...."
-ssd_root="/ssd"
-ssd_snap_dir="$ssd_root/@snapshots"
-ssd_vols=(@chakra @home @home/kelci @home/mark @kubuntu @suse)
-hdds_root="/hdds"
-hdds_snaps="$hdds_root/snapshots"
-hdds_vols=(@fedora @shared)
-ext_backups="/run/media/$USER/OT4P/backups"
-all_vols=("${ssd_vols[@]}" "${hdds_vols[@]}")
+config_use="List of commands to run for backup-btrfs. This is actually
+a mini script used to control whach backup-btrfs does. It works by
+calling the 'make-snaps' and 'copy-latest' functions with the desired
+arguments. Each of these functions works as follows:
 
-make-snaps "$ssd_root" "$ssd_snap_dir" "${ssd_vols[@]}"
-copy-latest "$ssd_snap_dir" "$hdds_snaps" "${ssd_vols[@]}"
-make-snaps "$hdds_root" "$hdds_snaps" "${hdds_vols[@]}"
-copy-latest "$hdds_snaps" "$ext_backups" "${all_vols[@]}"
+function origin destination subvolumes ...
+
+Snapshot or clone given subvolumes from 'origin' to 'destination'.
+
+The only difference is that 'make-snaps' makes snapshots within a
+drive and 'copy-latest' copies the (latest) snapshot of each subvolume
+to another drive.
+
+If any of this is confusing, please choose to edit the default config.
+It is a good and nicely-commented example."
+
+old_IFS="$IFS" # Save old IFS.
+IFS=$'\n' # Separate control script by line.
+config=( $(get-config backup-btrfs/control_script -what-do\
+                      "$config_use" -verbatim) )
+IFS="$old_IFS" # Go back to normal IFS.
+for line in "${config[@]}"; do
+    eval "$line"
+done
