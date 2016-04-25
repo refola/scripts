@@ -1,9 +1,12 @@
-Here's how to set ssd2hdds.sh to run regularly via systemd.
+Here's how to set backup-btrfs.sh to run regularly via systemd.
 
 # after cd'ing to here
-sudo cp "$(readlink -f "$(which ssd2hdds)")" /sbin # copy script
-sudo cp ./ssd2hdds.{timer,service} /etc/systemd/system # copy units
-sudo systemctl enable ssd2hdds.service # needed for timer
-sudo systemctl enable ssd2hdds.timer # run it "often enough"
-sudo systemctl start ssd2hdds.timer # start it without rebooting
+sudo cp "$(readlink -f "$(which backup-btrfs)")" /sbin # copy script
+sudo cp ./backup-btrfs.{timer,service} /etc/systemd/system # copy units
+sudo systemctl enable backup-btrfs.service # needed for timer
+sudo systemctl enable backup-btrfs.timer # run it "often enough"
+sudo systemctl start backup-btrfs.timer # start it without rebooting
 systemctl list-timers # check that it's working
+
+# TODO: Add "install" and "uninstall" options to backup-btrfs.sh to
+# automate this and the reverse.

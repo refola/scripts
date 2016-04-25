@@ -1,8 +1,0 @@
-# Run script to make btrfs snapshots of Mark Haferkamp's 2016-04-11 SSD setup and (incrementally) clone the snapshots to Mark's two-HDD btrfs RAID1 setup. This script is so improper that I don't even know why I'm bothering with this description.
-
-[Unit]
-Description=btrfs snapshot ssd contents to btrfs raid1 hdd array
-
-[Service]
-Type=oneshot
-ExecStart=/sbin/ssd2hdds.sh

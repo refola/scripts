@@ -1,0 +1,9 @@
+# Run script to make btrfs snapshots and (incrementally) clone the
+# snapshots between devices.
+
+[Unit]
+Description=btrfs snapshot and clone between devices
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/backup-btrfs.sh

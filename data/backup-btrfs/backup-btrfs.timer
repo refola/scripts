@@ -1,0 +1,12 @@
+# Run backup-btrfs.sh 5 minutes after bootup and "often enough"
+# afterwards.
+
+[Unit]
+Description=btrfs snapshot and clone between devices
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=1h
+
+[Install]
+WantedBy=timers.target
