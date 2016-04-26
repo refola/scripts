@@ -6,4 +6,4 @@ Description=btrfs snapshot and clone between devices
 
 [Service]
 Type=oneshot
-ExecStart=/sbin/backup-btrfs backup
+ExecStart=/sbin/backup-btrfs.installed
