@@ -370,6 +370,7 @@ install() {
     msg "echo \"\$script\" > \"$tmp_path\""
     echo "$script" > "$tmp_path"
     cmd cp "$tmp_path" "$install_path"
+    cmd chmod +x "$install_path"
     cmd rm "$tmp_path"
 
     # Copy systemd units.
