@@ -107,9 +107,9 @@ fatal() {
 }
 
 ## Usage: cmd command [args ...]
-# Outputs and runs the given command with the given args, prefixit the
-# whole thing with sudo. Every simple system-changing command in this
-# script should be ran via cmd. Use 'cmd-eval' if you need shell
+# Outputs and runs the given command with the given args, prefixing
+# the whole thing with sudo. Every simple system-changing command in
+# this script should be ran via cmd. Use 'cmd-eval' if you need shell
 # features like unix pipes.
 cmd() {
     msg "\e[33msudo $*"
@@ -274,7 +274,11 @@ init() {
     # Make sure sudo doesn't time out.
     msg "Enabling sudo mode."
     cmd sudo -v # Activate.
-    ( while true; do cmd sudo -v; sleep 50; done; ) & # Keep it running.
+
+    # This loop repeatedly runs "sudo -v" to keep sudo from timing
+    # out, enabling the script to continue as long as necessary,
+    # without post-startup interaction.
+    ( while true; do sudo -v; sleep 50; done; ) &
     add-exit-trap "kill $!" # Make sure it stops with the script.
 
     # Get timestamp for new snapshots.
