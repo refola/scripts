@@ -51,8 +51,8 @@ all_vols=("${ssd_vols[@]}" "${hdds_vols[@]}")
 
 # Snapshot data on the SSD
 make-snaps "$ssd_root" "$ssd_snap_dir" "${ssd_vols[@]}"
-# Copy latest snapshots from the SSD to the HDDs
-copy-latest "$ssd_snap_dir" "$hdds_snaps" "${ssd_vols[@]}"
+# Copy latest snapshots from the SSD to the HDDs and delete the old SSD parent snapshots
+copy-latest-and-delete-origins-parent-snapshots "$ssd_snap_dir" "$hdds_snaps" "${ssd_vols[@]}"
 # Snapshot HDDs-specific data
 make-snaps "$hdds_root" "$hdds_snaps" "${hdds_vols[@]}"
 # Copy everything to the external drive
