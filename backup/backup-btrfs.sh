@@ -21,11 +21,6 @@
 # "always" made (the exception being if this script on somehow
 # finishes in under a second on your system).
 
-# This does not delete old snapshots. You'll need to (manually) delete
-# them before drive space fills up (e.g., with 'btrfs sub del
-# /path/to/snapshots/2016-01-02-*' for deleting all snapshots from
-# 2016, January 2nd).
-
 
 ### filesystem layout ###
 
