@@ -1,14 +1,20 @@
 #!/bin/bash
 
+# This assumes that cdh is a function that sources this script.
+
+local usage="Usage: cdh [path]
+
+If path is given, then change the working directory to the given path
+and sets \$H to the path.
+
+Otherwise, changes the working directory to \$H if it isn't already,
+and display this usage message if it is."
+
 if [ -z "$1" ]
 then
     if [ "$PWD" = "$H" ]
     then
-        # This assumes that cdh is a function that sources this script.
-        echo "Usage: cdh [path]"
-        echo "Changes the working directory to the given path"
-        echo "and sets \$H to the path. Otherwise changes the"
-        echo "working directory to \$H."
+        echo "$usage"
     else
         cd "$H"
     fi
