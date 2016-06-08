@@ -1,1 +1,1 @@
-zypper se $args
+zypper search $args

@@ -1,1 +1,1 @@
-zypper in $args
+zypper install $args

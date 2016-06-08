@@ -1,3 +1,3 @@
-zypper ref
-zypper up -d
-zypper up
+zypper refresh
+zypper update --download-only --no-confirm
+zypper update
