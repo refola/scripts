@@ -3,6 +3,8 @@
 # This contains everything that's done when a Bash prompt happens,
 # namely setting: history behaviour, PROMPT_COMMAND, PS1, and PS2.
 
+# Make sure all _lowercase_ functions are unset before exiting.
+
 
 ## Environment variables for controlling Bash history
 
@@ -25,32 +27,40 @@ pcmd() {
     echo -n "$append;$read;$save;$zero"
 }
 export PROMPT_COMMAND="$(pcmd)"
-unset pcmd
 
-# Get a properly-escaped color code.
-# Make sure to unset this at the end.
+# Get a properly-escaped color code. The surrounding "\[\]" are to
+# tell Bash that the color code doesn't count towards the prompt's
+# length.
 color() { echo -n "\[\e[$1m\]"; }
+
+# echo a bright ">" if everything's okay, otherwise echo a red "?"
+_PS1_STATUS() {
+    local status="$?"
+    if [ "$status" != 0 ]; then
+        echo -e '\e[1;31m'"$status!"
+    fi
+}
 
 # Set PS1.
 ps1() {
     local brown="$(color '0;33')"
-    local hm="\$(date +%H%M)"
+    local hm='\D{%H%M}'
     local dark="$(color '1;30')"
-    local sec="\$(date +:%S)"
+    local sec='\D{%S}'
     local green="$(color '0;32')"
-    # \$(echo '~') is the only way I've found to get a literal ~ in
-    # $PS1 in both Bash 4.2 and 4.3. 4.3 requires ~ to be escaped,
-    # while 4.2 shows the characters used to escape ~ in 4.3. Using
-    # "bling quoting" like $'~' works in an echo command in 4.3, but
-    # does not work as part of $PS1. See also
-    # http://stackoverflow.com/a/24347937/619001 .
-    local dir="\${PWD/#\$H/\$(echo '~')}"
+    # Not quite '~', as a workaround for Bash oddness. See <ref> for
+    # details on the issues involved.
+    # ref: http://stackoverflow.com/a/24347937/619001
+    local fake_tilde="∼"
+    local dir="\${PWD/#\$H/$fake_tilde}"
     local bright="$(color '1;37')"
-    local off="$(color '0')"
-    echo -n "$brown$hm$dark$sec$green$dir$bright> $off"
+    local status="$bright>\$(_PS1_STATUS)"
+    local off="$(color 0)"
+    echo -n "$brown$hm$dark:$sec$green$dir$status $off"
+    # Result:
+    # \[\e[0;33m\]\D{%H%M}\[\e[1;30m\]:\D{%S}\[\e[0;32m\]${PWD/#$H/∼}\[\e[1;37m\]>$(_PS1_STATUS) \[\e[0m\]
 }
 export PS1="$(ps1)"
-unset ps1
 
 # Set PS2.
 ps2() {
@@ -59,9 +69,8 @@ ps2() {
     echo -n "$cyan> $off"
 }
 export PS2="$(ps2)"
-unset ps2
 
-unset color
+unset pcmd color ps1 ps2
 
 # See <ref> for Bash "eternal history" which might be adaptable to
 # personal customizations and not losing history entered in one
