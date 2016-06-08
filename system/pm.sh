@@ -26,8 +26,10 @@ Currently supported package managers:
 * pacman (Arch, Chakra, Kaos, etc)
 * zypper (openSUSE)
 
-Incomplete functionality:
+Limitations:
 * The info command doesn't yet support zypper.
+* This works by checking for the existence of a package manager, but
+  it should check 'ID=' and 'ID_LIKE' in /etc/os-release instead.
 
 Developer information:
 * Please see $(get-data pm/README -path) for how package manager
@@ -135,7 +137,11 @@ pm-op() {
 ## Usage: main "$@"
 # Do everything.
 main() {
-    local op="${1:-help}"
+    if [ -z "$1" ]; then
+        echo "$usage"
+        exit 1
+    fi
+    local op="$1"
     shift
     case "$op" in
         det|detect)
