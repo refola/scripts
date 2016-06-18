@@ -51,18 +51,18 @@ Config paths are as follows.
 Defaults:     $defaults_prefix
 Live configs: $config_prefix
 
-NOTE: Your script must exit if $(basename "$0") exits with a non-zero
+\e[0;31mNOTE\e[0m: Your script must exit if $(basename "$0") exits with a non-zero
 status. Otherwise it will run with an almost-certainly-invalid blank
 config. Here's a helper function that you can use. Yes, it's a lot of
 boilerplate code. But it's the best available until finding a satisfactory way
 of reusing common code that must be sourced to have the desired effect. Maybe
 an updated $(basename "$0") will allow something like:
- . \"\$($(basename "$0") -helper prefix fn_name)\"
+\e[0;1m . \"\$($(basename "$0") -helper prefix fn_name)\"\e[0m
 to generate a sourcable script for getting configs with given prefix
 via a function of given fn_name.
 
-# Shortcut function to get a config with description, exiting on fail.
-_script_name=\"foo\"
+\e[0;32m# Shortcut function to get a config with description, exiting on fail.
+\e[0;1m_script_name=\"foo\"
 get() {
     local var_name=\"\$1\"
     local cfg_name=\"\$2\"
@@ -70,16 +70,16 @@ get() {
     local result
     result=\"\$(get-config \"\$_script_name/\$cfg_name\" -what-do \"\$cfg_desc\")\"
     if [ \$? != \"0\" ]; then
- echo \"Error getting config \$cfg_name. Exiting.\" >&2
- exit 1
+        echo \"Error getting config \$cfg_name. Exiting.\" >&2
+        exit 1
     else
         # Save config to variable.
- eval \"\$var_name='\$result'\"
+        eval \"\$var_name='\$result'\"
     fi
 }
-# Get the config.
-get var_name config_name \"config description\"
-"
+\e[0;32m# Get the config.
+\e[0;1mget var_name config_name \"config description\"
+\e[0m"
 
 # Global variables: Set by main, but defined here for clarity.
 config_name=""           # The full config name, including the script,
@@ -114,7 +114,7 @@ copy_default_config() {
 ## Usage: color code text
 # Adds code to make text color.
 color() { echo -n "\e[${1}m${*:2}\e[0m"; } # "{*:2}" to output 1 string.
-# Shortcut functions to change text color.
+# Shortcut functions for specific colors.
 red() { color '0;31' "$@"; }
 yellow() { color '1;33' "$@"; }
 
@@ -142,7 +142,7 @@ can_read_config() {
         explain_config
         # Echo question separately because 'read' does not support color codes.
         echo -e -n "[$(yellow A)]bort (default) / use [$(yellow D)]efault config / [$(yellow E)]dit config? "
-        local ans; read -n1 ans
+        local ans; read -r -n1 ans
         echo # because 'read' doesn't
         case "$ans" in
             [dD] ) copy_default_config
@@ -222,7 +222,7 @@ main() {
     elif [ -z "$config_name" ]; then
         # If no config name is passed, then this cannot run.
         error "Missing mandatory argument: configuration name."
-        echo "$usage" >&2
+        echo -e "$usage" >&2
         exit 1
     elif [ -n "$path_only" ]; then
         # Just echo the path and exit.
