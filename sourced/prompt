@@ -1,12 +1,14 @@
 #!/bin/bash
 
+# Custom Bash prompt action and display configuration file
+
 # This contains everything that's done when a Bash prompt happens,
 # namely setting: history behaviour, PROMPT_COMMAND, PS1, and PS2.
+##
+# Note: Make sure all _lowercase_ functions are unset before exiting.
 
-# Make sure all _lowercase_ functions are unset before exiting.
 
-
-## Environment variables for controlling Bash history
+## Set custom Bash history management
 
 # History file control to go with fancy PROMPT_COMMAND stuff
 export HISTFILE="$HOME/.bash_history" # This will always be empty....
@@ -17,63 +19,97 @@ export HISTCONTROL="ignoreboth" # "both" = duplicate commands and whitespace
 shopt -s histappend # Append history entries
 shopt -s cmdhist # Store multiline commands as single commands
 
-
 # Set PROMPT_COMMAND.
 pcmd() {
     local append="history -a"
     local read="history -n"
     local save="cat $HISTFILE >> \"${HISTARCHIVE}/\$(date --utc +%F)\""
     local zero="> $HISTFILE"
-    echo -n "$append;$read;$save;$zero"
+    echo -n "$append; $read; $save; $zero"
 }
 export PROMPT_COMMAND="$(pcmd)"
 
+
+## Set custom prompts
+
 # Get a properly-escaped color code. The surrounding "\[\]" are to
 # tell Bash that the color code doesn't count towards the prompt's
-# length.
+# length. This also means that the color codes will mess up Bash's
+# perceived prompt length if they are used inside functions. Don't
+# abuse color codes in functions called by $PS1; only use directly
+# insise the "ps1" and "ps2" functions. Please also note that Bash
+# will interpret each semicolon inside of, e.g., "0;1;36" (causing
+# "cyan" text) as a statement separator, so you must quote complex
+# colors codes.
 color() { echo -n "\[\e[$1m\]"; }
 
-# echo a bright ">" if everything's okay, otherwise echo a red "?"
+# Echo a literal "~" in a way that should hopefully work with _any_
+# 4.x version of Bash, and spit out the starting status code so other
+# stuff works later. See <ref> for details on why such a workaround is
+# required to get a consistent literal "~".
+##
+# ref: http://stackoverflow.com/a/24347937/619001
+_PS1_LITERAL_TILDE_WITHOUT_SIDE_EFFECTS() {
+    local status="$?"
+    echo -n '~'
+    return "$status"
+}
+
+# Echo the status code and "!" if there was a problem with the last
+# command, then returns the starting status code, in case something
+# else needs it later.
 _PS1_STATUS() {
     local status="$?"
     if [ "$status" != 0 ]; then
-        echo -e '\e[1;31m'"$status!"
+        echo -e "$status!"
     fi
+    return "$status"
 }
 
 # Set PS1.
 ps1() {
+    # Time stuff
     local brown="$(color '0;33')"
     local hm='\D{%H%M}'
     local dark="$(color '1;30')"
     local sec='\D{%S}'
+    local time="$brown$hm$dark:$sec"
+
+    # Directory stuff
     local green="$(color '0;32')"
-    # Not quite '~', as a workaround for Bash oddness. See <ref> for
-    # details on the issues involved.
-    # ref: http://stackoverflow.com/a/24347937/619001
-    local fake_tilde="∼"
-    local dir="\${PWD/#\$H/$fake_tilde}"
-    local bright="$(color '1;37')"
-    local status="$bright>\$(_PS1_STATUS)"
+    local tilde='$(_PS1_LITERAL_TILDE_WITHOUT_SIDE_EFFECTS)'
+    local dir="$green\${PWD/#\$H/$tilde}"
+
+    # Status code and "> " prompt
+    local bright="$(color '0;1')"
+    local red="$(color '1;31')"
+    local status="$bright>$red\$(_PS1_STATUS) "
+
+    # Echo the whole thing, returning colors back to normal at the end
     local off="$(color 0)"
-    echo -n "$brown$hm$dark:$sec$green$dir$status $off"
+    echo -n "$time$dir$status$off"
     # Result:
-    # \[\e[0;33m\]\D{%H%M}\[\e[1;30m\]:\D{%S}\[\e[0;32m\]${PWD/#$H/∼}\[\e[1;37m\]>$(_PS1_STATUS) \[\e[0m\]
+    # \[\e[0;33m\]\D{%H%M}\[\e[1;30m\]:\D{%S}\[\e[0;32m\]${PWD/#$H/$(_PS1_LITERAL_TILDE_WITHOUT_SIDE_EFFECTS)}\[\e[1;37m\]>\[\e[1;31m\]$(_PS1_STATUS) \[\e[0m\]
 }
 export PS1="$(ps1)"
 
 # Set PS2.
 ps2() {
     local cyan="$(color '0;36')"
-    local off="$(color '0')"
+    local off="$(color 0)"
     echo -n "$cyan> $off"
 }
 export PS2="$(ps2)"
 
+
+## Unset all lowercase functions
 unset pcmd color ps1 ps2
+
+
+## Note for a future project idea
 
 # See <ref> for Bash "eternal history" which might be adaptable to
 # personal customizations and not losing history entered in one
 # terminal when also using another.
-
+##
 # ref: http://www.debian-administration.org/articles/543
