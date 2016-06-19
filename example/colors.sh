@@ -43,14 +43,25 @@ code-enabling string, and follow your text by the null-code
 string. The code-enabling strings are made by surrounding the codes by
 '\e[' and 'm', and separating the codes by ';'. Here's an example:
 
-echo -e '\e[3;4;30;106mRunning this gets you italic, underlined, dark text on a pink background.\e[0m'"
+echo -e '\e[0;3;4;30;106mRunning this gets you italic, underlined, dark text on a pink background.\e[0m'
 
-echo "$info"
-echo
+Note the '0;' at the beginning of the code-enabling string. That's to
+clear out other formatting that may have gone before. Color codes
+replace other color codes of the same type (i.e., foreground vs
+background), but '\e[0m' and such is the only way I know to clear
+other formatting, and it clears all formatting."
 
-block 0 normal
-block 1 bold
-block 3 italic
-block 4 underline
-block 5 blink
-block 7 "perma-swap foreground and background"
+if [ "$1" = "info" ]; then
+    echo "$info"
+    echo
+else
+    echo "Here's the color code reference. Run '$(basename "$0") info'"
+    echo "for information about how *nix console color codes work."
+    echo
+    block 0 normal
+    block 1 bold
+    block 3 italic
+    block 4 underline
+    block 5 blink
+    block 7 "perma-swap foreground and background"
+fi
