@@ -1,1 +1,0 @@
-/home/minecraft/server/minecraft_server.sh
