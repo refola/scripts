@@ -15,7 +15,7 @@ fi
 # convenience for pretty formatting with colors.
 msg () {
     if [ "$VERBOSE" = "true" ]; then
-        echo -e "$@\e[0m"
+        echo -e "$@" "\e[0m"
     fi
 }
 msg "\e[32m\$VERBOSE\e[0;1m=\e[32m$VERBOSE"
@@ -23,8 +23,8 @@ msg "\e[32m\$VERBOSE\e[0;1m=\e[32m$VERBOSE"
 # Where we are: the place that everything's relative to
 here="$(dirname "$(readlink -f "$0")")"
 # Be here now, because absolute coordinates are a pain.
-cd "$here"
-msg "\e[34mAt\e[35m $(pwd)."
+cd "$here" || exit 1
+msg "\e[92mAt\e[35m $(pwd)"
 
 # Directories to skip, via regex patterns that will be
 # concatenated. For example, "\." will skip all items that have a
@@ -48,8 +48,7 @@ test
 # the outer-most pipes to avoid matching the empty string that's
 # contained within everything we don't want to skip.
 skip_pattern="$(echo -n "$skip_dirs" | tr $'\n' '|' | cut -c2- | rev | cut -c2- | rev)"
-msg -n "\e[33mSkipped item regex: "
-msg "\e[35m$skip_pattern"
+msg "\e[92mSkipped item regex \e[35m$skip_pattern"
 
 # Where to make the symlinks
 bin="./bin"
@@ -57,7 +56,7 @@ bin="./bin"
 # Usage: nuke
 # Removes everything in $BIN and remakes the directory.
 nuke () {
-    msg "\e[33mReplacing \e[35m$bin\e[0;1m with blank folder."
+    msg "\e[33mReplacing \e[35m$bin\e[33m with blank folder"
     rm -r "$bin"
     mkdir "$bin"
 }
@@ -105,7 +104,7 @@ process() {
 main() {
     echo -e "\e[33mRebuilding \e[35m$bin....\e[0m"
     if [ -z "$VERBOSE" ]; then
-        echo "(Run this script with '-v' for verbose mode.)"
+        echo -e "\e[34m(Run this script with '-v' for verbose mode.)\e[0m"
     fi
     nuke
     local item
