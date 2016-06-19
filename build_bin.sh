@@ -1,41 +1,45 @@
 #!/bin/bash
 
-# rebuild_bin.sh
+# build_bin.sh
 
 # Go through all the scripts and make shortcuts in ./bin, stripping
 # the .sh.
 
 # Output control
-if [ "$1" = "-v" ]
-then
+if [ "$1" = "-v" ]; then
     VERBOSE="true"
 fi
-# Usage: msg message
-# If in verbose mode, echo what's passed. Otherwise don't.
+## Usage: msg message
+# If in verbose mode, call echo with "-e", what's passed, and a
+# trailing "\e[0m". Otherwise don't. The "-e" and "\e[0m" are a
+# convenience for pretty formatting with colors.
 msg () {
-    if [ "$VERBOSE" = "true" ]
-    then
-	echo "$@"
+    if [ "$VERBOSE" = "true" ]; then
+        echo -e "$@\e[0m"
     fi
 }
-msg "VERBOSE=$VERBOSE"
+msg "\e[32m\$VERBOSE\e[0;1m=\e[32m$VERBOSE"
+
+# Where we are: the place that everything's relative to
+here="$(dirname "$(readlink -f "$0")")"
+# Be here now, because absolute coordinates are a pain.
+cd "$here"
+msg "\e[34mAt\e[35m $(pwd)."
 
 # Directories to skip, via regex patterns that will be
 # concatenated. For example, "\." will skip all items that have a
 # literal dot (".") in their name.
-## Note: This list is hard-coded and not moved to config (to be gotten
-## via 'SKIP_DIRS="$(get-config build_bin/skip_dirs)"') because this
-## script is not allowed to have dependencies beyond Bash and basic
-## *nix utilities.
-# Note: The dot in '\.' must be escaped for egrep.
-SKIP_DIRS="
-\.
+##
+# Note: This list is hard-coded and not retrieved by get-config
+# because this script is uniquely forbidden from having dependencies
+# beyond Bash and common *nix utilities.
+skip_dirs="
+\..*
 bash_custom
 bin
 config
 data
 example
-fun
 sourced
 test
 "
@@ -43,75 +47,75 @@ test
 # Build the skip pattern by converting newlines to pipes and removing
 # the outer-most pipes to avoid matching the empty string that's
 # contained within everything we don't want to skip.
-SKIP_PATTERN="$(echo -n "$SKIP_DIRS" | tr $'\n' '|' | cut -c2- | rev | cut -c2- | rev)"
-
-# Where we are: the place that everything's relative to
-HERE="$(dirname "$(readlink -f "$0")")"
-msg "We are at $HERE."
+skip_pattern="$(echo -n "$skip_dirs" | tr $'\n' '|' | cut -c2- | rev | cut -c2- | rev)"
+msg -n "\e[33mSkipped item regex: "
+msg "\e[35m$skip_pattern"
 
 # Where to make the symlinks
-BIN="$HERE/bin"
-msg "We are making links at $BIN."
+bin="./bin"
 
 # Usage: nuke
 # Removes everything in $BIN and remakes the directory.
 nuke () {
-    msg "Nuking $BIN."
-    rm -r "$BIN"
-    msg "Making new $BIN."
-    mkdir "$BIN"
+    msg "\e[33mReplacing \e[35m$bin\e[0;1m with blank folder."
+    rm -r "$bin"
+    mkdir "$bin"
 }
 
 # Usage: target path
 # Outputs how the given script should be targetted in a link.
 target () {
-    local target="$(realpath --no-symlinks --relative-to "$BIN" "$1")"
+    local target="$(realpath --no-symlinks --relative-to "$bin" "$1")"
     echo -n "$target"
 }
 
 # Usage: name path
 # Outputs how a link to the given script path should be named.
 name () {
-    echo -n "$BIN/$(basename "$1" | rev | cut -c4- | rev)"
+    # The "rev-cut-rev part gets rid of everything after the 4th-last
+    # character, e.g., "script.sh" -> "script".
+    echo -n "$bin/$(basename "$1" | rev | cut -c4- | rev)"
 }
 
 # Usage: process item [depth]
-# Recursively adds links to scripts in directory to $HERE/bin.
+# Recursively adds links to scripts in directory to $here/bin.
 process() {
-    if [ -d "$1" ]
-    then
-	msg "Processing $1 recursively."
-	for item in $(ls -A "$1" | grep -v '~')
-	do
-	    process "$1/$item"
-	done
-	# If $1 is a regular file and is executable
-    elif [ -f "$1" -a -x "$1" ]
-    then
-	local TARGET="$(target "$1")"
-	local NAME="$(name "$1")"
-	msg "$NAME -> $TARGET"
-	ln -s "$TARGET" "$NAME"
-    else
-	msg "Cannot process $1."
+    if [ -d "$1" ]; then # Directory
+        if [ -L "$1" ]; then # symlink
+            msg "\e[31mSkipping directory symlink \e[35m$1"
+        else
+            msg "\e[92mAt folder \e[35m$1"
+            local item
+            for item in "$1"/*; do
+                if [ "$(echo -n "$item" | tail -c1)" != "~" ]; then # Skip temporary/backup files from text editors.
+                    process "$item"
+                fi
+            done
+        fi
+    elif [ -f "$1" ] && [ -x "$1" ]; then # Regular executable file
+        local target="$(target "$1")"
+        local name="$(name "$1")"
+        msg "\e[33mLinking \e[35m$name \e[0;92m-> \e[35m$target"
+        ln -s "$target" "$name"
+    else # Who knows what this is?
+        msg "\e[31mNot processing \e[35m$1"
     fi
 }
 
 main() {
-    echo "Rebuilding $BIN. (Run this script with '-v' for verbose mode.)"
+    echo -e "\e[33mRebuilding \e[35m$bin....\e[0m"
+    if [ -z "$VERBOSE" ]; then
+        echo "(Run this script with '-v' for verbose mode.)"
+    fi
     nuke
-    for item in $(ls -A "$HERE" | grep -E -v "$SKIP_PATTERN")
-    do
-	local ITEM="$HERE/$item"
-	if [ -d "$ITEM" ]
-	then
-	    process "$ITEM"
-	else
-	    msg "Not processing $ITEM"
-	fi
+    local item
+    for item in *; do
+        # If it _doesn't_ match the skip pattern and _is_ a directory
+        if echo -n "$item" | grep -qEv "$skip_pattern" && [ -d "$item" ]; then
+            process "$item"
+        fi
     done
-    echo "Done."
+    echo -e "\n\e[33mDone \e[92m^.^\e[0m\n"
 }
 
 main
-
