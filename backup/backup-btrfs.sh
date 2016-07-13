@@ -66,6 +66,12 @@
 # /backup/@home-user/2016-04-18T01:24:20+00:00
 
 
+### global variable(s) ###
+TIMESTAMP= # Set by init()
+#DEBUG= # Disable debug mode
+DEBUG=true # Enable debug mode
+
+
 ### generic utility functions ###
 
 # list of commands to run on exit
@@ -108,7 +114,9 @@ fatal() {
 # features like unix pipes.
 cmd() {
     msg "\e[33msudo $*"
-    sudo "$@"
+    if [ -z "$DEBUG" ]; then
+        sudo "$@"
+    fi
 }
 
 ## Usage: cmd-eval "string to evaluate" [...]
@@ -119,7 +127,21 @@ cmd() {
 # NOTE: You need to manually add "sudo" to commands ran with this.
 cmd-eval() {
     msg "\e[33m$*"
-    eval "$*"
+    if [ -z "$DEBUG" ]; then
+        eval "$*"
+    fi
+}
+
+## Usage: exists paths...
+# Check if given paths exist. If one or more don't exist, return 1.
+# Useful for, e.g., "if exists /path/to/place; then do-thing; fi".
+exists() {
+    while [ "$#" -gt 0 ]; do
+        if [ ! -e "$1" ]; then
+            return 1
+        fi
+        shift
+    done
 }
 
 
@@ -149,49 +171,60 @@ sanitize() {
 
 ### btrfs actions ###
 
-## Usage: clone-or-update from-snap to-dir
-# Use appropriate btrfs commands to make it so that to-dir contains a
-# copy of the btrfs subvolume at from-snap.
+## Usage: clone-or-update from-dir to-dir subvolume
+# Use btrfs commands to make it so that to-dir contains a copy of the
+# latest btrfs subvolume at from-dir/sanitized-subvolume.
 ##
-# Result: to-dir/part_of_from-snap_after_slash matches from-snap.
+# Result: to-dir/sanitized-subvolume/latest-snapshot-date matches
+# from-dir/sanitized-subvolume/latest-snapshot-date.
 clone-or-update() {
-    local from="$1"
+    local from_dir="$1"
     local to_dir="$2"
-    local from_dir="$(dirname "$from")"
-    local last_parent_name="$(last-backup "$to_dir")"
+    local subvol="$3"
+    local sanSv="$(sanitize "$subvol")"
+    from_dir="$from_dir/$sanSv"
+    local from="$from_dir/$TIMESTAMP"
+    to_dir="$to_dir/$sanSv"
+    local to_parent="$(last-backup "$to_dir")"
 
-    if [ -z "$last_parent_name" ]; then # No subvol's found, so bootstrap.
+    if [ -z "$to_parent" ]; then # No subvol's found, so bootstrap.
         msg "Cloning '$from'→'$to_dir'"
         cmd-eval "sudo btrfs send '$from' | sudo btrfs receive '$to_dir'"
     else
-        last_parent="$from_dir/$last_parent_name"
-        msg "Using mutual parent '$last_parent' to clone '$from'→'$to_dir'"
-        cmd-eval "sudo btrfs send -p '$last_parent' '$from' | sudo btrfs receive '$to_dir'"
+        from_parent="$from_dir/$to_parent"
+        msg "Using mutual parent '$from_parent' to clone '$from'→'$to_dir'"
+        cmd-eval "sudo btrfs send -p '$from_parent' '$from' | sudo btrfs receive '$to_dir'"
     fi
 }
 
-## Usage: del-older-than location timestamp
-# Deletes each btrfs subvolume at 'location' that is older than
-# 'timestamp'. This is useful for deleting old snapshot archives to
+## Usage: del-older-than location time subvolume
+# Deletes each btrfs snapshot for subvolume at 'location' that is
+# older than 'time', with age determined by the name of the snapshot,
+# expected to be in ISO-8601 format and UTC, as used by the rest of
+# this script. This is useful for deleting old snapshot archives to
 # free up space.
-del-older-than() {
-    local location="$1"
-    local timestamp="$2"
+delete-older-than() {
+    local location="$1/$(sanitize "$3")"
+    local time="$(date --utc --iso-8601=seconds --date="$2")"
     local maybe_older
     for maybe_older in "$location"/*; do
-        if [[ "$maybe_older" < "$location/$timestamp" ]]; then
+        if [[ "$maybe_older" < "$location/$time" ]]; then
             msg "Deleting old subvolume '$maybe_older'."
             cmd btrfs subvolume delete "$maybe_older"
         fi
     done
 }
 
-## Usage: snapshot from-subvolume to-snapshot-name
-# Snapshots from-subvolume to to-snapshot-name and runs 'sync' to
-# workaround a bug in btrfs.
+## Usage: snapshot from-root to-snapshot-dir subvol
+# Snapshots from-root/subvol to to-snapshot-dir/subvol and runs 'sync'
+# to workaround a bug in btrfs.
 snapshot() {
-    local from="$1"
-    local to="$2"
+    local from_root="$1"
+    local to_snap_dir="$2"
+    local subvol="$3"
+    local sanSv="$(sanitize "$subvol")"
+    local from="$from_root/$subvol"
+    local to="$to_snap_dir/$sanSv/$TIMESTAMP"
     msg "Snapshotting '$from'→'$to'"
     cmd btrfs subvolume snapshot -r "$from" "$to"
     # It's necessary to sync after snapshotting so that 'btrfs send'
@@ -203,57 +236,31 @@ snapshot() {
 
 ### high-level snapshot actions ###
 
-## Usage: snap action from to subvolumes ...
-# Does the indicated snapshot action with given 'from' and 'to'
-# locations and given subvolume(s). Valid actions are "snapshot" and
-# "copy-latest", respectively creating snapshots within a partition
-# and copying the latest snapshot to another partition.
-snap() {
-    # Get variables.
-    local action="$1"
-    local from="$2"
-    local to="$3"
-    shift 3
+## Usage: subvol-loop function num-fn-args fn-args [...] subvolumes [...]
+# Iterates through each subvolume, running the given 'function' with
+# its 'fn-args', of which there are 'num-fn-args', appending the
+# current subvolume to the end of the arguments for 'function'. This
+# abstraction is meant to replace the current 'snap' function.
+subvol-loop() {
+    # known-location args
+    local fn="$1"
+    local num_fn_args="$2"
+    # known-but-variable-count args
+    local fn_args=("${@:3:$num_fn_args}")
+    # shift to and save the subvolume list
+    shift 2
+    shift "$num_fn_args"
     local subvols=("$@")
-    # Verify action validity.
-    if ! echo snapshot copy-del copy-latest | grep -q "$action"; then
-        fatal "Invalid snap action: '$action'"
-    fi
-    # Check if the origin and destination are there.
-    if [ ! -d "$from" ] || [ ! -d "$to" ]; then
-        msg "\e[32mMissing origin/destination for '$from'→'$to', so skipping it."
-        return
-    else
-        msg "\e[32mRunning '$action' for '$from'→'$to'."
-    fi
-    # Loop through all subvolumes.
+
+    # Inform user of what's going on.
+    msg "\e[32mRunning '$fn' with args '${fn_args[*]}' on subvols '${subvols[*]}'."
+
+    # Actually run the function for the subvolumes.
     local sv
     for sv in "${subvols[@]}"; do
-        local sanSv="$(sanitize "$sv")"
-        # Make sure the destination directory exists.
-        if [ ! -d "$to/$sanSv" ]; then
-            cmd mkdir "$to/$sanSv" # No '-p': $to must already exist.
-        fi
         # Do the applicable action.
-        case "$action" in
-            "copy-latest")
-                clone-or-update "$from/$sanSv/$timestamp" "$to/$sanSv" ||\
-                    fatal "Error updating $sv."
-                ;;
-            "copy-del")
-                clone-or-update "$from/$sanSv/$timestamp" "$to/$sanSv" ||\
-                    fatal "Error updating $sv. Not deleting old snapshots."
-                del-older-than "$from/$sanSv" "$timestamp"
-                ;;
-            "snapshot")
-                snapshot "$from/$sv" "$to/$sanSv/$timestamp"
-                ;;
-            *) # Error...
-                fatal "Invalid action '$action' snuck through check."
-                ;;
-        esac
+        $fn "${fn_args[@]}" "$sv"
     done
-    echo
 }
 
 ## Usage: make-snaps from to subvolume [...]
@@ -262,7 +269,8 @@ snap() {
 # snapshots are useful for (incrementally) copying subvolumes to other
 # devices for real backups.
 make-snaps() {
-    snap snapshot "$@"
+    exists "$1" "$2" || return 1
+    subvol-loop snapshot 2 "$@"
 }
 
 ## Usage: copy-latest from to subvolume [...]
@@ -270,16 +278,20 @@ make-snaps() {
 # 'to'. This is useful for real backups, (incrementally) copying
 # entire subvolumes between devices.
 copy-latest() {
-    snap copy-latest "$@"
+    exists "$1" "$2" || return 1
+    subvol-loop clone-or-update 2 "$@"
 }
 
-## Usage: copy-latest-and-delete-origins-parent-subvolumes from to subvolume [...]
-# Copy the latest snapshot for each given subvolume in 'from' to 'to',
-# and then delete the found parent subvolume from 'from'. This is
-# useful when the device for 'from' doesn't have much space and the
-# device for 'to' acts as an archive of the old states of 'from'.
-copy-latest-and-delete-origins-parent-snapshots() {
-    snap copy-del "$@"
+## Usage: delete-old snap_dir time subvolume [...]
+# Delete snapshots older than 'time' from snap_dir. 'time' is a
+# date/time string as used by "date --date=STRING". For example, a
+# time of "3 days ago" will delete snapshots which are more than 3
+# days old. This is useful when the device for 'from' doesn't have
+# much space and the device for 'to' acts as an archive of the old
+# states of 'from'.
+delete-old() {
+    exists "$1" || return 1
+    subvol-loop delete-older-than 2 "$@"
 }
 
 
@@ -289,13 +301,18 @@ copy-latest-and-delete-origins-parent-snapshots() {
 # Runs initialization for the script. This should only be used by
 # main(), and only once.
 init() {
+    # Warn about debug mode if active
+    if [ -n "$DEBUG" ]; then
+        msg "Debug mode active. Essential root commands will not really be ran."
+    fi
+
     # Check that required programs are installed.
     if ! which btrfs > /dev/null; then
         fatal "btrfs command not found. Are you sure you're using btrfs?"
     fi
 
     # Check lock directory to prevent parallel runs.
-    lockdir="/tmp/.backup-btrfs.lock"
+    local lockdir="/tmp/.backup-btrfs.lock"
     if cmd mkdir "$lockdir"; then
         # This is the only copy of the script running. Make sure we'll
         # clean up at the end.
@@ -305,18 +322,17 @@ init() {
         fatal "Could not acquire lock: $lockdir"
     fi
 
-    # Make sure sudo doesn't time out.
-    msg "Enabling sudo mode."
-    cmd -v # Activate.
-
     # This loop repeatedly runs "sudo -v" to keep sudo from timing
     # out, enabling the script to continue as long as necessary,
-    # without post-startup interaction.
-    ( while true; do cmd -v; sleep 50; done; ) &
+    # without pausing for credentials.
+    ##
+    # Note: It's not necessary to explicitly activate sudo mode first,
+    # since the lock acquisition already uses sudo.
+    ( while true; do sleep 50; cmd -v; done; ) &
     add-exit-trap "kill $!" # Make sure it stops with the script.
 
     # Get timestamp for new snapshots.
-    timestamp="$(date --utc --iso-8601=seconds)"
+    TIMESTAMP="$(date --utc --iso-8601=seconds)"
 }
 
 

@@ -40,7 +40,7 @@ ssd_vols=(@chakra @home @home/kelci @home/mark @kubuntu @suse)
 # Where the HDD data starts
 hdds_root="/hdds"
 # Where the SSD->HDDs backups and HDDs backups are stored
-hdds_snaps="$hdds_root/snapshots"
+hdds_snap_dir="$hdds_root/snapshots"
 # HDDs-specific subvolumes
 hdds_vols=(@fedora @shared)
 
@@ -51,9 +51,16 @@ all_vols=("${ssd_vols[@]}" "${hdds_vols[@]}")
 
 # Snapshot data on the SSD
 make-snaps "$ssd_root" "$ssd_snap_dir" "${ssd_vols[@]}"
-# Copy latest snapshots from the SSD to the HDDs and delete the old SSD parent snapshots
-copy-latest-and-delete-origins-parent-snapshots "$ssd_snap_dir" "$hdds_snaps" "${ssd_vols[@]}"
+# Copy latest snapshots from the SSD to the HDDs
+copy-latest "$ssd_snap_dir" "$hdds_snap_dir" "${ssd_vols[@]}"
+# Delete old SSD snapshots
+delete-old "$ssd_snap_dir" "3 days ago" "${ssd_vols[@]}"
+
 # Snapshot HDDs-specific data
-make-snaps "$hdds_root" "$hdds_snaps" "${hdds_vols[@]}"
+make-snaps "$hdds_root" "$hdds_snap_dir" "${hdds_vols[@]}"
 # Copy everything to the external drive
-copy-latest "$hdds_snaps" "$ext_backups" "${all_vols[@]}"
+copy-latest "$hdds_snap_dir" "$ext_backups" "${all_vols[@]}"
+# Delete old HDDs snapshots
+delete-old "$hdds_snap_dir" "3 months ago" "${all_vols[@]}"
+# Delete old external drive snapshots
+delete-old "$ext_backups" "1 year ago" "${all_vols[@]}"
