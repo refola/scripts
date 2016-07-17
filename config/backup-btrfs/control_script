@@ -71,6 +71,6 @@ make-snaps "$hdds_root" "$hdds_snap_dir" "${hdds_vols[@]}" || return 1
 # Copy everything to the external drive
 copy-latest "$hdds_snap_dir" "$ext_backups" "${all_vols[@]}" || return 1
 # Delete old HDDs snapshots
-delete-old "$hdds_snap_dir" "3 months ago" "${all_vols[@]}" || return 1
+delete-old "$hdds_snap_dir" "2 months ago" "${all_vols[@]}" || return 1
 # Delete old external drive snapshots
 delete-old "$ext_backups" "1 year ago" "${all_vols[@]}" || return 1
