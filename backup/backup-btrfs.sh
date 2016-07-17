@@ -68,8 +68,8 @@
 
 ### global variable(s) ###
 TIMESTAMP= # Set by init()
-#DEBUG= # Disable debug mode
-DEBUG=true # Enable debug mode
+DEBUG= # Disable debug mode
+#DEBUG=true # Enable debug mode
 
 
 ### generic utility functions ###
@@ -416,12 +416,16 @@ install() {
         fi
     done < "$(readlink -f "$0")" # $0 is fragile, but needed
 
-    # Append init-running.
-    script="$script"$'\n'"init # Run init manually; this has no main."
-
-    # Append config.
-    script="$script"$'\n'"### config from install time ###"
+    # Append function-wrapped config.
+    script="$script"$'\n'"### config from install time, wrapped in function ###"
+    script="$script"$'\n'"backup() {"
+    script="$script"$'\n'"msg 'Running backups.'"
     script="$script"$'\n'"$(cat "$(get-config-path)")"
+    script="$script"$'\n'"}"
+
+    # Append init-running and backup-running.
+    script="$script"$'\n'"init # Run init manually; this has no main."
+    script="$script"$'\n'"backup # Run backup manually; this has no main."
 
     # Save to $install_path
     tmp_path="/tmp/backup-btrfs.sh_temp_backup-btrfs.installed"
