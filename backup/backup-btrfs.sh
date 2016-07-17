@@ -441,7 +441,7 @@ install() {
     cmd cp "$from/backup-btrfs.timer" "$systemd_install_dir"
 
     # Enable and start systemd service+timer pair.
-    cmd systemctl enable backup-btrfs.service
+    ## Don't enable backup-btrfs.service directly; the timer does it.
     cmd systemctl enable backup-btrfs.timer
     cmd systemctl start backup-btrfs.timer
 
