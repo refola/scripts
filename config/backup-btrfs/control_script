@@ -30,6 +30,11 @@
 ## is slow, so it's important for backups to be as efficiently
 ## incremental as possible.
 
+
+### variable setup ###
+
+# These lines set up what to backup/snapshot to/from where.
+
 # Where the SSD data starts
 ssd_root="/ssd"
 # Where the SSD subvolumes are meant to be snapshotted to
@@ -49,18 +54,23 @@ ext_backups="/run/media/$USER/OT4P/backups"
 # Every subvolume to be transferred from HDDs to external drive
 all_vols=("${ssd_vols[@]}" "${hdds_vols[@]}")
 
+
+### btrfs actions ####
+
+# These lines run the actual backup functions, exiting on error.
+
 # Snapshot data on the SSD
-make-snaps "$ssd_root" "$ssd_snap_dir" "${ssd_vols[@]}"
+make-snaps "$ssd_root" "$ssd_snap_dir" "${ssd_vols[@]}" || return 1
 # Copy latest snapshots from the SSD to the HDDs
-copy-latest "$ssd_snap_dir" "$hdds_snap_dir" "${ssd_vols[@]}"
+copy-latest "$ssd_snap_dir" "$hdds_snap_dir" "${ssd_vols[@]}" || return 1
 # Delete old SSD snapshots
-delete-old "$ssd_snap_dir" "3 days ago" "${ssd_vols[@]}"
+delete-old "$ssd_snap_dir" "3 days ago" "${ssd_vols[@]}" || return 1
 
 # Snapshot HDDs-specific data
-make-snaps "$hdds_root" "$hdds_snap_dir" "${hdds_vols[@]}"
+make-snaps "$hdds_root" "$hdds_snap_dir" "${hdds_vols[@]}" || return 1
 # Copy everything to the external drive
-copy-latest "$hdds_snap_dir" "$ext_backups" "${all_vols[@]}"
+copy-latest "$hdds_snap_dir" "$ext_backups" "${all_vols[@]}" || return 1
 # Delete old HDDs snapshots
-delete-old "$hdds_snap_dir" "3 months ago" "${all_vols[@]}"
+delete-old "$hdds_snap_dir" "3 months ago" "${all_vols[@]}" || return 1
 # Delete old external drive snapshots
-delete-old "$ext_backups" "1 year ago" "${all_vols[@]}"
+delete-old "$ext_backups" "1 year ago" "${all_vols[@]}" || return 1

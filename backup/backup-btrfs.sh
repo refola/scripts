@@ -133,11 +133,13 @@ cmd-eval() {
 }
 
 ## Usage: exists paths...
-# Check if given paths exist. If one or more don't exist, return 1.
-# Useful for, e.g., "if exists /path/to/place; then do-thing; fi".
+# Check if given paths exist, giving a message and returning 1 on
+# first non-existent path. Useful for, e.g., "if exists
+# /path/to/place; then do-thing; fi".
 exists() {
     while [ "$#" -gt 0 ]; do
         if [ ! -e "$1" ]; then
+            msg "Not found: $1"
             return 1
         fi
         shift
@@ -374,8 +376,8 @@ backup() {
     msg "Running backups."
     check-config # Don't try running an imaginary config.
     # Source the config script to run it.
-    ## TODO: Wait for <1> to be fixed so this works regardless of
-    ## where ShellCheck is ran from.
+    ## TODO: Wait for <1> to be fixed so the following "shellcheck
+    ## source" line works regardless of where ShellCheck is ran from.
     ### <1>: https://github.com/koalaman/shellcheck/issues/539
     # shellcheck source=../config/backup-btrfs/control_script
     . "$(get-config-path)"
