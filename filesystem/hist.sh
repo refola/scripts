@@ -23,7 +23,7 @@ fi
 # Searches history folder for entries matching given regex.
 search() {
     local files=( $DIR/* )
-    cat "${files[@]}" | egrep "$1"
+    cat "${files[@]}" | egrep "$1" | uniq
 }
 
 if [ "$COUNT" = "all" ]
