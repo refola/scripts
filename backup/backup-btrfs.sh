@@ -146,6 +146,28 @@ exists() {
     done
 }
 
+## Usage: list separator last_separator thing1 [thing2 [...]]
+# Lists all things, separating them with the given separator,
+# switching to last_separator for separating the last two things. Bash
+# doesn't support returning strings, so the result is echo'd out and
+# probably needs capturing.
+list() {
+    local sep="$1"
+    local last="$2"
+    shift 2
+    local out
+    while [ "$#" -gt "2" ]; do
+        out+="$1$sep"
+        shift
+    done
+    if [ "$#" = "2" ]; then
+        out+="$1$last"
+        shift
+    fi
+    out+="$1"
+    echo "$out"
+}
+
 
 ### btrfs utility functions ###
 
@@ -255,7 +277,11 @@ subvol-loop() {
     local subvols=("$@")
 
     # Inform user of what's going on.
-    msg "\e[32mRunning '$fn' with args '${fn_args[*]}' on subvols '${subvols[*]}'."
+    local args
+    args="'$(list "', '" "', and '" "${fn_args[@]}")'"
+    local svs
+    svs="'$(list "', '" "', and '" "${subvols[@]}")'"
+    msg "\e[32mRunning '$fn' with args ($args) on subvols ($svs)."
 
     # Actually run the function for the subvolumes.
     local sv
