@@ -68,15 +68,18 @@
 
 ### global variable ###
 
+# Manage debug mode
+DEBUG= # Disabled
+#DEBUG=true # Enabled
+
+# Set near run-exit-traps()
+EXIT_TRAPS=
+
 # Set by init()
 TIMESTAMP=
 
 # Set near check-config()
 CONFIG_USE=
-
-# Manage debug mode
-DEBUG= # Disabled
-#DEBUG=true # Enabled
 
 # Set near install()
 INSTALL_PATH=
@@ -90,12 +93,13 @@ USAGE=
 ### generic utility functions ###
 
 # list of commands to run on exit
-exit_traps=()
+EXIT_TRAPS=()
 ## Usage: trap run-exit-traps EXIT
 # Run everything in ${exit_traps[@]}.
 run-exit-traps() {
     local i
-    for i in "${exit_traps[@]}"; do
+    for i in "${EXIT_TRAPS[@]}"; do
+        msg "Running exit trap: $i"
         eval "$i"
     done
 }
@@ -104,7 +108,7 @@ trap run-exit-traps EXIT # Might only work on Linux+Bash.
 ## Usage: add-exit-trap "command1 [arg1 ...]" ...
 # Adds given command(s) to the list of things to run on script exit.
 add-exit-trap() {
-    exit_traps+=("$@")
+    EXIT_TRAPS+=("$@")
 }
 
 ## Usage: msg text to display
@@ -376,8 +380,7 @@ init() {
     # since the lock acquisition already uses sudo.
     msg "Starting sudo-refreshing loop."
     ( while true; do sleep 50; cmd -v; done; ) &
-    add-exit-trap "msg 'Killing sudo-refreshing loop.'"
-    add-exit-trap "kill $!" # Make sure it stops with the script.
+    add-exit-trap "kill $! # sudo-refreshing loop"
 
     # Get timestamp for new snapshots.
     TIMESTAMP="$(date --utc --iso-8601=seconds)"
