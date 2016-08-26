@@ -335,6 +335,9 @@ copy-latest() {
 delete-old() {
     exists "$1" || return 1
     subvol-loop delete-older-than 2 "$@"
+    # Sync everything to free up cleared space.
+    msg "'sync'ing '$1' to free space from deleted snapshots."
+    cmd btrfs filesystem sync "$1"
 }
 
 
