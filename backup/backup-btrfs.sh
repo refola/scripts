@@ -12,6 +12,64 @@
 ##
 
 
+### contents ###
+
+# comments
+## header
+### shebang
+### short description
+### note
+## contents
+### comments
+### code
+## limitations
+### recentism
+### time quantization
+## filesystem layout
+### subvolume locations
+### snapshot name format
+### backup snapshot clone structure
+### example
+
+# code
+## global variable declarations
+### debug mode
+### exit traps
+### start time timestamp
+### confix explanation
+### install parameters
+### usage
+## generic utility functions
+### exit traps
+### messages
+### command-running
+### path existence checking
+### list formatting
+## btrfs utility functions
+### last backup name retrieval
+### subvolume path-to-name sanitization
+## btrfs actions
+### snapshot clone/update
+### old snapshot deletion
+### snapshot creation
+## high-level snapshot actions
+### subvolume-looping function
+### snapshot creation
+### snapshot clone/update
+### old snapshot deletion
+## initial checks and setup
+### initialization
+## main stuff
+### configuration getting
+### configuration checking
+### configuration running
+### systemd service installation
+### systemd service reinstallation
+### systemd service uninstallation
+### usage information
+### main
+
+
 ### limitations ###
 
 # This script assumes that you mostly just want the latest data. It
@@ -66,7 +124,7 @@
 # /backup/@home-user/2016-04-18T01:24:20+00:00
 
 
-### global variable ###
+### global variable declarations ###
 
 # Manage debug mode
 DEBUG= # Disabled
@@ -111,14 +169,14 @@ add-exit-trap() {
     EXIT_TRAPS+=("$@")
 }
 
-## Usage: msg text to display
+## Usage: msg "text to display"
 # Outputs a message with a bit of formatting. This should be used
 # instead of echo almost everywhere in this script.
 msg() {
     echo -e "\e[1m$*\e[0m"
 }
 
-## Usage: fatal message about fatal error
+## Usage: fatal "message about fatal error"
 # Outputs the given error message, with a bit of formatting, to
 # stderr, and then exits the script.
 fatal() {
