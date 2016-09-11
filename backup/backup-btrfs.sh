@@ -49,9 +49,9 @@
 ### last backup name retrieval
 ### subvolume path-to-name sanitization
 ## btrfs actions
+### snapshot creation
 ### snapshot clone/update
 ### old snapshot deletion
-### snapshot creation
 ## high-level snapshot actions
 ### subvolume-looping function
 ### snapshot creation
@@ -254,7 +254,7 @@ list() {
 
 ### btrfs utility functions ###
 
-## Usage: last_backup_time="$(last-backup backup-dir)"
+## Usage: last_backup_name="$(last-backup backup-dir)"
 # Get name of last backup in given backup directory, or empty string
 # if there is no backup.
 last-backup() {
@@ -277,6 +277,24 @@ sanitize() {
 
 
 ### btrfs actions ###
+
+## Usage: snapshot from-root to-snapshot-dir subvol
+# Snapshots from-root/subvol to to-snapshot-dir/subvol and runs 'sync'
+# to workaround a bug in btrfs.
+snapshot() {
+    local from_root="$1"
+    local to_snap_dir="$2"
+    local subvol="$3"
+    local sanSv="$(sanitize "$subvol")"
+    local from="$from_root/$subvol"
+    local to="$to_snap_dir/$sanSv/$TIMESTAMP"
+    msg "Snapshotting '$from'→'$to'"
+    cmd btrfs subvolume snapshot -r "$from" "$to"
+    # It's necessary to sync after snapshotting so that 'btrfs send'
+    # works correctly. See:
+    # https://btrfs.wiki.kernel.org/index.php/Incremental_Backup#Initial_Bootstrapping
+    sync
+}
 
 ## Usage: clone-or-update from-dir to-dir subvolume
 # Use btrfs commands to make it so that to-dir contains a copy of the
@@ -319,24 +337,6 @@ delete-older-than() {
             cmd btrfs subvolume delete "$maybe_older"
         fi
     done
-}
-
-## Usage: snapshot from-root to-snapshot-dir subvol
-# Snapshots from-root/subvol to to-snapshot-dir/subvol and runs 'sync'
-# to workaround a bug in btrfs.
-snapshot() {
-    local from_root="$1"
-    local to_snap_dir="$2"
-    local subvol="$3"
-    local sanSv="$(sanitize "$subvol")"
-    local from="$from_root/$subvol"
-    local to="$to_snap_dir/$sanSv/$TIMESTAMP"
-    msg "Snapshotting '$from'→'$to'"
-    cmd btrfs subvolume snapshot -r "$from" "$to"
-    # It's necessary to sync after snapshotting so that 'btrfs send'
-    # works correctly. See:
-    # https://btrfs.wiki.kernel.org/index.php/Incremental_Backup#Initial_Bootstrapping
-    sync
 }
 
 
@@ -411,8 +411,8 @@ delete-old() {
 ### initial checks and setup ###
 
 ## Usage: init
-# Runs initialization for the script. This should only be used by
-# main(), and only once.
+# Runs initialization for the script. This should be called by main()
+# and only main(), once and only once.
 init() {
     # Warn about debug mode if active
     if [ -n "$DEBUG" ]; then
@@ -524,6 +524,7 @@ install() {
         if [ "$REPLY" = "$stop_at" ]; then
             break
         elif [ -z "$script" ]; then
+            # REPLY="#!/bin/bash"
             script="$REPLY"$'\n'"$AUTOGEN_WARN_MSG"
         else
             script="$script"$'\n'"$REPLY"
