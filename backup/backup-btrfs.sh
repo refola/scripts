@@ -127,26 +127,32 @@ fatal() {
 }
 
 ## Usage: cmd command [args ...]
-# Outputs and runs the given command with the given args, prefixing
-# the whole thing with sudo. Every simple system-changing command in
-# this script should be ran via cmd. Use 'cmd-eval' if you need shell
-# features like unix pipes.
+# Normally, this runs the given command with the given args, prefixing
+# the whole thing with sudo. But if debug mode is active, the command
+# is displayed and not ran.
+##
+# Every simple system-changing command in this script should be ran
+# via cmd. Use 'cmd-eval' if you need shell features like unix pipes.
 cmd() {
-    msg "\e[33msudo $*"
-    if [ -z "$DEBUG" ]; then
+    if [ -n "$DEBUG" ]; then
+        msg "\e[33msudo $*"
+    else
         sudo "$@"
     fi
 }
 
 ## Usage: cmd-eval "string to evaluate" [...]
-# Outputs and evals the given string. This is the less-automatic
-# variant of cmd, intended for cases where things like unix pipes are
-# required.
+# Normally, this evals the given string. But if debug mode is active,
+# the string is displayed and not eval'd.
+##
+# This is the less-automatic variant of 'cmd', intended for cases
+# where things like unix pipes are required.
 ##
 # NOTE: You need to manually add "sudo" to commands ran with this.
 cmd-eval() {
-    msg "\e[33m$*"
-    if [ -z "$DEBUG" ]; then
+    if [ -n "$DEBUG" ]; then
+        msg "\e[33m$*"
+    else
         eval "$*"
     fi
 }
@@ -228,15 +234,14 @@ clone-or-update() {
     from_dir="$from_dir/$sanSv"
     local from="$from_dir/$TIMESTAMP"
     to_dir="$to_dir/$sanSv"
-    local to_parent="$(last-backup "$to_dir")"
+    local last_parent="$(last-backup "$to_dir")"
 
-    if [ -z "$to_parent" ]; then # No subvols found, so bootstrap.
+    if [ -z "$last_parent" ]; then # No subvols found, so bootstrap.
         msg "Cloning '$from'→'$to_dir'"
         cmd-eval "sudo btrfs send '$from' | sudo btrfs receive '$to_dir'"
     else
-        from_parent="$from_dir/$to_parent"
-        msg "Using mutual parent '$from_parent' to clone '$from'→'$to_dir'"
-        cmd-eval "sudo btrfs send -p '$from_parent' '$from' | sudo btrfs receive '$to_dir'"
+        msg "Cloning '$from'→'$to_dir' via parent '$last_parent'."
+        cmd-eval "sudo btrfs send -p '$from_dir/$last_parent' '$from' | sudo btrfs receive '$to_dir'"
     fi
 }
 
