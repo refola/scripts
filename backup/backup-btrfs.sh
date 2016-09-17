@@ -426,6 +426,7 @@ init() {
 
     # Check lock directory to prevent parallel runs.
     local lockdir="/tmp/.backup-btrfs.lock"
+    msg "Acquiring lock as root."
     if cmd mkdir "$lockdir"; then
         # This is the only copy of the script running. Make sure we'll
         # clean up at the end.
