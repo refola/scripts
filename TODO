@@ -1,0 +1,43 @@
+Here's a list of everything that should be fixed for this to be easily and safely installed to nearly any *nix system without complication.
+
+# Make installer script
+## Ideally, this will enable a "one-liner" to fetch and install this, with only a little user input required.
+
+# Scripts to clean up
+## backup/phone-system-to-home.sh: semi-hard-coded computer location, hard-coded phone locations, probably making tons of (obsolete) Android assumptions
+## bash_custom/.bashrc: hard-coded script source location: should get sourcing locations from a config file
+## bash_custom/.profile: very much hard-coded to my preferences; maybe don't even install in the first place?
+## bash_custom/install.sh: replace with top-level install.sh
+## config/**: probably okay, since users are prompted to change everything the first time, so pushing my configs as defaults isn't terrible; just gotta comment everything clearly...
+## cpu/cpu-desert-speed.sh: hard-coded to use 2GHz as assumed moderate frequency
+## cpu/cpu-frequencies.sh: hard-coded to skip 800MHz as the assumed lowest frequency
+## cpu/cpu-save-core-zero.sh: is this actually useful?
+## cpu/*: multiple copies of the same "see if this program exists otherwise use the other to do this thing" logic; some references to cpu-save-core-zero.sh
+## data/**: probably fine, tho the btrfs backup systemd service isn't easily customized, and pm/*/* needs double-checking for distro-specific best-practice package management sequences
+## example/**: needs to be super clear that it's just a bunch of demonstrations for learning and not for 'production'
+## filesystem/clean-profile.sh: this is like an outdated console version of BleachBit; remove, or move to example/?
+## filesystem/fix-permissions.sh: needs config instead of hard-coding
+## filesystem/inode-identification.sh: probably kinda useless and should be moved to example/
+## filesystem/restore-from-btrfs-snapshot.sh: needs backup-btrfs integration instead of hard-coding
+## filesystem/scrub-btrfs.sh: needs cleaner backup-btrfs integration
+## found/*: find original authors, push changes upstream?
+## fun/*: probably not that useful; move to example/?
+## keyboard/keyboard-layout.sh: command line version of roughly how my keyboard is set; move to example/?
+## lib/get-config.sh: use itself for configuration of preference for configuration prompting?: always (breaks automation), first time (current behavior), or never (i.e., use my config exactly as-is if you're cloning my preferences); notify of where configs are; easier config-getting for scripts
+## net/bandwidth-monitor.sh: hard-coded interface, outdated ifconfig command
+## net/reset-network.sh: hard-coded interfaces and modules
+## net/packet-loss-logger.sh: graceful shutdown that logs total packets even if the last packet wasn't lost
+## net/ping-local-network.sh: hard-coded subnet
+## proc/**: antiquated
+## screen/redshift-control.sh: hard-coded locations and such
+## speech/say-{count-up,time}.sh: move to example/?
+## system/opensuse-post-kernel-update.sh: obsolete?
+## system/password-generator.sh: move to found/?
+## system/pm.sh: use /etc/os-release
+## system/ram-monitor.sh: hard-coded free memory amount
+## volume/**: antiquated
+
+
+# Future big feature
+## Streamlined, scripted "one-home-per-distro with some shared config" setup
+## Script dependency-tracking in Bash?
