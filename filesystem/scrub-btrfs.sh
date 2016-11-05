@@ -49,6 +49,7 @@ handle-backup-service() {
     if which backup-btrfs.installed &>/dev/null; then
         echo "Stopping btrfs backup service before starting scrubs."
         sudo systemctl stop backup-btrfs.timer
+        add-exit-trap "echo 'Re-enabling backup service.'"
         add-exit-trap "sudo systemctl start backup-btrfs.timer"
         # Also start sudo loop so re-starting the service doesn't need
         # manual reactivation at the script's end (copied from
