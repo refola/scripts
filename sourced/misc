@@ -8,6 +8,10 @@ eval "$(dircolors --bourne-shell)"
 # Make sudo auto-complete with command and file names
 complete -cf sudo
 
+# Unset LC_* so weird grep "Binary file (standard input) matches"
+# issues stop happening in the shell.
+unset LC_MEASUREMENT LC_MESSAGES LC_TIME
+
 # Options that are apparently useful?
 shopt -s cdspell
 shopt -s checkwinsize
