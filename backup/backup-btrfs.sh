@@ -36,7 +36,7 @@
 ### debug mode
 ### exit traps
 ### start time timestamp
-### confix explanation
+### config explanation
 ### install parameters
 ### usage
 ## generic utility functions
@@ -404,6 +404,7 @@ delete-old() {
     subvol-loop delete-older-than 2 "$@"
     # Sync everything to free up cleared space.
     msg "'sync'ing '$1' to free space from deleted snapshots."
+    msg "Note that btrfs' cleanup of freed space may take a while longer."
     cmd btrfs filesystem sync "$1"
 }
 
