@@ -1,10 +1,9 @@
 #!/bin/bash
-# Make cm* auto-complete with command names
-complete -c cmcd
-complete -c cmdir
-complete -c cmedit
-complete -c cmls
-complete -c cmpath
+# Make cm* and other commands auto-complete with command names
+for _tmp_refola_scripts_completion_var in cmcd cmdir cmedit cmls cmpath silent-fork; do
+    complete -c "$_tmp_refola_scripts_completion_var"
+done
+unset _tmp_refola_scripts_completion_var
 
 # mkcd's arg is close enough to what cd's completion suggests
 complete -o nospace -F _cd mkcd
