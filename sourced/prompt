@@ -23,7 +23,8 @@ shopt -s cmdhist # Store multiline commands as single commands
 pcmd() {
     local append="history -a"
     local read="history -n"
-    local save="cat $HISTFILE >> \"${HISTARCHIVE}/\$(date --utc +%F)\""
+    local date="/bin/date" # avoid using `date` alias
+    local save="cat $HISTFILE >> \"${HISTARCHIVE}/\$($date --utc +%F)\""
     local zero="> $HISTFILE"
     echo -n "$append; $read; $save; $zero"
 }
