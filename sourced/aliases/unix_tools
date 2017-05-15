@@ -3,6 +3,7 @@
 # Aliases to make Unix tools prettier and safer
 
 # Make things more colorful, use human-usable units, and ISO 8601 time format.
+alias date='date --iso-8601=seconds'
 alias ls='ls --group-directories-first --time-style=+"%Y-%m-%dT%H:%M:%S%z" --color=auto'
 alias df='df -h'
 alias free='free -m'
@@ -13,3 +14,4 @@ alias egrep='egrep --color=tty'
 # Prompt before losing data
 alias cp='cp -i --reflink=auto' # and be CoW-efficient
 alias mv='mv -i'
+
