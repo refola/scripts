@@ -19,7 +19,7 @@ msg "DEBUG=$DEBUG"
 
 # These variables are required for bootstrapping Bash customizations.
 h="/home/$USER" # local version of $H
-custom_sourced="$h/sampla/samselpla/scripts/sourced"
+custom_sourced="$h/sampla/samselpla/scripts/sourced" # TODO: fix hard-coding
 
 # Custom behaviour locations.
 # Note: Do not include /etc/bash_completion.d. It's already dealt with
@@ -56,3 +56,4 @@ for clutter in DEBUG msg h custom_sourced to_source source_them
 do
     unset $clutter
 done
+unset clutter # Because keeping track of the clutter generates more clutter.
