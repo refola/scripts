@@ -6,8 +6,8 @@
 # sure to unset this at the end of the script.
 __refola_add_path() {
     for x in "$@"; do
-        if [ -d "$1" ] && ! (echo "$PATH" | grep -q "$1"); then
-            PATH="$PATH:$1"
+        if [ -d "$x" ] && ! (echo "$PATH" | grep -q "$x"); then
+            PATH="$PATH:$x"
         fi
     done
 }
