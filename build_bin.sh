@@ -44,10 +44,10 @@ sourced
 test
 "
 
-# Build the skip pattern by converting newlines to pipes and removing
-# the outer-most pipes to avoid matching the empty string that's
-# contained within everything we don't want to skip.
-skip_pattern="$(echo -n "$skip_dirs" | tr $'\n' '|' | cut -c2- | rev | cut -c2- | rev)"
+# Build the skip pattern by converting newlines to $|^ (separating
+# regexes which should match the entire string) and removing the
+# outer-most $| and |^ which otherwise remain at the ends.
+skip_pattern="$(echo -n "$skip_dirs" | sed -z 's/\n/$|^/g' | cut -c3- | rev | cut -c3- | rev)"
 msg "\e[92mSkipped item regex \e[35m$skip_pattern"
 
 # Where to make the symlinks
