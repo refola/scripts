@@ -1,2 +1,2 @@
 #!/bin/sh
-say the time is "$(date +%H:%M)."
+say "The time is $(date +%H:%M)."
