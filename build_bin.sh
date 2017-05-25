@@ -47,7 +47,8 @@ test
 # Build the skip pattern by converting newlines to $|^ (separating
 # regexes which should match the entire string) and removing the
 # outer-most $| and |^ which otherwise remain at the ends.
-skip_pattern="$(echo -n "$skip_dirs" | sed -z 's/\n/$|^/g' | cut -c3- | rev | cut -c3- | rev)"
+sep='$|^'
+skip_pattern="$(echo -n "$skip_dirs" | sed -z "s/\n/$sep/g" | cut -c${#sep}- | rev | cut -c${#sep}- | rev)"
 msg "\e[92mSkipped item regex \e[35m$skip_pattern"
 
 # Where to make the symlinks
