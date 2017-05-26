@@ -1,17 +1,16 @@
 #!/bin/bash
 
-if [ -z "$2" ]
-then
-    say "Usage: $(basename "$0") max delta"
-    say "Counts to max in increments of delta."
+usage="Usage: $(basename "$0") to [by]
+
+Counts to 'to' in increments of 'by'."
+
+if [ -z "$1" ]; then
+    say "$usage"
     exit 1
 else
-    max="$1"
-    delta="$2"
-    say "Now counting to $max in increments of $delta."
-    for ((n="$delta"; n<="$max"; n+="$delta"))
-    do
+    to="$1"
+    by="${2-1}"
+    for ((n="$by"; n<="$to"; n+="$by")); do
         say "$n"
     done
-    say "That was fun."
 fi
