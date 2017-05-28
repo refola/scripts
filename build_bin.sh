@@ -40,6 +40,7 @@ bin
 config
 data
 example
+graveyard
 sourced
 test
 "
