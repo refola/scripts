@@ -43,11 +43,11 @@ code-enabling string, and follow your text by the null-code
 string. The code-enabling strings are made by surrounding the codes by
 '\e[' and 'm', and separating the codes by ';'. Here's an example:
 
-echo -e '\e[0;3;4;30;106mRunning this gets you italic, underlined, dark text on a pink background.\e[0m'
+echo -e '\e[0;3;4;30;105mItalic, underlined, and dark on pink\e[0m'
 
 Note the '0;' at the beginning of the code-enabling string. That's to
 clear out other formatting that may have gone before. Color codes
-replace other color codes of the same type (i.e., foreground vs
+replace other color codes of the same type (e.g., foreground vs
 background), but '\e[0m' and such is the only way I know to clear
 other formatting, and it clears all formatting."
 
