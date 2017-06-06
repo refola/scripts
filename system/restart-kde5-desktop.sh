@@ -6,7 +6,7 @@
 run-maybe-5() {
     local prog="$1"
     shift
-    if which "${prog}5" 2>/dev/null; then
+    if which "${prog}5" &>/dev/null; then
         prog="${prog}5"
     fi
     $prog "$@"
