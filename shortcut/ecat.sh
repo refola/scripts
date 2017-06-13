@@ -11,5 +11,6 @@ fi
 while [ -n "$1" ]; do
     echo -e "\e[0;1m$1\e[0m"
     cat "$1"
+    echo # This is in case the previous file doesn't end with a newline.
     shift
 done
