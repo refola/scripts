@@ -4,7 +4,7 @@
 
 if [ -z "$1" ]
 then
-    # This assumes that cds is a function that sources this script.
+    # This assumes that cdl is a function that sources this script.
     echo "Usage: cdl name"
     echo "Restores \$PWD and \$H with given name, as saved by cdl."
     # Show list of saved variable sets
