@@ -23,8 +23,10 @@ scrubit() {
     local location="$2"
     local file="${place}/${today}_scrub_${name}"
     local disp="$name at $location"
-    if [ -d "$location" ]
-    then
+    # '-e' may be too broad, but anything stricter risks blocking
+    # valid scrubs. The actual 'btrfs scrub' command does the real
+    # checking anyway.
+    if [ -e "$location" ]; then
         # Ensure log folder exists.
         mkdir -p "$(dirname "$file")"
         echo "Starting btrfs scrub for $disp."
@@ -65,8 +67,7 @@ main() {
     sudo -v
     handle-backup-service
     local scrub_pids=()
-    for line in "${disks[@]}"
-    do
+    for line in "${disks[@]}"; do
         IFS=' ' # split line on space
         # We want $line split into its components.
         # shellcheck disable=SC2086
