@@ -18,7 +18,9 @@ run-maybe-5() {
 restart() {
     echo "Restarting $1."
     run-maybe-5 kquitapp "$1"
-    run-maybe-5 kstart "$@"
+    sleep 1
+    run-maybe-5 kstart "$@" &
+    sleep 1
 }
 
 echo "Restarting 'KDE5' desktop stuff."
