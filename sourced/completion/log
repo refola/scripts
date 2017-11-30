@@ -1,0 +1,12 @@
+#!/bin/bash
+# Bash completion for log.sh
+
+_log() {
+    local IFS=$'\n'
+    local files="Please run '"log"' without arguments for help."
+    if [ -s "$(get-config "log/location" -path)" ]; then
+	files="$(ls -1 "$(get-config "log/location")")"
+    fi
+    COMPREPLY=( $(compgen -W "${files[@]}" -- "${COMP_WORDS[COMP_CWORD]}") )
+}
+complete -F _log log
