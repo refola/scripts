@@ -279,8 +279,9 @@ sanitize() {
 ### btrfs actions ###
 
 ## Usage: snapshot from-root to-snapshot-dir subvol
-# Snapshots from-root/subvol to to-snapshot-dir/subvol and runs 'sync'
-# to workaround a bug in btrfs.
+# Snapshots from-root/subvol to to-snapshot-dir/subvol/$TIMESTAMP
+# (sanitizing subvol and making the directory for the to-snapshot-dir
+# side, as applicable) and runs 'sync' to workaround a bug in btrfs.
 snapshot() {
     local from_root="$1"
     local to_snap_dir="$2"
@@ -288,6 +289,7 @@ snapshot() {
     local sanSv="$(sanitize "$subvol")"
     local from="$from_root/$subvol"
     local to="$to_snap_dir/$sanSv/$TIMESTAMP"
+    cmd mkdir -p "$to_snap_dir/$sanSv" # Make sure the target directory exists.
     msg "Snapshotting '$from'→'$to'"
     cmd btrfs subvolume snapshot -r "$from" "$to"
     # It's necessary to sync after snapshotting so that 'btrfs send'
@@ -297,8 +299,9 @@ snapshot() {
 }
 
 ## Usage: clone-or-update from-dir to-dir subvolume
-# Use btrfs commands to make it so that to-dir contains a copy of the
-# latest btrfs subvolume at from-dir/sanitized-subvolume.
+# Use btrfs commands to make it so that to-dir/sanitized-subvolume
+# contains a copy of the latest btrfs subvolume at
+# from-dir/sanitized-subvolume.
 ##
 # Result: to-dir/sanitized-subvolume/latest-snapshot-date matches
 # from-dir/sanitized-subvolume/latest-snapshot-date.
@@ -310,6 +313,7 @@ clone-or-update() {
     from_dir="$from_dir/$sanSv"
     local from="$from_dir/$TIMESTAMP"
     to_dir="$to_dir/$sanSv"
+    cmd mkdir -p "$to_dir" # Make sure the target directory exists.
     local last_parent="$(last-backup "$to_dir")"
 
     if [ -z "$last_parent" ]; then # No subvols found, so bootstrap.
