@@ -1,10 +1,13 @@
 #!/bin/bash
-echo "click \$1 times [spaced 0.\$2 s apart on X server \$3]"
 
-times=$1
 if [ -z "$1" ] ; then
-    times=5
+    echo "Usage: $0 click-count [delay [X-server]]"
+    echo "Clicks click-count times, optionally delaying 0.delay seconds between clicks,"
+    echo "and on the given X server."
+    exit 1
 fi
+
+times="$1"
 
 # TODO: figure out current X server automatically
 server=$3
