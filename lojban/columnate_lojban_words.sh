@@ -239,7 +239,7 @@ main() {
     process-type gismu          latin   ' '   30
     process-type merged_reduced dotsies $'\t' 10
     process-type merged         latin   $'\t' 40
-    msg "\nDone! Here are the generated files."
+    msg "\nDone! Here are the generated files, stored in $out_dir."
     ls "$out_dir"
 }
 
