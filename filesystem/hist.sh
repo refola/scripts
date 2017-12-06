@@ -1,34 +1,15 @@
-#!/bin/bash
+#!/bin/sh
 ## hist.sh
-# Searches through custom Bash history folder for commands matching
+# Searches through custom command history folder for commands matching
 # given pattern, displaying last several results.
 
-DIR="$HISTARCHIVE" # Custom history location used by $PROMPT_COMMAND
+dir="$HISTARCHIVE" # Custom history location used by $PROMPT_COMMAND
+count="${2-25}" # How many entries to show
+usage="Usage: $(basename "$0") regex [count]
 
-COUNT="25" # How many entries to show
-if [ -n "$2" ]
-then
-    COUNT="$2"
-fi
-
-if [ -z "$1" ]
-then
-    echo "Usage: $(basename "$0") regex [count]"
-    echo "Searches files in $DIR for given regex, returning the last count (default $COUNT) lines"
-    echo "Count can be \"all\" to display all matching history items."
-    exit 1
-fi
-
-# Usage: search regex
-# Searches history folder for entries matching given regex.
-search() {
-    local files=( $DIR/* )
-    cat "${files[@]}" | egrep "$1" | uniq
-}
-
-if [ "$COUNT" = "all" ]
-then
-    search "$1"
-else
-    search "$1" | tail -n "$COUNT"
-fi
+Searches files in $dir for given regex, returning the
+last count (default $count) lines. Count can be 'all' to display all
+matching history items."
+[ -z "$1" ] && echo "$usage" && exit 1 # Check for input
+count="$(echo "$count" | sed 's/^all$/+1/g')" # Make 'all' show all.
+grep -Ehe "$1" "$dir"/* | uniq | tail -n "$count" # Do the search
