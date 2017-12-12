@@ -1,10 +1,15 @@
 #!/bin/bash
+## shortcuts
+# Convert certain scripts into functions for shell integration.
 
-## Usage: _mk_cmd_fns cmd1 [cmd2 [...]]
+## Usage: __make_command_function command [...]
 # Make functions that source given commands, enabling things like "cd"
 # in the commands to have the desired effects in interactive shells.
-_mk_cmd_fns() {
+__make_command_function() {
     while [ -n "$1" ]; do
+        if [ "$DEBUG" = "true" ]; then
+            echo "shortcut: $1"
+        fi
         # Example "cmd-foo" -> cmd-foo() { . "/path/to/cmd-foo" "$@"; }
         eval "$1() { . \"$(cmpath "$1")\" \"\$@\"; }"
         shift
@@ -12,4 +17,7 @@ _mk_cmd_fns() {
 }
 
 # Make the functions.
-_mk_cmd_fns cdh cmcd cmls cds cdl mkcd
+__make_command_function cdh cmcd cdl mkcd
+
+# Cleanup
+unset __make_command_function

@@ -1,10 +1,8 @@
 #!/bin/bash
+## cdl.sh
+# Sourcable script for `cdl()` function.
 
-# Restore $PWD and $H as saved by cds.
-
-if [ -z "$1" ]
-then
-    # This assumes that cdl is a function that sources this script.
+if [ -z "$1" ]; then
     echo "Usage: cdl name"
     echo "Restores \$PWD and \$H with given name, as saved by cdl."
     # Show list of saved variable sets
@@ -16,5 +14,7 @@ else
     path="$(get-config "var-save/$*" -path)"
     # Load them implicitly with appropriate commands.
     cdh "$(cat "$path/H")"
+    # This is sourced and we don't want to exit the interactive session.
+    # shellcheck disable=SC2164
     cd "$(cat "$path/PWD")"
 fi

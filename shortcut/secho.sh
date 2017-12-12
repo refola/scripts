@@ -7,7 +7,7 @@ usage="Usage: secho text file [...]
 Do what may be naively intended by 'sudo echo text > file'. In
 particular, this is a shortcut for:
 
-    echo text | sudo tee file1 >/dev/null
+    echo text | sudo tee file >/dev/null
 
 As a bonus, you can pass additional file names and they will also be
 written to with sudo, equivalent to
@@ -20,8 +20,7 @@ if [ -z "$2" ]; then
 else
     text="$1"
     shift
-    while [ -n "$1" ]; do
-        echo "$text" | sudo tee "$1" >/dev/null
-        shift
+    for file in "$@"; do
+        echo "$text" | sudo tee "$file" >/dev/null
     done
 fi
