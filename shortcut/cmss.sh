@@ -10,7 +10,7 @@ if [ -z "$1" ]; then
     exit 1
 else
     for x in "$@"; do
-        cmcd "$x"
+        cd "$(cmdir "$x")"
         shellcheck -x "$(cmpath "$x")"
     done
 fi
