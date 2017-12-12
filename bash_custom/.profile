@@ -4,7 +4,7 @@
 
 # Add a directory to $PATH iff it exists and isn't already added. Make
 # sure to unset this at the end of the script.
-__refola_add_path() {
+__add_to_path() {
     for x in "$@"; do
         if [ -d "$x" ] && ! (echo "$PATH" | grep -Eq "(^|:)$x(:|$)"); then
             export PATH="$PATH:$x"
@@ -12,11 +12,11 @@ __refola_add_path() {
     done
 }
 
-# Stuff that's not automatically cluttered by programs ($HOME is $H/sys/DISTRONAME)
+# Stuff that's not automatically cluttered by programs ($HOME is $H/skami/zdani/DISTRONAME)
 H="/home/$USER"
     
 # Include private bin folders in PATH
-__refola_add_path "$H/skami/samtci/bin" "$H/sampla/samselpla/scripts/bin" "$HOME/.cabal/bin"
+__add_to_path "$H/skami/samtci/bin" "$H/sampla/samselpla/scripts/bin" "$HOME/.cabal/bin"
 # Emacs is pretty neat.
 EDITOR="emacsclient-t" # Custom commands for running emacsclient
 VISUAL="emacsclient-c" # since arguments don't work here.
@@ -38,18 +38,16 @@ GOPATH="$H/sampla/samselpla/go"
 GOBIN="$H/skami/samtci/bin/go"
 # TODO: Figure out why "go build" is placing binaries in the current working directory instead....
 # Make sure I can run stuff from GOBIN
-__refola_add_path "$GOBIN"
-# Shortcut variables for common paths
-GOREF="$GOPATH/src/github.com/refola"
+__add_to_path "$GOBIN"
 
 # EXPORT GO STUFF
-export GOPATH GOBIN GOREF
+export GOPATH GOBIN
 
 
 ## FIXING PROBLEMS
 
 # Include sbins if not already included (fixes sudo in OpenSUSE)
-__refola_add_path /sbin /usr/sbin /usr/local/sbin
+__add_to_path /sbin /usr/sbin /usr/local/sbin
 # Just go to the gorram man page without that annoying prompt, per 
 # <https://forums.opensuse.org/showthread.php/427627-The-Man-What-manual-page-do-you-want-prompt?p=2271750#post2271750>
 MAN_POSIXLY_CORRECT=1
@@ -61,4 +59,4 @@ export MAN_POSIXLY_CORRECT __GL_YIELD
 
 
 ## CLEANUP
-unset __refola_add_path
+unset __add_to_path
