@@ -6,31 +6,22 @@
 default_name="run-commands"
 name="$(basename "${0/%.sh/}")" # get only the name of the script
 
+usage="Please symlink your script to here ($(cmpath "$0")) and set the
+commands to run via configs instead of running $default_name
+directly."
+
 if [ "$name" = "$default_name" ]; then
-    echo "Please symlink your script to here and set the commands to"
-    echo "run via configs instead of running $default_name directly."
+    echo "$usage" >&2
     exit 1
 fi
 
-get() {
-    get-config "$name/$1" \
-               -what-do "list of commands to run for $name" \
-               -var-rep \
-               || exit 1
+check-config() {
+    get-config "$name/$1" -what-do "$2" >/dev/null || exit 1
 }
 
-echo "$(get description)" || exit 1
+# Ensure that it's been configured (interactively) before use.
+check-config description "description of what's ran for $name"
+check-config commands "commands to run for $name"
 
-# The IFS and extra parentheses turn $commands into an array.
-IFS=$'\n'
-commands=( $(get commands) ) || exit 1
-
-for cmd in "${commands[@]}"
-do
-    # Show command being ran, in case this is being used in a debug
-    # context. Output is ignored anyway in the normal case.
-    echo "Command: $cmd"
-    # Actually run the command. Using eval seems cleaner than trying
-    # to run $cmd, especially if it's complex.
-    eval "$cmd"
-done
+# Just source the file. What could possibly go wrong?
+. "$(get-config "$name/commands" -path)"
