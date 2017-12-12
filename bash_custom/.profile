@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 ## PERSONAL CUSTOMIZATIONS
 
@@ -6,8 +6,8 @@
 # sure to unset this at the end of the script.
 __refola_add_path() {
     for x in "$@"; do
-        if [ -d "$x" ] && ! (echo "$PATH" | grep -q "$x"); then
-            PATH="$PATH:$x"
+        if [ -d "$x" ] && ! (echo "$PATH" | grep -Eq "(^|:)$x(:|$)"); then
+            export PATH="$PATH:$x"
         fi
     done
 }
@@ -20,13 +20,14 @@ __refola_add_path "$H/skami/samtci/bin" "$H/sampla/samselpla/scripts/bin" "$HOME
 # Emacs is pretty neat.
 EDITOR="emacsclient-t" # Custom commands for running emacsclient
 VISUAL="emacsclient-c" # since arguments don't work here.
+SUDO_EDITOR="$EDITOR" # Make it work with sudoedit too.
 # Enable pretty things like the Zenburn theme in terminal Emacs
 TERM="xterm-256color"
 # less > more
 PAGER="less"
 
 # EXPORT CUSTOM
-export H PATH EDITOR VISUAL TERM PAGER
+export H EDITOR VISUAL SUDO_EDITOR TERM PAGER
 
 
 ## GO STUFF
@@ -42,7 +43,7 @@ __refola_add_path "$GOBIN"
 GOREF="$GOPATH/src/github.com/refola"
 
 # EXPORT GO STUFF
-export GOPATH GOBIN PATH GOREF
+export GOPATH GOBIN GOREF
 
 
 ## FIXING PROBLEMS
@@ -56,7 +57,7 @@ MAN_POSIXLY_CORRECT=1
 __GL_YIELD="USLEEP"
 
 ## EXPORT PROBLEM FIXES
-export PATH MAN_POSIXLY_CORRECT __GL_YIELD
+export MAN_POSIXLY_CORRECT __GL_YIELD
 
 
 ## CLEANUP
