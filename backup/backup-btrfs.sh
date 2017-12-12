@@ -126,9 +126,8 @@
 
 ### global variable declarations ###
 
-# Manage debug mode
-DEBUG= # Disabled
-#DEBUG=true # Enabled
+# Set by main()
+DEBUG= # Disabled (non-blank for enabled)
 
 # Set near run-exit-traps()
 EXIT_TRAPS=
@@ -311,7 +310,12 @@ clone-or-update() {
     local subvol="$3"
     local sanSv="$(sanitize "$subvol")"
     from_dir="$from_dir/$sanSv"
-    local from="$from_dir/$TIMESTAMP"
+    local last="$(last-backup "$from_dir")"
+    if [ -z "$last" ]; then
+        msg "Error: No backup in $from_dir"
+        return 1
+    fi
+    local from="$from_dir/$last"
     to_dir="$to_dir/$sanSv"
     cmd mkdir -p "$to_dir" # Make sure the target directory exists.
     local last_parent="$(last-backup "$to_dir")"
@@ -319,7 +323,9 @@ clone-or-update() {
     if [ -z "$last_parent" ]; then # No subvols found, so bootstrap.
         msg "Cloning '$from'→'$to_dir'"
         cmd-eval "sudo btrfs send '$from' | sudo btrfs receive '$to_dir'"
-    else
+    elif [ -e "$to_dir/$last" ]; then # Nothing to do.
+        msg "Skipping '$subvol': '$to_dir' already has the latest snapshot from '$from_dir'."
+    else # Incremental backup.
         msg "Cloning '$from'→'$to_dir' via parent '$last_parent'."
         cmd-eval "sudo btrfs send -p '$from_dir/$last_parent' '$from' | sudo btrfs receive '$to_dir'"
     fi
@@ -600,7 +606,7 @@ uninstall() {
     msg "Uninstall complete."
 }
 
-USAGE="Usage: backup-btrfs action
+USAGE="Usage: backup-btrfs [DEBUG] {action}
 
 Run btrfs backups. Here are the valid actions.
 
@@ -610,6 +616,10 @@ install    Bundle script and config into no-arg system script and set
 reinstall  Redo install with latest script and config versions.
 uninstall  Remove installed file and systemd units.
 usage      Show this usage information.
+
+If 'DEBUG' is passed, then actions are simulated instead. This is good
+for testing purposes, such as if the control script has just been
+modified.
 "
 ## Usage: usage
 # Show usage message.
@@ -620,9 +630,13 @@ usage() {
 ## Usage: main "$@"
 # Run the script.
 main() {
+    if [ "$1" = "DEBUG" ]; then
+        DEBUG=true
+        shift
+    fi
     if [ $# != '1' ]; then
         usage
-        fatal "Expected exectly 1 argument."
+        fatal "Expected exectly 1 action."
     fi
 
     case "$1" in
