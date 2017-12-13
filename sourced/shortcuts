@@ -2,22 +2,13 @@
 ## shortcuts
 # Convert certain scripts into functions for shell integration.
 
-## Usage: __make_command_function command [...]
 # Make functions that source given commands, enabling things like "cd"
 # in the commands to have the desired effects in interactive shells.
-__make_command_function() {
-    while [ -n "$1" ]; do
-        if [ "$DEBUG" = "true" ]; then
-            echo "shortcut: $1"
-        fi
-        # Example "cmd-foo" -> cmd-foo() { . "/path/to/cmd-foo" "$@"; }
-        eval "$1() { . \"$(cmpath "$1")\" \"\$@\"; }"
-        shift
-    done
-}
-
-# Make the functions.
-__make_command_function cdh cmcd cdl mkcd
-
-# Cleanup
-unset __make_command_function
+for fn in cdh cmcd cdl mkcd; do
+    if [ "$DEBUG" = "true" ]; then
+        echo "shortcut: $fn"
+    fi
+    # Example "cmd-foo" -> cmd-foo() { . "/path/to/cmd-foo" "$@"; }
+    eval "$fn() { . \"$(cmpath "$fn")\" \"\$@\"; }"
+    shift
+done
