@@ -15,7 +15,5 @@ if [ -z "$1" ] || [ ! -e "$path" ]; then
 else
     # Load them implicitly with appropriate commands.
     cdh "$(cat "$path/H")"
-    # This is sourced and we don't want to exit the interactive session.
-    # shellcheck disable=SC2164
-    cd "$(cat "$path/PWD")"
+    pcd "$(cat "$path/PWD")"
 fi

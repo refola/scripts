@@ -16,3 +16,5 @@ alias egrep='egrep --color=tty'
 alias cp='cp -i --reflink=auto' # and be CoW-efficient
 alias mv='mv -i'
 
+# Replace 'cd' with an almost-equivalent 'pushd'-based command
+alias cd='pcd'

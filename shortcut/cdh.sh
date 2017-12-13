@@ -19,13 +19,9 @@ if [ -z "$1" ]; then
         # shellcheck disable=SC2168
         return 1
     else
-        # This is sourced and we don't want to exit the interactive session.
-        # shellcheck disable=SC2164
-        cd "$H"
+        pcd "$H"
     fi
 else # Change to the given path and set `$H` to the path.
-    # This is sourced and we don't want to exit the interactive session.
-    # shellcheck disable=SC2164
-    cd "$1"
+    pcd "$1"
     export H="$PWD" # `$PWD` gets rid of relative paths.
 fi
