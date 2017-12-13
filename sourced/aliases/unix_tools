@@ -5,12 +5,12 @@
 # Make things more colorful, use human-usable units, and ISO 8601 time format.
 alias date='date --iso-8601=seconds'
 alias ls='ls --group-directories-first --time-style=+"%Y-%m-%dT%H:%M:%S%z" --color=auto'
-alias lah='ls --group-directories-first --time-style=+"%Y-%m-%dT%H:%M:%S%z" --color=auto -lAh' # almost same as previous line, but in nice long form
+alias lah='ls -lAh' # add nice long form args to above
 alias df='df -h'
 alias free='free -m'
 alias grep='grep --color=tty'
-alias fgrep='fgrep --color=tty'
-alias egrep='egrep --color=tty'
+alias egrep='grep -E' # Per 'man grep', these are equivalent;
+alias fgrep='grep -F' # and the arg just compounds to grep's.
 
 # Prompt before losing data
 alias cp='cp -i --reflink=auto' # and be CoW-efficient
