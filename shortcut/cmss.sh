@@ -10,7 +10,8 @@ if [ -z "$1" ]; then
     exit 1
 else
     for x in "$@"; do
-        cd "$(cmdir "$x")"
+        cd "$(cmdir "$x")" ||
+            echo "Couldn't 'cd'; paths to sourced scripts may be broken." >&2
         shellcheck -x "$(cmpath "$x")"
     done
 fi
