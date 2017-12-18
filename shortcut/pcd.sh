@@ -7,7 +7,7 @@
 if [ $# != 1 ] || [ "$1" = "-" ]; then
     # This is sourced and we don't want to exit the interactive session.
     # shellcheck disable=SC2164
-    cd "$@"
+    ''cd "$@" # Prefix with '' to avoid infinite recursion by alias
 else
     # Other than side effects on `popd` and `dirs`, this looks the
     # same as `cd`.
