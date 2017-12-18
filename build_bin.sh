@@ -43,6 +43,7 @@ example
 graveyard
 sourced
 test
+zsh_custom
 "
 
 # Build the skip pattern by converting newlines to $|^ (separating
