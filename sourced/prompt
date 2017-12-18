@@ -38,7 +38,7 @@ export PROMPT_COMMAND="$(pcmd)"
 # length. This also means that the color codes will mess up Bash's
 # perceived prompt length if they are used inside functions. Don't
 # abuse color codes in functions called by $PS1; only use directly
-# insise the "ps1" and "ps2" functions. Please also note that Bash
+# inside the "ps1" and "ps2" functions. Please also note that Bash
 # will interpret each semicolon inside of, e.g., "0;1;36" (causing
 # "cyan" text) as a statement separator, so you must quote complex
 # colors codes.
