@@ -1,1 +1,1 @@
-pacman -S $args
+pacman --needed -S $args
