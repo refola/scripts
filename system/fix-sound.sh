@@ -1,10 +1,15 @@
 #!/bin/bash
-echo "Muting sound."
-volume-mute
+
+if volume-muted -q; then
+    wasmuted=true
+else
+    wasmuted=false
+    echo "Muting sound."
+    volume-mute
+fi
 
 word="yh" # "yh" seems to be the shortest-time sound it can do
 cmd=(say "$word")
-
 
 if [ -e "$(which spd-say)" ]; then # use lower-level parameters to be faster
     cmd=(spd-say --wait --rate +100 "$word")
@@ -15,5 +20,7 @@ echo "which seems to fix cracking audio after changing sessions."
 ${cmd[@]}
 ${cmd[@]}
 
-echo "Unmuting sound."
-volume-mute
+if [ "$wasmuted" = "false" ]; then
+    echo "Unmuting sound."
+    volume-mute
+fi
