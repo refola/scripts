@@ -11,10 +11,12 @@ result to the log of given name.
 
 On first use, log prompts for a location in which to store the logs."
 
+# Args are mandatory.
 if [ -z "$*" ]; then
     echo "$usage"
     # Show list of saved variable sets
-    log_loc="$(get-config log/location)"
+    log_loc="$(get-config log/location)" || exit 1
+    mkdir -p "$log_loc" # in case of new configuration
     echo "List of current log names:"
     ls -m "$log_loc"
 
