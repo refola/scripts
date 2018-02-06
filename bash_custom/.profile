@@ -51,11 +51,9 @@ __add_to_path /sbin /usr/sbin /usr/local/sbin
 # Just go to the gorram man page without that annoying prompt, per 
 # <https://forums.opensuse.org/showthread.php/427627-The-Man-What-manual-page-do-you-want-prompt?p=2271750#post2271750>
 MAN_POSIXLY_CORRECT=1
-# KWin says I need this for stuff and references <https://bugs.kde.org/show_bug.cgi?id=322060>.
-__GL_YIELD="USLEEP"
 
 ## EXPORT PROBLEM FIXES
-export MAN_POSIXLY_CORRECT __GL_YIELD
+export MAN_POSIXLY_CORRECT
 
 
 ## CLEANUP
