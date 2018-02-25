@@ -5,8 +5,8 @@
 log_location="$(get-config "log-bandwidth/log-location" \
                            -what-do "where to save the log")" || exit 1
 IFS=$'\n'
-interfaces=( $(get-config "log-bandwidth/interfaces" \
-                          -what-do "list of network interfaces to log stats of") ) || exit 1
+interfaces=( $(ip addr | grep -E '^[0-9]+: ' |
+                   sed -r 's/[0-9]+: ([^:]+):.*/\1/g') ) || exit 1
 
 # Make sure the log location exists.
 mkdir -p "$(dirname "$log_location")"
@@ -37,12 +37,13 @@ get-bytes() {
         result="$(echo "$result" | grep -E -o -m1 "[0-9]+")"
         # Limit to first match (byte count)
         result="$(echo "$result" | head -n1)"
-        # Finally output result
-        echo "$result"
-        return 0
-    else
-        return 1
+        # Finally output nonzero result
+        if [ "$result" != "0" ]; then
+            echo "$result"
+            return 0
+        fi
     fi
+    return 1
 }
 
 log "$(date -Iseconds)"
