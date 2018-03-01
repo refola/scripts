@@ -1,38 +1,43 @@
 #!/bin/bash
 # Restore file/folder from a btrfs snapshot.
 
-# TODO: This should be able to handle everything from assuming the
-# "backup-btrfs" script has been used for snapshots and auto-inferring
-# all the snapshot stuff from a full destination path. For now it just
-# defaults to my main personal usecase and takes extra parameters for
-# other snapshot and destination directories.
+# TODO: Automagically retrieve config from `backup-btrfs` script
+# config and `/etc/fstab`, and then make autocomplete.
 
-snapdir="/mnt/@snapshots/@home-mark"
-cd $snapdir # because ls'ing "$snapdir/*/" doesn't work the same
+## Usage: get config-name config-description
+# Echoes the requested config back to the script, possibly interacting
+# with the user to get initial config if it doesn't exist yet.
+get() { get-config "restore-from-btrfs-snapshot/$1" -what-do "$2" || exit 1; }
+
+# Get configurations.
+snapdir="$(get "snapdir"
+               "directory where your home directory's snapshots are located")"
+destination="$(get "destination"
+                   "directory under the same mount point as 'snapdir' where your
+home directory is located (_not_ under '/home'!)")"
+
+
 # get last folder in snapshot directory
-lastsnap="$(basename "$(find "$snapdir" -mindepth 1 -maxdepth 1 | tail -n 1)")"
-snapshot="$snapdir/$lastsnap"
+snapshot="$(find "$snapdir" -mindepth 1 -maxdepth 1 | tail -n 1)"
 
-destination="/mnt/@home/mark"
+usage="Usage: $(basename "$0") path [snapshot destination]
+Restores contents of 'path' from 'snapshot' to 'destination'.
 
-if [ -z "$1" ]
-then
-    echo "Usage: $(basename "$0") path [snapshot destination]"
-    echo "Restores contents of path from snapshot to destination."
-    echo
-    echo "Defaults:"
-    echo "  snapshot:     $snapshot"
-    echo "  destination:  $destination"
-    echo
-    echo "Note: snapshot and destination must be on subvolumes"
-    echo "in the same btrfs mount point. Otherwise it will duplicate"
-    echo "all the data, ignoring btrfs's copy-on-write features."
+Defaults:
+  snapshot:     $snapshot
+  destination:  $destination
+
+Note: snapshot and destination must be on subvolumes in the same btrfs
+mount point. Otherwise it will duplicate all the data, ignoring
+btrfs's copy-on-write features, and wasting that much space."
+
+if [ -z "$1" ]; then
+    echo "$usage"
     exit 1
 fi
 path="$1"
 
-if [ ! -z "$3" ]
-then
+if [ ! -z "$3" ]; then
     snapshot="$2"
     destination="$3"
 fi
