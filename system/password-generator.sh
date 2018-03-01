@@ -32,6 +32,9 @@ follows.
 
 'pattern-name' must be one of the following:
 
+  -
+             This is an alias for 'default'.
+
   all-us     a-zA-Z0-9 \`~!@#$%^&*()[]{}',.\"<>/=\\\\?+|\\-_;:
              All the directly-typable characters on my United States keyboard.
 
@@ -50,6 +53,10 @@ follows.
 
   default
              Currently this is an alias for 'all-us'.
+
+  hcg        a-zA-Z0-9 \`~!@#$%^*[]{},.=+|\\-_;:
+             This is 'all-us' with characters removed to match what
+             healthcare.gov accepts.
 
   pin        0-9
              For low-security systems that won't let you use good passwords.
@@ -124,8 +131,9 @@ main() {
     # Get pattern
     local pattern
     case "$1" in
-        pin)
-            pattern="0-9"
+        -|all-us|default)
+            # "\\\\" -> "\\" by bash and "\\" -> "\" by tr
+            pattern="a-zA-Z0-9 \`~!@#$%^&*()[]{}',.\"<>/=\\\\?+|\-_;:"
             ;;
         alnum)
             pattern="a-z0-9"
@@ -133,12 +141,14 @@ main() {
         basic)
             pattern="a-zA-Z0-9!@#$%^&*()"
             ;;
-        all-us|default)
-            # "\\\\" -> "\\" by bash and "\\" -> "\" by tr
-            pattern="a-zA-Z0-9 \`~!@#$%^&*()[]{}',.\"<>/=\\\\?+|\-_;:"
-            ;;
         custom)
             pattern="$2"
+            ;;
+        hcg)
+            pattern="a-zA-Z0-9 \`~!@#$%^*[]{},.=+|\\-_;:"
+            ;;
+        pin)
+            pattern="0-9"
             ;;
         *)
             usage
