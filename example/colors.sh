@@ -3,33 +3,36 @@
 # Echo a reference for color codes.
 
 ## Usage: row outer-code inner-code-prefix name
+# Show a row of color codes.
 row() {
     echo -n "$3"
     local i
     for i in {0..7}; do
         echo -en "\e[0;$1;$2${i}m$2$i\e[0m "
     done
-    echo
+    echo "(clear row's codes with $4)"
 }
 
-## Usage: block code name
+## Usage: block code name clearer
 # Show a block of color codes, combined with "code", and preceded with
 # printing "name" in "code".
 block() {
+    # Explicitly ignore blinking, with error
     if [ "$1" = "5" ]; then
-        echo "$1: $2"
-        echo "I don't want this to blink"
-        echo "so I'm skipping this one."
+        echo "$1: $2 (clear with $3)"
+        echo "This would blink, but that's distracting so I'm skipping it."
         echo
         return 1
     fi
+
+    # Otherwise, business as usual
     local i
     local j
-    echo -e "$1: \e[0;${1}m$2\e[0m"
-    row "$1" 03 "normal:     "
-    row "$1" 04 "background: "
-    row "$1" 09 "intense:    "
-    row "$1" 10 "intense bg: "
+    echo -e "$1: \e[0;${1}m$2\e[${3}m (clear with $3)"
+    row "$1" 03 "normal:     " "38 or 39"
+    row "$1" 04 "background: " "48 or 49"
+    row "$1" 09 "intense:    " "38 or 39"
+    row "$1" 10 "intense bg: " "48 or 49"
     echo
 }
 
@@ -45,11 +48,12 @@ string. The code-enabling strings are made by surrounding the codes by
 
 echo -e '\e[0;3;4;30;105mItalic, underlined, and dark on pink\e[0m'
 
-Note the '0;' at the beginning of the code-enabling string. That's to
-clear out other formatting that may have gone before. Color codes
-replace other color codes of the same type (e.g., foreground vs
-background), but '\e[0m' and such is the only way I know to clear
-other formatting, and it clears all formatting."
+Note the '0;' at the beginning of the code-enabling string. This
+clears out all possible previously-entered formatting that may have
+gone before. Color codes replace other color codes of the same type
+(e.g., foreground vs background), and particular codes undo the effect
+of particular types of codes, but '\e[0m' is the all-purpose
+formatting reset code."
 
 if [ "$1" = "info" ]; then
     echo "$info"
@@ -58,10 +62,14 @@ else
     echo "Here's the color code reference. Run '$(basename "$0") info'"
     echo "for information about how *nix console color codes work."
     echo
-    block 0 normal
-    block 1 bold
-    block 3 italic
-    block 4 underline
-    block 5 blink
-    block 7 "perma-swap foreground and background"
+    #     Nr  Effect      Clearer
+    block 0   normal      20
+    block 1   bold        21
+    block 2   faint       22
+    block 3   italic      23
+    block 4   underline   24
+    block 5   blink       25
+    block 6   nothing?    26
+    block 7   bg-fg-swap  27
+    block 53  overline    55
 fi
