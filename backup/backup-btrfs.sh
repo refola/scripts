@@ -492,7 +492,7 @@ It is a good and nicely-commented example."
 # if not.
 check-config() {
     # Check the config, explaining how it works if it isn't already set.
-    get-config backup-btrfs/control_script -what-do\
+    get-config backup-btrfs/control_script -verbatim -what-do\
                "$CONFIG_USE" >/dev/null || fatal "Can't get config!"
 }
 
