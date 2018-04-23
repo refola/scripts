@@ -44,6 +44,13 @@ __add_to_path "$GOBIN"
 export GOPATH GOBIN
 
 
+## NIX
+
+if [ -e ~/.nix-profile/etc/profile.d/nix.sh ]; then
+    . ~/.nix-profile/etc/profile.d/nix.sh
+fi
+
+
 ## FIXING PROBLEMS
 
 # Include sbins if not already included (fixes sudo in OpenSUSE)
