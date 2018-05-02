@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Generic command-running script, intended for running several
 # commands at once or for cases where a command is required without
 # supporting Bash syntax.

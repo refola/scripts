@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 usage="smooth-volume-up [delay [increment]]
 
 Gradually increase volume every delay (default: 2s) interval, with an

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ### Space-separated lists of interfaces and modules to reset.
 INTERFACES="enp3s0 fake_interface_name_for_testing"

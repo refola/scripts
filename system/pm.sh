@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # pm.sh - package manager frontend for multiple distros
 

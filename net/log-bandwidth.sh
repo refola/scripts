@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## log-bandwidth.sh
 # Save current bandwidth stats to a log.
 

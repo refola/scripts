@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## cmedit.sh
 # Edit the file referred to by a command. No more manual, nested,
 # "basename of readlink of which" invocations.

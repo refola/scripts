@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## cdl.sh
 # Sourcable script for `cdl()` function.
 

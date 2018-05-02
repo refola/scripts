@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## get-config.sh
 # Read and output the requested configuration file if found. Otherwise
 # copy the default and prompt the user to edit it.

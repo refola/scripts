@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## start-emacs.sh
 
 start_dir="/home/$USER"

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## minecraft-server.sh
 # Run the official Minecraft server program for my particular setup.
 

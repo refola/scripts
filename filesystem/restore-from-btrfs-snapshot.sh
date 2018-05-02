@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Restore file/folder from a btrfs snapshot.
 
 # TODO: Automagically retrieve config from `backup-btrfs` script

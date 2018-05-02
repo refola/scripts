@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## build_zandronum.sh
 # Automate installation of Zandronum from source, based on
 # <ref>. NOTE: The wiki page this is based off of does not state a

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## cmss.sh
 # Run Shellcheck on the given commands.
 

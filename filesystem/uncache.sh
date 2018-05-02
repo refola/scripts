@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 run() {
     echo "Running '$1' to $2."
     eval "$1"

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## cmdir.sh
 # Output the location of a command. Useful for scripts that need to
 # access their location.

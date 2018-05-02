@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## packet-loss-alerter.sh
 # Keep pinging a known reliable host, produce an audible warning each
 # time a packet is lost, and produce a more annoying warning and exit

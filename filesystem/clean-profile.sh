@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 localfolders="
 .cache/banshee-1
 .cache/dconf

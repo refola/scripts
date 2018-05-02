@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 cmds="
 sudo chmod -R g=u /home/kelci

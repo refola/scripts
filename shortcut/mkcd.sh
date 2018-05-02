@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## mkcd.sh
 # Sourcable script for `mkcd()` function.
 

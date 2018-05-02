@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## packet-loss-logger.sh
 # Keep pinging a known reliable host and log a message each time a
 # packet is lost.

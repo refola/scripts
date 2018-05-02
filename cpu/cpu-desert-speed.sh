@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 echo "Setting CPUs to ondemand frequency, but limited to only 2 GHz because ambiant temperatures are too hot (uses sudo)."
 if [ -e /usr/bin/cpupower ]
 then

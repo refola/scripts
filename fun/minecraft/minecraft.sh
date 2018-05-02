@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## minecraft.sh
 # Run Minecraft client and server, precaching files in the background.
 

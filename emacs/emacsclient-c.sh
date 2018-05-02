@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## emacsclient-*.sh
 # Run `emacsclient -*` as an environment variable-compatible command.
 # command. Note that `*` can currently only be `c` or `t`; see the

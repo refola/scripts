@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Make files with Lojban words formatted in alphabetical order in
 # columns (e.g., the first gismu column will always contain "bacru

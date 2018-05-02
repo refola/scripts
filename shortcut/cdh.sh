@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## cdh.sh
 # Sourcable script for `cdh()` function.
 

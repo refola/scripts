@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Cache a bunch of regularly-used folders for faster future access
 
 cfg="cache-places/folders"

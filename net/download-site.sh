@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## download-site.sh
 # Use wget to recursively download everything publicly accessible in a
 # site, saving the files to user-set location.

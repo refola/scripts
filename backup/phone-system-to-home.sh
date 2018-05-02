@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Phone system backup script, using a delete-and-copy method via
 #  "adb pull [source] [destination]".
 

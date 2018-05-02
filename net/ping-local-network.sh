@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 doit() {
     ping -c 1 "$1" | grep -B 1 "1 received" | grep -o "$1"

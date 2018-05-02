@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## save-smart-info.sh
 # Save SMART info for pre-determined locations and save output to
 # date-based filenames.

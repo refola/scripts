@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 cmds=( grub2-mkconfig grub-mkconfig )
 dests=( /boot/grub2/grub.cfg /boot/grub/grub.cfg )

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 echo "Running script for checking file existence."
 if [ -z "$1" ]
 then

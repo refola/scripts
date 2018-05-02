@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Cache the given folder(s) or $PWD.
 
 # Cache a single folder.

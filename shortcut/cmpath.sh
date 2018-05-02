@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## cmpath.sh
 # Output actual paths commands, resolving symlinks.
 

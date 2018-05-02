@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## cmcd.sh
 # Sourcable script for `cmcd()` function.
 

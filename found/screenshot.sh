@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # screenshot.sh
 # Version: 0.1 
 # Author: Marco R. Gazzetta

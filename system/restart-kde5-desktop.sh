@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ## Usage: run-maybe-5 program args ...
 # Runs program5 if it exists, or program if program5 doesn't exist,

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # touch-control.sh
 ##
 # Enable/disable touch input, at least on a ThinkPad X220 Tablet and

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## cds.sh
 # Save $PWD and $H.
 

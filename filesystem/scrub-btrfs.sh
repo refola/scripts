@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## scrub-btrfs.sh
 # Run btrfs scrub for pre-determined locations and save output to
 # date-based filenames.

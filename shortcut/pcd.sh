@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## pcd.sh
 # Emulate `cd` with `pushd` side effects.
 

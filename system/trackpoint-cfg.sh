@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## trackpoint-cfg.sh
 # Set trackpoint configuration to my preferences.
 

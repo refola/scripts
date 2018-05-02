@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 echo "Setting CPUs to ondemand frequency (uses sudo)."
 if [ -e /usr/bin/cpupower ]
 then

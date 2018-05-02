@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # redshift-control.sh sets redshift on Mark's computer to change the color temperature for Flagstaff according to the day and night temperature
 
 # gamma for the X server, as R:G:B

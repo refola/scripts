@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## get-data.sh
 # Read in data for a script from the data directory of this scripts repository.
 

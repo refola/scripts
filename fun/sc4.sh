@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Assuming SimCity 4 has been installed, this runs it with the parameters found most useful, as explained below.
 # "-w": windowed; doesn't work; use desktop emulation in Wine.
 # "-CPUCount:2": keep the weird built-in scheduler from fucking up on multicore systems; try other values if needed.

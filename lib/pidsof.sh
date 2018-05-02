@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## pidsof.sh
 # Approximately clone the Linux pidof command in a cross-*nix way.
 

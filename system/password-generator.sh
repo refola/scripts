@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # password-generator.sh
 
 usage="password-generator [options ...] {pattern-name}

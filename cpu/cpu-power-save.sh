@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 echo "Setting CPUs to minimum frequency (uses sudo)."
 if [ -e /usr/bin/cpupower ]
 then

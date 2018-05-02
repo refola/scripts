@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## ecat.sh
 # Echo the name of and "cat" each passed file.
 
