@@ -53,7 +53,7 @@ change-shebang-prefixes() {
         elif prog="$(get-prog "$x")"; then
             for runner in "${runners[$prog]}" "${runners["$default"]}"; do
                 if [ -n "$runner" ]; then
-                    echo sed -i "s\\$prog\\$runner\\" "$x"
+                    sed -i "1 s\\#!/.*$prog\\$runner$prog\\" "$x"
                     continue 2
                 fi
             done
@@ -104,7 +104,7 @@ main() {
         env-all|env-most|bin-sh|bin-all)
             $1
             shift
-            change-runners "$@"
+            change-shebang-prefixes "$@"
             ;;
         help|h|--help|-h)
             usage
