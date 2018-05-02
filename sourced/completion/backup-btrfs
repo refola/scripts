@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Bash completion for backup-btrfs.sh
 
 _backup-btrfs() {

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## shortcuts
 # Convert certain scripts into functions for shell integration.
 

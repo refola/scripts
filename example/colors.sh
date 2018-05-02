@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## colors.sh
 # Echo a reference for color codes.
 

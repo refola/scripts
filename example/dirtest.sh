@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 echo "Running \"Directory test\" script to benchmark directory creation."
 
 place="./directorybenchmarktest"

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Example script to run "go get" and "go build" for the given go-gettable project, keeping it local to wherever this script is located.
 # Simply edit PKG, post this script somewhere, and tell your project's users to do the following:
 # 1. Install Go (see https://golang.org/doc/install).

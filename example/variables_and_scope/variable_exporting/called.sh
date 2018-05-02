@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 echo "This is called.sh. VAR1 is $VAR1."
 

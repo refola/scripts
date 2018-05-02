@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # si_regexes.sh
 # Apply a series of regex find-replace operations to convert DataPacRat's formatting for S.I. into proper HTML.
 # Author: Mark Haferkamp

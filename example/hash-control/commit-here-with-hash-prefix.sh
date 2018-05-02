@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Make a git commit with given message, hash prefix, and other
 # arguments (default: commit all).
 here="$(dirname "$(readlink -f "$0")")"

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 echo "This is called_later.sh."
 echo "Here's my perception of VAR1, VAR2, and VAR3...."

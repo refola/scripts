@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 echo "loop \$1 script"
 times=$1
 if [ -z "$1" ] ; then

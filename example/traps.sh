@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 exit1() { echo "exit1" ; }
 exit2() { echo "exit2" ; }

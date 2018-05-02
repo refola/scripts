@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Lock the screen and do not allow it to be unlocked until 6 hours have passed.
 
 uptime

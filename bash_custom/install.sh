@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Install custom Bash profile stuff.
 
 # Figure out where the script is

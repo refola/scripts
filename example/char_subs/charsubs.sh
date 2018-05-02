@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ck="\\-=qwfpgjluy;[]\\\\arstdhneio'zxcvbkm,./"
 dv="[]',.pyfgcrl/=\\\\aoeuidhtns\\-;qjkxbmwvz"

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Lock the screen and do not allow it to be unlocked until the given time has elapsed.
 
 # Make sure the number of seconds is given.

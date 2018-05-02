@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 func1() {
     func2

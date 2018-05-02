@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 VAR_X="after W"
 VAR_Y="before Z"

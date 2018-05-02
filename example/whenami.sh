@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # whenami.sh
 # Outputs the local time, optionally repeatedly.
 

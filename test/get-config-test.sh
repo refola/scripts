@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## get-config-test.sh
 # Test the get-config script.
 

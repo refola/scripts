@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # tuple_funcs.sh
 
 # Demonstrates how to do stuff with tuples and functions in Bash as

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Get script location
 DELINKED=`readlink -f "$0"`

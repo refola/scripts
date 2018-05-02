@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Make cm* and other commands auto-complete with command names
 for __tmp_refola_scripts_completion_var in cmcd cmdir cmedit cmls cmpath cmss silent-fork; do
     complete -c "$__tmp_refola_scripts_completion_var"

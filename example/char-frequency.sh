@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 declare -A chars
 msg="$1"
 len="${#msg}"

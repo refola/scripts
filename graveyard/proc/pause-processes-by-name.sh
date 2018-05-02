@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Pause all of the current user's processes that match the given name.
 
 sec="60"
