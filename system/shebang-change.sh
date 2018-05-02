@@ -78,7 +78,7 @@ change-shebang-prefixes() {
         elif prog="$(get-prog "$x")"; then
             for runner in "${runners[$prog]}" "${runners["$default"]}"; do
                 if [ -n "$runner" ]; then
-                    cmd sed -i "1 s\\#!/.*$prog\\$runner$prog\\" "$x"
+                    cmd sed --follow-symlinks --posix -i "1 s\\#!/.*$prog\\$runner$prog\\" "$x"
                     continue 2
                 fi
             done
