@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
-## GLOBAL VARIABLES
+
+## Global variables
+
+# Only print commands? Set to `true` for a debug mode.
+dry=false
 
 # This is for setting which runners are prefered for which programs.
 # `runners[program]=runner` sets `program` she-bangs to use `runner`.
@@ -23,11 +27,32 @@ bin="#!/bin/"
 # List of all prefixes
 prefixes=("$env" "$bin")
 
-# Convenience function
+
+## Generic functions
+
+# Run given command, unless `dry` is `true`, in which case just print
+# it.
+cmd() {
+    if [ "$dry" = true ]; then
+        echo -n "$1"
+        shift
+        for x in "$@"; do
+            echo -n " '$x'"
+        done
+        echo
+    else
+        "$@"
+    fi
+}
+
+# Show error message and return error status.
 err() {
     echo "$@" >&2
     return 1
 }
+
+
+## Specific functions
 
 # Get the name of the program after whatever prefix is in the shebang
 get-prog() {
@@ -53,7 +78,7 @@ change-shebang-prefixes() {
         elif prog="$(get-prog "$x")"; then
             for runner in "${runners[$prog]}" "${runners["$default"]}"; do
                 if [ -n "$runner" ]; then
-                    sed -i "1 s\\#!/.*$prog\\$runner$prog\\" "$x"
+                    cmd sed -i "1 s\\#!/.*$prog\\$runner$prog\\" "$x"
                     continue 2
                 fi
             done
@@ -81,7 +106,7 @@ bin-all() { runners["$default"]="$bin"; }
 # Show usage information.
 usage() {
     echo "Usage:
-$0 command files [...]
+$0 [dry] command files [...]
 $0 { help | h | --help | -h }
 
 Update files' she-bang lines (when the first line starts with '#!/')
@@ -95,12 +120,22 @@ env-most   Change most she-bangs to use '/usr/bin/env' to get the
 bin-sh     Change 'sh' she-bangs to use '/bin/sh' while leaving others
             unchanged.
 bin-all    Change all she-bangs to use '/bin/'.
+
+If 'dry' is passed, only echo the changes that would have been made.
+
+If 'help' or similar is passed, only echo this usage message.
 "
 }
 
 # Pretend that there's a functional shell script entry point.
 main() {
     case "$1" in
+        dry)
+            dry=true
+            shift
+            main "$@"
+            return
+            ;;
         env-all|env-most|bin-sh|bin-all)
             $1
             shift
@@ -108,11 +143,11 @@ main() {
             ;;
         help|h|--help|-h)
             usage
-            exit
+            return
             ;;
         *)
             usage
-            exit 1
+            return 1
             ;;
     esac
 }
