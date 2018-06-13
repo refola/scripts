@@ -253,19 +253,39 @@ list() {
 
 ### btrfs utility functions ###
 
-## Usage: last_backup_name="$(last-backup backup-dir)"
-# Get name of last backup in given backup directory, or empty string
-# if there is no backup.
+## Usage: last_backup_name="$(last-backup "$(backup-dirs[@]}")"
+# Get name of last backup in each given backup directory, or empty
+# string if there is no backup in all.
+##
+# NOTE: This assumes that this script is the only source of items in
+# the snapshot directory.
 last-backup() {
-    local dir="$1"
-    # NOTE: This assumes that this script is the only source of items
-    # in the snapshot directory.
-    if [ -n "$(ls "$dir")" ]; then
-        # Get list of existing snapshots and get last one.
-        local last="$(find "$dir" -maxdepth 1 -mindepth 1 | sort | tail -n1)"
-        # Get rid of leading */ and output it.
-        echo "${last/*\//}"
-    fi
+    # Default to empty string.
+    local last=
+
+    # We need to split `find`'s results on newlines.
+    local old_IFS="$IFS"
+    IFS=$'\n'
+    # Go thru all snapshots in first directory, in reverse order.
+    for snap in $(find "$1" -maxdepth 1 -mindepth 1 | sort -r); do
+        # Get just the snapshot's name without containing directory.
+        snap="${snap/*\//}"
+        for dir in "$@"; do
+            if ! [ -d "$dir/$snap" ]; then
+                # Give up on backup name at first failure.
+                continue 2
+            fi
+        done
+        # Since snapshots are listed in reverse (newest-first) order,
+        # the first success is correct.
+        last="$snap"
+        break
+    done
+
+    # Restore old `$IFS`
+    IFS="$old_IFS"
+    # Show result, if any.
+    echo "$last"
 }
 
 ## Usage: sanitized="$(sanitize subvolume)"
@@ -318,7 +338,7 @@ clone-or-update() {
     local from="$from_dir/$last"
     to_dir="$to_dir/$sanSv"
     cmd mkdir -p "$to_dir" # Make sure the target directory exists.
-    local last_parent="$(last-backup "$to_dir")"
+    local last_parent="$(last-backup "$to_dir" "$from")"
 
     if [ -z "$last_parent" ]; then # No subvols found, so bootstrap.
         msg "Cloning '$from'→'$to_dir'"
