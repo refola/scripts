@@ -2,9 +2,23 @@
 
 # pm.sh - package manager frontend for multiple distros
 
-debug= # This can be enabled in main().
+# Package managers, split by sudo-using status
+NON_SUDO_PMS=($(get-data "pm/non-sudo-pms")) ||
+    fatal "Could not get list of non-sudo package managers."
+SUDO_PMS=($(get-data "pm/sudo-pms")) ||
+    fatal "Could not get list of sudo-using package managers."
 
-usage="Usage: $(basename "$0") [dbg | debug] [operation [package ...]]
+# Non-sudo pms first to minimize directly calling sudo.
+PMS=("${non_sudo_pms[@]}" "${sudo_pms[@]}")
+
+# Is debug mode enabled?
+DEBUG=
+
+# Is a particular package manager manually selected?
+PM=
+
+# Instructions
+USAGE="Usage: $(basename "$0") [options ...] [operation [package ...]]
 
 pm is an interactive frontend for multiple distros' package managers,
 with the goal of enabling a single set of commands to handle common
@@ -22,8 +36,10 @@ rm,  remove     Remove listed package(s).
 s,   search     Search for packages.
 up,  upgrade    Upgrade the system.
 
-If the first argument is 'dbg' or 'debug', then underlying package
-manager commands are not actually ran.
+Current options are as follows.
+
+dbg, debug      Skip running package manager commands.
+pm=manager      Force use of given package manager.
 
 Currently supported package managers:
 * apt-get (Debian, *buntu, Mint, etc)
@@ -42,25 +58,30 @@ Developer information:
   operations are defined.
 "
 
+
+## Usage: package_manager="$(detect)"
+# Detect which package manager is being used.
+detect() {
+    if [ -n "$PM" ]; then
+        echo "$PM"
+        return 0
+    fi
+    local pm
+    for pm in "${PMS[@]}"; do
+        if which "$pm" &> /dev/null; then
+            echo -e "$pm"
+            return 0
+        fi
+    done
+    # If package manager not found, exit with error.
+    fatal "No package manager found"
+}
+
 ## Usage: fatal args ...
 # Runs err with given args and exits the script.
 fatal() {
     echo -e "\e[1;4;91mError\e[0m: $*" 1>&2
     exit 1
-}
-
-# Package managers, split by sudo-using status
-non_sudo_pms=($(get-data "pm/non-sudo-pms")) ||
-    fatal "Could not get list of non-sudo package managers."
-sudo_pms=($(get-data "pm/sudo-pms")) ||
-    fatal "Could not get list of sudo-using package managers."
-# Non-sudo pms first to minimize directly calling sudo.
-pms=("${non_sudo_pms[@]}" "${sudo_pms[@]}")
-
-## Usage: msg args ...
-# Echos args in fancy style, so it's clear that it's from pm.
-msg() {
-    echo -e "\e[1;34mpm: \e[0;32m$1\e[0m"
 }
 
 ## Usage: maybe-sudo command operation
@@ -71,8 +92,8 @@ maybe-sudo() {
     local op="$2"
     local old_IFS="$IFS"
     local IFS=" "
-    local zero="${sudo_pms[*]}"
-    local one="${non_sudo_pms[*]}"
+    local zero="${SUDO_PMS[*]}"
+    local one="${NON_SUDO_PMS[*]}"
     IFS="$old_IFS"
     local test
     test="$(echo -e "$zero\n$one" | grep -e "\b$cmd\b")"
@@ -91,19 +112,10 @@ maybe-sudo() {
     esac
 }
 
-## Usage: package_manager="$(detect)"
-# Detect which package manager is being used.
-detect() {
-    local pm
-    for pm in "${pms[@]}"; do
-        if which "$pm" &> /dev/null; then
-            echo -e "$pm"
-            return 0
-        fi
-    done
-    # If package manager not found, exit with error.
-    fatal "No package manager found"
-    exit 1
+## Usage: msg args ...
+# Echos args in fancy style, so it's clear that it's from pm.
+msg() {
+    echo -e "\e[1;34mpm: \e[0;32m$1\e[0m"
 }
 
 ## Usage: pm-op operation [args ...]
@@ -114,8 +126,6 @@ pm-op() {
     pm="$(detect)" || return 1
     local op="$1"
     shift
-    # $args is used in the eval.
-    # shellcheck disable=SC2034
     local args="$*"
     local raw_cmds
     raw_cmds="$(get-data "pm/$op/$pm")" ||
@@ -126,46 +136,52 @@ pm-op() {
         if maybe-sudo "$cmd" "$op"; then
             line="sudo $line"
         fi
-        line="$(eval echo "$line")"
+        line="$(echo "$line" | sed -r "s/\\\$args/$args/g")" ||
+            fatal "Failed \$args substitution: $line"
         msg "Running $line"
-        if [ -z "$debug" ]; then
+        if [ -z "$DEBUG" ]; then
             eval "$line" || fatal "Command did not complete successfully."
         fi
     done
 }
 
+
 ## Usage: main "$@"
 # Do everything.
 main() {
     if [ -z "$1" ]; then
-        echo "$usage"
+        echo "$USAGE"
         exit 1
     fi
-    local op="$1"
+    local arg="$1"
     shift
-    case "$op" in
+    case "$arg" in
         dbg|debug)
-            debug=true
+            DEBUG=true
             msg "Debug mode enabled. Commands won't be ran."
             main "$@" ;;
         det|detect)
             local manager
             manager="$(detect)" || exit 1
             msg "Package manager: $manager" ;;
+        h|'help')
+            echo "$USAGE" ;;
         'in'|install)
             msg "Upgrading system before install."
             pm-op up
             pm-op 'in' "$@" ;;
-        h|'help')
-            echo "$usage" ;;
+        pm=*)
+            PM="${arg/pm=/}"
+            msg "Forcing use of package manager $PM."
+            main "$@" ;;
         *)
             # Most commands don't need anything special. Just gotta
             # check that they exist.
-            if [ -d "$(get-data "pm/$op" -path)" ]; then
-                pm-op "$op" "$@"
+            if [ -d "$(get-data "pm/$arg" -path)" ]; then
+                pm-op "$arg" "$@"
             else
-                msg "Unknown operation: $op"
-                echo "$usage"
+                msg "Unknown argument: $arg"
+                echo "$USAGE"
                 exit 1
             fi ;;
     esac
