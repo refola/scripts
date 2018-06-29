@@ -2,7 +2,9 @@
 
 # pm.sh - package manager frontend for multiple distros
 
-usage="Usage: $(basename "$0") [operation [package ...]]
+debug= # This can be enabled in main().
+
+usage="Usage: $(basename "$0") [dbg | debug] [operation [package ...]]
 
 pm is an interactive frontend for multiple distros' package managers,
 with the goal of enabling a single set of commands to handle common
@@ -20,9 +22,13 @@ rm,  remove     Remove listed package(s).
 s,   search     Search for packages.
 up,  upgrade    Upgrade the system.
 
+If the first argument is 'dbg' or 'debug', then underlying package
+manager commands are not actually ran.
+
 Currently supported package managers:
 * apt-get (Debian, *buntu, Mint, etc)
 * ccr (Chakra)
+* nix-env (NixOS)
 * pacman (Arch, Chakra, Kaos, etc)
 * zypper (openSUSE)
 
@@ -32,7 +38,7 @@ Limitations:
   it should check 'ID=' and 'ID_LIKE' in /etc/os-release instead.
 
 Developer information:
-* Please see $(get-data pm/README -path) for how package manager
+* Please see $(get-data pm/README.md -path) for how package manager
   operations are defined.
 "
 
@@ -57,26 +63,32 @@ msg() {
     echo -e "\e[1;34mpm: \e[0;32m$1\e[0m"
 }
 
-## Usage: maybe-sudo command
-# Returns 0 if calls to command should be prefixed with "sudo",
-# otherwise returns 1.
+## Usage: maybe-sudo command operation
+# Returns 0 if calls to command in operation should be prefixed with
+# "sudo", otherwise returns 1.
 maybe-sudo() {
-    if [ "$EUID" = "0" ]; then
-        return 0
-    else
-        local zero="${sudo_pms[*]}"
-        local one="${non_sudo_pms[*]}"
-        local test
-        test="$(echo -e "$zero\n$one" | grep -e "\b$1\b")"
-        case "$test" in
-            "$zero")
-                return 0 ;;
-            "$one")
-                return 1 ;;
-            *) # Blindly assume that unknown commands don't need sudo.
-                return 1 ;;
-        esac
-    fi
+    local cmd="$1"
+    local op="$2"
+    local old_IFS="$IFS"
+    local IFS=" "
+    local zero="${sudo_pms[*]}"
+    local one="${non_sudo_pms[*]}"
+    IFS="$old_IFS"
+    local test
+    test="$(echo -e "$zero\n$one" | grep -e "\b$cmd\b")"
+    case "$test" in
+        "$zero")
+            if ! [ -f "$(get-data "pm/$op/.no-sudo" -path)" ]; then
+                return 0
+            else
+                return 1
+            fi
+            ;;
+        "$one")
+            return 1 ;;
+        *) # Blindly assume that unknown commands don't need sudo.
+            return 1 ;;
+    esac
 }
 
 ## Usage: package_manager="$(detect)"
@@ -105,32 +117,20 @@ pm-op() {
     # $args is used in the eval.
     # shellcheck disable=SC2034
     local args="$*"
-    local no_sudo
-    if [ -f "$(get-data "pm/$op/.no-sudo" -path)" ]; then
-        no_sudo="true"
-    fi
     local raw_cmds
     raw_cmds="$(get-data "pm/$op/$pm")" ||
         fatal "Can't $op with $pm."
     local IFS=$'\n'
     for line in $raw_cmds; do
-        # TODO: Eval is evil! The Devil is in the details! Be careful
-        # what you wish for! (Double-check that this correctly
-        # converts $vars without doing anything more dangerous.)
-        local cmd
-        cmd="$(eval "echo \"$line\"")" ||
-            fatal "Could not convert '$cmd'"
-        local IFS=' ' # Split on spaces ...
-        ## ... and let set have the intended space-separated args
-        ## contained in $1 without shellcheck complaining.
-        # shellcheck disable=SC2086
-        set $cmd
-        cmd=("$@")
-        if [ -z "$no_sudo" ] && maybe-sudo "${cmd[0]}"; then
-            cmd=("sudo" "${cmd[@]}")
+        cmd="${line/ *}"
+        if maybe-sudo "$cmd" "$op"; then
+            line="sudo $line"
         fi
-        msg "Running ${cmd[*]}"
-        "${cmd[@]}" || fatal "Command did not complete successfully."
+        line="$(eval echo "$line")"
+        msg "Running $line"
+        if [ -z "$debug" ]; then
+            eval "$line" || fatal "Command did not complete successfully."
+        fi
     done
 }
 
@@ -144,6 +144,10 @@ main() {
     local op="$1"
     shift
     case "$op" in
+        dbg|debug)
+            debug=true
+            msg "Debug mode enabled. Commands won't be ran."
+            main "$@" ;;
         det|detect)
             local manager
             manager="$(detect)" || exit 1
