@@ -9,7 +9,7 @@ SUDO_PMS=($(get-data "pm/sudo-pms")) ||
     fatal "Could not get list of sudo-using package managers."
 
 # Non-sudo pms first to minimize directly calling sudo.
-PMS=("${non_sudo_pms[@]}" "${sudo_pms[@]}")
+PMS=("${NON_SUDO_PMS[@]}" "${SUDO_PMS[@]}")
 
 # Is debug mode enabled?
 DEBUG=
