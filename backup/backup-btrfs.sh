@@ -338,7 +338,7 @@ clone-or-update() {
     local from="$from_dir/$last"
     to_dir="$to_dir/$sanSv"
     cmd mkdir -p "$to_dir" # Make sure the target directory exists.
-    local last_parent="$(last-backup "$to_dir" "$from")"
+    local last_parent="$(last-backup "$to_dir" "$from_dir")"
 
     if [ -z "$last_parent" ]; then # No subvols found, so bootstrap.
         msg "Cloning '$from'→'$to_dir'"
