@@ -10,9 +10,9 @@
 get() { get-config "restore-from-btrfs-snapshot/$1" -what-do "$2" || exit 1; }
 
 # Get configurations.
-snapdir="$(get "snapdir"
+snapdir="$(get "snapdir" \
                "directory where your home directory's snapshots are located")"
-destination="$(get "destination"
+destination="$(get "destination" \
                    "directory under the same mount point as 'snapdir' where your
 home directory is located (_not_ under '/home'!)")"
 
