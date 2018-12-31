@@ -34,14 +34,11 @@ if [ -z "$prefix" ]; then
 fi
 
 doit() {
-    ping -c 1 "$1" | grep -B 1 "1 received" | grep -o "$1"
+    # Ping $1 with count=1, wait=5s, and only show results if successful.
+    ping -c 1 -W 5s "$1" | grep -B 1 "1 received" | grep -o "$1"
 }
 
 for ((x=1; x<255; x++));
 do
-    doit "$prefix.$x" &
-done
-
-sleep 4
-
-exit
+    doit "$prefix$x" &
+done | sort --version-sort # This sort adds an implicit "wait".
