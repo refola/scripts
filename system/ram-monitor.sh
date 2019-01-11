@@ -38,23 +38,25 @@ checkMemStats() {
     fi
 }
 
+ram_default=20
+swap_default=70
+usage="$0 [minRamPercent [minSwapPercent]]
+
+Constantly check RAM and swap levels, giving a warning if they both
+get too low. By default, require at least $ram_default% free RAM, or
+at least $swap_default% free swap."
+
 # main "$@"
 ##
 # Run the script, with whichever parameters are available.
 main() {
-    local usage="$0 minRamPercent minSwapPercent
-
-Constantly check RAM and swap levels, giving a warning if they both
-get too low."
-
     if [ "$#" != 2 ]; then
         echo "$usage"
-        exit 1
     fi
     mesg y # Enable `write` command
     while true; do
-        checkMemStats RAM MemAvailable MemTotal "${1-20}" \
-                      Swap SwapFree SwapTotal "${2-70}" ||
+        checkMemStats RAM MemAvailable MemTotal "${1-$ram_default}" \
+                      Swap SwapFree SwapTotal "${2-$swap_default}" ||
             sleep 9
         sleep 1
     done
