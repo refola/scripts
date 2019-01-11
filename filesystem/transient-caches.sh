@@ -125,8 +125,9 @@ nuke() {
     for x in "${dirs[@]}"; do
         # Using ':?' cancels command with error if the variable is
         # unset, preventing accidental calling of 'rm -rf /'.
-        [ -d "$tmp_loc/$x" ] && rm -rf "${tmp_loc:?}/$x"
-        [ -d "$loc/$x" ]     && rm -rf "${loc:?}/$x"
+        [ -d "$tmp_loc/$x" ] && rm -rf "${tmp_loc:?}/$x" # /tmp caches
+        [ -d "$loc/$x" ] && rm -rf "${loc:?}/$x" # ~/.cache caches
+        [ -L "$loc/$x" ] && rm "$loc/$x" # ~/.cache dangling symlinks
     done
     clean-empty-dirs -p "$tmp_loc"
 }
