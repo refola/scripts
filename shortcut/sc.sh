@@ -4,7 +4,9 @@ usage="sc /path/to/script.sh [...]
 
 Run ShellCheck on each passed script path, from the respective
 directory of each script, enabling source-following, and disabling
-checks that sc's author personally finds overzealous."
+checks that sc's author personally finds overzealous. This is
+particularly useful for scripts which source other scripts and use the
+'# shellcheck source=' directive with relative paths."
 
 [ -z "$1" ] && echo "$usage" && exit 1
 
