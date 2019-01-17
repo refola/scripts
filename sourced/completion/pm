@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Bash completion for pm.sh
+
+_pm() {
+    local pms=() pm commands
+    # The files are one word per line, so the supposed error makes no difference.
+    # shellcheck disable=SC2013
+    for pm in $(cat "$(get-data pm -path)"/*pms); do
+        pms+=("pm=$pm")
+    done
+    commands=(detect det help h info if install 'in' remove rm search s upgrade up debug dbg "${pms[@]}")
+    COMPREPLY=($(compgen -W "${commands[*]}" -- "${COMP_WORDS[COMP_CWORD]}"))
+}
+complete -F _pm pm
