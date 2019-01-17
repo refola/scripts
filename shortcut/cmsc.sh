@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-## cmss.sh
+## cmsc.sh
 # Run Shellcheck on the given commands.
 
 usage="Usage: $(cmpath "$0") command [...]
