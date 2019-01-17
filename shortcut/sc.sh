@@ -14,4 +14,5 @@ for script in "$@"; do
     cd "$(dirname "$script")"
     # SC2155: Declare and assign separately to avoid masking return values.
     shellcheck --exclude=SC2155 -x "$(basename "$script")"
+    cd - &>/dev/null # change back so possible future possibly-relative paths work
 done
