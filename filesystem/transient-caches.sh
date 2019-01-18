@@ -14,6 +14,8 @@ tmp_loc="/tmp/$USER-$UID/.cache-transient"
 # script disabling transient cache, then the desktop environment is
 # left with symlinks to nonexistent directories, hence can't write
 # under them during login before on-login scripts are ran.
+##
+# TODO: move these to script data directory
 dirs=(
     amarok
     calligrasheets
@@ -97,7 +99,7 @@ enable() {
     mkdir -p "$tmp_loc"
     local x
     for x in "${dirs[@]}"; do
-        [ -L "$loc/$x" ] && continue # Already done.
+        [ -L "$loc/$x" ] && [ -d "$tmp_loc/$x" ] && continue # Already done.
         [ -d "$loc/$x" ] && mv "$loc/$x" "$tmp_loc/" # Move existing.
         mkdir -p "$tmp_loc/$x" # Make sure it exists.
         ln -s "$tmp_loc/$x" "$loc/$x" # Set symlink.
