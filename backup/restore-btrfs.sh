@@ -266,9 +266,9 @@ init() {
 okay-to-restore() {
     local d="$1" sv="$2" snap="$3"
     exists "$d/$sv" && # destination exists
-    ! exists "$d/$sv/$snap" && # snapshot doesn't exist
-    ! clone-start-logged "$sv" "$snap" && # clone not attempted
-    ! clone-complete-logged "$sv" "$snap" # clone not made
+        ! exists "$d/$sv/$snap" && # snapshot doesn't exist
+        ! clone-start-logged "$sv" "$snap" && # clone not attempted
+        ! clone-complete-logged "$sv" "$snap" # clone not made
 }
 
 ## Usage: restore from to
@@ -289,20 +289,20 @@ restore() {
     local sv source dest last
     cd "$from" || fatal "Can't 'cd' to '$from'"
     for subvol in */; do
-    sv="${subvol/%'/'}" # trim trailing '/'
-    source="$from/$sv"
-    dest="$to/$sv"
-    exists "$dest" || cmd mkdir "$dest" ||
-        fatal "Can't find or create restore destination '$dest'."
-    last="$(last-backup "$source")"
-    if okay-to-restore "$to" "$sv" "$last"; then
-        log-clone-start "$sv" "$last"
-        cmd-eval "sudo btrfs send '$source/$last' | sudo btrfs receive '$dest'" ||
-        fatal "Failed to clone '$source/$last' to '$dest'."
-        log-clone-complete "$sv" "$last"
-    else
-        msg "Couldn't restore '$from/$sv/$last' to '$dest'."
-    fi
+        sv="${subvol/%'/'}" # trim trailing '/'
+        source="$from/$sv"
+        dest="$to/$sv"
+        exists "$dest" || cmd mkdir "$dest" ||
+            fatal "Can't find or create restore destination '$dest'."
+        last="$(last-backup "$source")"
+        if okay-to-restore "$to" "$sv" "$last"; then
+            log-clone-start "$sv" "$last"
+            cmd-eval "sudo btrfs send '$source/$last' | sudo btrfs receive '$dest'" ||
+                fatal "Failed to clone '$source/$last' to '$dest'."
+            log-clone-complete "$sv" "$last"
+        else
+            msg "Couldn't restore '$from/$sv/$last' to '$dest'."
+        fi
     done
 }
 
