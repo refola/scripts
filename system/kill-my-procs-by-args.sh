@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ## system/kill-my-procs-by-name.sh
 # Kill current user's processes by name.
 

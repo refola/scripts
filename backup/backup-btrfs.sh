@@ -556,7 +556,7 @@ install() {
         if [ "$REPLY" = "$stop_at" ]; then
             break
         elif [ -z "$script" ]; then
-            # REPLY="#!/bin/bash"
+            # REPLY="#!/usr/bin/env bash"
             script="$REPLY"$'\n'"$AUTOGEN_WARN_MSG"
         else
             script="$script"$'\n'"$REPLY"
