@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Bash completion for transient-caches.sh
+
+_transient-caches() {
+    local commands=(help nuke off on usage)
+    COMPREPLY=($(compgen -W "${commands[*]}" -- "${COMP_WORDS[COMP_CWORD]}"))
+}
+complete -F _transient-caches transient-caches
