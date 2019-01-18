@@ -276,13 +276,13 @@ okay-to-restore() {
 restore() {
     local from="$1" to="$2"
     LOG_FILE="$to/restore.log"
-    cmd touch "$LOG_FILE"
     # Check if locations might be valid
     exists "$from" || fatal "Can't find backups at '$from'."
     exists "$to" ||
 	(exists "$(dirname "$to")" && cmd mkdir "$to") ||
 	fatal "Can't find restore destination at '$to'" \
 	      "or can't create it in parent directory."
+    cmd touch "$LOG_FILE" # Only log after directory checks
     # TODO: handle error considerations listed in opening comments.
 
     # Loop thru subvolumes
