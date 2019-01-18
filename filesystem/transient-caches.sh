@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #transient-caches.sh
 # Make and unmake transient ~/.cache/* folders under /tmp
 
@@ -7,40 +7,14 @@ tmp_loc="/tmp/$USER-$UID/.cache-transient"
 
 # Directories under $loc for which to make transient
 ##
-# NOTE: This is just the list of folders I had in my personal
-# ~/.cache, with some entries commented out due to potential login
-# issues if the cache is not available. The problem is that if this
-# script enables transient cache and /tmp is cleared without this
-# script disabling transient cache, then the desktop environment is
-# left with symlinks to nonexistent directories, hence can't write
-# under them during login before on-login scripts are ran.
-##
-# TODO: move these to script data directory
-dirs=(
-    amarok
-    calligrasheets
-    chromium
-    fontconfig
-    gstreamer-1.0
-    kamoso
-    kcharselect
-    kcmshell5
-    khelpcenter
-    kio_http
-    krunner
-    kscreenlocker_greet
-    ksmserver-logout-greeter
-    ksplashqml
-    #kwin
-    mesa_shader_cache
-    mozilla
-    #plasmashell
-    qtshadercache
-    spectacle
-    systemsettings
-    thumbnails
-    youtube-dl
-)
+# NOTE: Certain entries start with "^#" to let them be skipped due to
+# potential login issues if the cache is unavailable before this
+# script is ran. The problem is that if this script enables transient
+# cache and /tmp is cleared without this script disabling transient
+# cache, then the desktop environment is left with symlinks to
+# nonexistent directories, hence can't write under them during login
+# before on-login scripts are ran.
+dirs=($(get-data transient-caches/paths | grep -v '^#'))
 
 debug() {
     local x
