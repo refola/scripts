@@ -15,6 +15,10 @@
 # appropriate place in one snapshot root folder and copy the latest to
 # another.
 ##
+# TODO: Deduplicate copied code in common with backup-btrfs.sh,
+# without making this depend on more than basic GNU utilities, Bash,
+# and btrfs-progs.
+##
 
 ### overall data flow ###
 ## Backup structure:
@@ -30,25 +34,6 @@
 # /path/to/restore/@[...]
 # /path/to/restore/@subvolK/dateN
 
-### TODO: error consideration ###
-## Problem: interruption
-# - Program can be interrupted mid-restore
-# - Partially-cloned snapshots might be hard to identify
-# - Don't want to waste time recloning good snapshots
-## Fixes
-# - Log transfer start/complete in well-defined format in destination
-# - Make sure to sync before logging completion
-# - Before each transfer, check log for started clone that didn't complete
-# - If partial clone exists, quit after asking user to delete it and
-#   restart script
-# - If partial clone doesn't exist, proceed as if this is the first
-#   time, but still logging action
-## Problem: clobbering
-# - Script can be pointed at an in-use location
-# - Don't want to overwrite existing data
-# - Don't want to add extra from-scratch clones where parents exist
-## Fixes
-# - Skip nonempty unlogged destination @subvol folders?
 
 ### global variable declarations ###
 
@@ -64,6 +49,10 @@ USAGE=
 # Set by restore()
 LOG_FILE= # TODO: Need cleaner log init code location
 
+# Set by restore()
+FROM=
+TO=
+
 
 ### generic utility functions ###
 
@@ -74,7 +63,7 @@ EXIT_TRAPS=()
 run-exit-traps() {
     local i
     for i in "${EXIT_TRAPS[@]}"; do
-        msg "Running exit trap: $i"
+        msg "running exit trap: $i"
         eval "$i"
     done
 }
@@ -132,68 +121,49 @@ cmd-eval() {
     fi
 }
 
-## Usage: exists paths...
-# Check if given paths exist, giving a message and returning 1 on
-# first non-existent path. Useful for, e.g., "if exists
-# /path/to/place; then do-thing; fi".
-exists() {
-    while [ "$#" -gt 0 ]; do
-        if [ ! -e "$1" ]; then
-            msg "Not found: $1"
-            return 1
-        fi
-        shift
-    done
-}
-
 
 ### (restore) logging and log checking ###
-
 
 ## Usage: log info
 # Timestamps info and appends it to $LOG_FILE.
 log() {
     local stamp data="$*"
+    cmd-eval sync
     stamp="$(date --utc --iso-8601=seconds)"
     cmd-eval "echo '$stamp: $data' | sudo tee --append '$LOG_FILE' >/dev/null"
 }
 
-## Usage: log-clone-start subvol snapshot
-# Logs the start of cloning subvol/snapshot.
-log-clone-start() { log "Starting clone: '$1/$2'"; }
+## Usage: log-* subvol/snapshot
+# Logs the * of cloning subvol/snapshot.
+log-start()    { log    "Start clone: '$1'"; }
+log-complete() { log "Complete clone: '$1'"; }
+log-remove()   { log   "Remove clone: '$1'"; }
 
-## Usage: log-clone-complete subvol snapshot
-# Logs the completion of cloning subvol/snapshot.
-log-clone-complete() { log "Completed clone: '$1/$2'"; }
+## Usage: last-log-for subvol/snapshot
+# Echoes the last log entry for subvol/snapshot.
+last-log-for() { grep "$1" "$LOG_FILE" | tail -n1; }
+## Usage: last-log-matches subvol/snapshot patten
+# Checks if the last log entry for subvol/snapshot matches pattern.
+last-log-matches() { last-log-for "$1" | grep --quiet "$2"; }
 
-## Usage: in-log info
-# Checks if given 'info' is in the log.
-in-log() { grep --quiet "$1" "$LOG_FILE"; }
-
-## Usage: clone-start-logged subvol snapshot
-# Checks if the log contains the start of cloning subvol/snapshot.
-clone-start-logged() { in-log "Starting clone: '$1/$2'"; }
-## Usage: clone-complete-logged subvol snapshot
-# Checks if the log contains the completion of cloning
-# subvol/snapshot.
-clone-complete-logged() { in-log "Completed clone: '$1/$2'"; }
+## Usage: last-action-is-* subvol/snapshot
+# Checks if the last logged action for subvol/snapshot is *
+last-log-is-start()  { last-log-matches "$1"     "Start"; }
+last-log-is-start()  { last-log-matches "$1"  "Complete"; }
+last-log-is-remove() { last-log-matches "$1"    "Remove"; }
+last-log-is-null()   { ! grep --quiet   "$1" "$LOG_FILE"; }
 
 
 ### btrfs utility functions ###
 
-## Usage: last_backup_name="$(last-backup "$(backup-dirs[@]}")"
+## Usage: name="$(last-backup snap-dir [...])"
 # Get name of last backup in each given backup directory, or empty
-# string if there is no backup in all.
+# string if there is no backup in common.
 ##
-# NOTE: This assumes that this script is the only source of items in
-# the snapshot directory.
+# NOTE: This assumes that this script and backup-btrfs.sh are the only
+# sources of items in the snapshot directory.
 last-backup() {
-    # Default to empty string.
-    local last=
-
-    # We need to split `find`'s results on newlines.
-    local old_IFS="$IFS"
-    IFS=$'\n'
+    local last IFS=$'\n'
     # Go thru all snapshots in first directory, in reverse order.
     for snap in $(find "$1" -maxdepth 1 -mindepth 1 | sort -r); do
         # Get just the snapshot's name without containing directory.
@@ -209,11 +179,7 @@ last-backup() {
         last="$snap"
         break
     done
-
-    # Restore old `$IFS`
-    IFS="$old_IFS"
-    # Show result, if any.
-    echo "$last"
+    echo "$last" # Show result, if any.
 }
 
 
@@ -223,18 +189,20 @@ last-backup() {
 # Runs initialization for the script. This should be called by main()
 # and only main(), once and only once.
 init() {
+    local deps lockdir
+    deps=(btrfs date dirname find mkdir rmdir sleep sudo sync tee)
     # Warn about debug mode if active
     if [ -n "$DEBUG" ]; then
-        msg "Debug mode active. Essential root commands will not really be ran."
+        msg "Debug mode active. Essential commands will not be ran."
     fi
 
     # Check that required programs are installed.
-    if ! which btrfs > /dev/null; then
-        fatal "btrfs command not found. Are you sure you're using btrfs?"
+    if ! type -P "${deps[@]}" > /dev/null; then
+        fatal "Cannot find all required commands."
     fi
 
-    # Check lock directory to prevent parallel runs.
-    local lockdir="/tmp/.backup-btrfs.lock"
+    # Check lock directory to prevent interference.
+    lockdir="/tmp/.backup-btrfs.lock"
     msg "Acquiring lock as root."
     if cmd mkdir "$lockdir"; then
         # This is the only copy of the script running. Make sure we'll
@@ -259,50 +227,61 @@ init() {
 
 ### main stuff ###
 
-## Usage: okay-to-restore restore-dir subvol snapshot
-# Checks if it's okay to restore to the given location.
-## TODO:
-# These conditions are too strict. Check other TODOs for details.
-okay-to-restore() {
-    local d="$1" sv="$2" snap="$3"
-    exists "$d/$sv" && # destination exists
-        ! exists "$d/$sv/$snap" && # snapshot doesn't exist
-        ! clone-start-logged "$sv" "$snap" && # clone not attempted
-        ! clone-complete-logged "$sv" "$snap" # clone not made
+## Usage: maybe-restore-sv subvol
+# Checks if it's okay to restore a snapshot of the given subvolume in
+# the given restore directory. This is true iff the subvolume
+# directory to restore to is empty.
+maybe-restore-sv() {
+    local sv="$1" source="$FROM/$sv" dest="$TO/$sv" last sv_snap
+    last="$(last-backup "$source")"
+    sv_snap="$sv/$last"
+    if last-log-is-remove "$sv_snap" || last-log-is-null "$sv_snap"; then
+        [ ! -e "$dest" ] && cmd mkdir "$dest"
+        log-start "$sv_snap"
+        cmd-eval "sudo btrfs send '$source/$last' | sudo btrfs receive '$dest'" ||
+            fatal "Failed to clone '$source/$last' to '$dest'."
+        log-complete "$sv_snap"
+    fi
+}
+
+## Usage: maybe-remove-sv subvol
+# Removes all snapshots of given subvolume in the restore directory
+# iff the log indicates an incomplete transfer.
+maybe-remove-sv() {
+    local sv="$1" dest="$TO/$sv" last_from last_to sv_snap
+    last_from="$(last-backup "$FROM/$sv")"
+    last_to="$(last-backup "$dest")"
+    sv_snap="$sv/$last_to"
+    # Make sure snapshots haven't changed since possible interrupted run.
+    [ "${last_from-$last_to}x" = "${last_to-$last_from}x" ] &&
+        fatal "Last snapshot disagreement: '$FROM/$sv/$last_from' vs '$dest/$last_to'."
+    # Check if it's okay to delete and delete it if so.
+    [ -e "$dest/$last_to" ] && # it exists
+        [ "$last_from" = "$last_to" ] && # it's of the latest source
+        last-action-is-start "$sv_snap" && # it's incomplete
+        cmd sudo btrfs subvolume delete "$dest/$last" && # remove it
+        log-remove "$sv_snap" # log removal
 }
 
 ## Usage: restore from to
 # Restore (clone) latest subvolumes from 'from' to 'to'.
 restore() {
-    local from="$1" to="$2"
-    LOG_FILE="$to/restore.log"
+    local subvol sv
+
     # Check if locations might be valid
-    exists "$from" || fatal "Can't find backups at '$from'."
-    exists "$to" ||
-    (exists "$(dirname "$to")" && cmd mkdir "$to") ||
-    fatal "Can't find restore destination at '$to'" \
-          "or can't create it in parent directory."
+    [ -d "$FROM" ] || fatal "Can't find backups at '$FROM'."
+    [ -d "$TO" ] ||
+        ([ -d "$(dirname "$TO")" ] && cmd mkdir "$TO") ||
+        fatal "Can't find restore destination at '$TO'" \
+              "or can't create it in parent directory."
     cmd touch "$LOG_FILE" # Only log after directory checks
-    # TODO: handle error considerations listed in opening comments.
 
     # Loop thru subvolumes
-    local sv source dest last
-    cd "$from" || fatal "Can't 'cd' to '$from'"
+    cd "$FROM" || fatal "Can't 'cd' to '$FROM'"
     for subvol in */; do
         sv="${subvol/%'/'}" # trim trailing '/'
-        source="$from/$sv"
-        dest="$to/$sv"
-        exists "$dest" || cmd mkdir "$dest" ||
-            fatal "Can't find or create restore destination '$dest'."
-        last="$(last-backup "$source")"
-        if okay-to-restore "$to" "$sv" "$last"; then
-            log-clone-start "$sv" "$last"
-            cmd-eval "sudo btrfs send '$source/$last' | sudo btrfs receive '$dest'" ||
-                fatal "Failed to clone '$source/$last' to '$dest'."
-            log-clone-complete "$sv" "$last"
-        else
-            msg "Couldn't restore '$from/$sv/$last' to '$dest'."
-        fi
+        maybe-remove-sv "$sv"
+        maybe-restore-sv "$sv"
     done
 }
 
@@ -315,9 +294,7 @@ If 'DEBUG' is passed, then actions are simulated instead. This is good
 for testing purposes, as a dry run."
 ## Usage: usage
 # Show usage message.
-usage() {
-    msg "$USAGE"
-}
+usage() { msg "$USAGE"; }
 
 ## Usage: main "$@"
 # Run the script.
@@ -331,8 +308,10 @@ main() {
         fatal "Need two paths."
     fi
 
+    FROM="$1" TO="$2"
+    LOG_FILE="$TO/restore.log"
     init
-    restore "$1" "$2"
+    restore
 }
 
 main "$@"
