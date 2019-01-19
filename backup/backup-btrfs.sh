@@ -45,6 +45,7 @@
 ### command-running
 ### path existence checking
 ### list formatting
+### presence in list checking
 ## btrfs utility functions
 ### last backup name retrieval
 ### subvolume path-to-name sanitization
@@ -128,11 +129,20 @@
 
 # Set by main()
 DEBUG= # Disabled (non-blank for enabled, or run with DEBUG)
+## How much info should be shown
+# -2: `fatal`
+# -1: `fatal`, `msg`
+#  0: `fatal`, `msg`, `cmd` goals
+# +1: `fatal`, `msg`, `cmd` goals, `cmd` commands
+# +2: `fatal`, `msg`, `cmd` goals, `cmd` commands, `cmd` outputs
+# +3: `fatal`, `msg`, `cmd` goals, `cmd` commands, `cmd` outputs, `dbg`
+VERBOSITY=
 
 # Set near run-exit-traps()
-EXIT_TRAPS=
+EXIT_TRAPS=()
 
 # Set by init()
+DEPS=()
 LOCKDIR=
 TIMESTAMP= # invocation time, used as "latest snapshot time"
 
@@ -172,19 +182,23 @@ add-exit-trap() {
     EXIT_TRAPS+=("$@")
 }
 
-## Usage: msg "text to display"
-# Outputs a message with a bit of formatting. This should be used
-# instead of echo almost everywhere in this script.
-msg() {
-    echo -e "\e[1m$*\e[0m"
-}
-
 ## Usage: fatal "message about fatal error"
 # Formats the given error message, outputs it to stderr, and exits the
 # script.
+##
+# VERBOSITY: any
 fatal() {
     echo -e "\e[31mError:\e[0;1m $*\e[0m" >&2
     exit 1
+}
+
+## Usage: msg "text to display"
+# Outputs a message with a bit of formatting. This should be used
+# instead of echo almost everywhere in this script.
+##
+# VERBOSITY: -1
+msg() {
+    [ "$VERBOSITY" -lt "-1" ] || echo -e "\e[1m$*\e[0m"
 }
 
 ## Usage: cmd goal command [args ...]
@@ -197,12 +211,21 @@ fatal() {
 # Note: Every simple system-changing command in this script should be
 # ran via cmd. Use 'cmd-eval' if you need shell features like unix
 # pipes.
+##
+# TODO: This should be merged with cmd-eval, but that seems to require
+# a sophisticated string-escaping function to convert this one's
+# variadicness into an eval'able string.
+##
+# VERBOSITY: 0 (goals), 1 (commands), 2 (outputs)
 cmd() {
-    msg "Doing task: $1."
-    if [ -n "$DEBUG" ]; then
-        msg "\e[33msudo ${*:2}"
-    else
-        sudo "${@:2}" || fatal "Could not $1."
+    [ "$VERBOSITY" -ge 0 ] && msg "Doing task: $1."
+    [ "$VERBOSITY" -ge 1 ] && msg "\e[33msudo ${*:2}"
+    if [ -z "$DEBUG" ]; then
+        if [ "$VERBOSITY" -ge 2 ]; then
+            sudo "${@:2}"
+        else
+            sudo "${@:2}" >/dev/null
+        fi || fatal "Could not $1."
     fi
 }
 
@@ -218,13 +241,27 @@ cmd() {
 ##
 # NOTE: You need to manually add "sudo" to commands ran with
 # this. Thus this is also good for non-root commands.
+##
+# VERBOSITY: 0 (goals), 1 (commands), 2 (outputs)
 cmd-eval() {
-    msg "Doing task: $1."
-    if [ -n "$DEBUG" ]; then
-        msg "\e[33m${*:2}"
-    else
-        eval "${*:2}" || fatal "Could not $1."
+    [ "$VERBOSITY" -ge 0 ] && msg "Doing task: $1."
+    [ "$VERBOSITY" -ge 1 ] && msg "\e[33m${*:2}"
+    if [ -z "$DEBUG" ]; then
+        if [ "$VERBOSITY" -ge 2 ]; then
+            eval "${*:2}"
+        else
+            eval "${*:2}" >/dev/null
+        fi || fatal "Could not $1."
     fi
+}
+
+## Usage: dbg messages [...]
+# Outputs a message with a bit of formatting. This should be used
+# instead of echo for showing internal state for debugging.
+##
+# VERBOSITY: 3
+dbg() {
+    [ "$VERBOSITY" -lt 3 ] || echo -e "\e[33m$*\e[0m"
 }
 
 ## Usage: exists paths...
@@ -260,6 +297,16 @@ list() {
     fi
     out+="$1"
     echo "$out"
+}
+
+## Usage: first-in-rest first rest [...]
+# Checks if the first argument is the same as one of the rest.
+first-in-rest() {
+    local x
+    for x in "${@:2}"; do
+        [ "$1" = "$x" ] && return 0
+    done
+    return 1
 }
 
 
@@ -323,9 +370,8 @@ snapshot() {
             mkdir -p "$target"
     cmd "snapshot '$from' to '$to'" \
         btrfs subvolume snapshot -r "$from" "$to"
-    # TODO: Remove 'sync' when obsolete. For now, it's necessary to
-    # sync after snapshotting so that 'btrfs send' works
-    # correctly. See:
+    # TODO: Remove 'sync' when cloning stops requiring it after
+    # snapshots. See
     # https://btrfs.wiki.kernel.org/index.php/Incremental_Backup#Initial_Bootstrapping
     cmd-eval "'sync' so 'btrfs send' works later" sync
 }
@@ -354,12 +400,12 @@ clone-or-update() {
 
     if [ -z "$last_parent" ]; then # No subvols found, so bootstrap.
         cmd-eval "clone snapshot '$from' to '$to_dir'" \
-                 "sudo btrfs send '$from' | sudo btrfs receive '$to_dir'"
+                 "sudo btrfs send --quiet '$from' | sudo btrfs receive '$to_dir'"
     elif [ -e "$to_dir/$last" ]; then # Nothing to do.
         msg "Skipping '$subvol' because '$to_dir' already has the latest snapshot from '$from_dir'."
     else # Incremental backup.
         cmd-eval "clone snapshot from '$from' to '$to_dir' via parent '$last_parent'" \
-                 "sudo btrfs send -p '$from_dir/$last_parent' '$from' | sudo btrfs receive '$to_dir'"
+                 "sudo btrfs send --quiet -p '$from_dir/$last_parent' '$from' | sudo btrfs receive '$to_dir'"
     fi
 }
 
@@ -457,16 +503,20 @@ delete-old() {
 # Runs initialization for the script. This should be called by main()
 # and only main(), once and only once.
 init() {
-    local program
+    local dep
+    DEPS=(btrfs cat chmod cp date find get-config get-data mkdir
+          mktemp readlink rm rmdir sleep sudo sync systemctl)
     # Notify of debug mode if active
     if [ -n "$DEBUG" ]; then
         msg "Debug mode active. External commands will not really be ran."
     fi
+    # Also notify of VERBOSITY level if it's high enough
+    dbg "VERBOSITY=$VERBOSITY"
 
     # Check that required programs are installed.
-    for program in btrfs date find get-config sleep sync; do
-        cmd-eval "make sure '$program' command exists" \
-                 "type -P $program > /dev/null"
+    for dep in "${DEPS[@]}"; do
+        cmd-eval "make sure '$dep' command exists" \
+                 "type -P $dep > /dev/null"
     done
 
     # Check lock directory to prevent parallel runs.
@@ -576,7 +626,7 @@ AUTOGEN_MSG="## DO NOT EDIT THIS AUTOGENERATED FILE!
 # sets a systemd service/timer pair to automatically run this every
 # hour or so.
 install() {
-    local stop_at IFS line script from
+    local stop_at IFS location line script from
     msg "Installing script as system command."
 
     # Make sure the config exists.
@@ -585,6 +635,8 @@ install() {
     # Read in every line of this script, stopping at the autogen stop
     # line that precedes the "### main stuff ###" section.
     stop_at="##### AUTOGEN STOP LINE #####"
+    location="$(readlink -f "$0")" || # TODO: something less fragile than $0
+        fatal "Could not get script location."
     while IFS= read -r line; do
         if [ "$line" = "$stop_at" ]; then
             break
@@ -593,7 +645,7 @@ install() {
         else
             script="$script"$'\n'"$line"
         fi
-    done < "$(readlink -f "$0")" # TODO: something less fragile than $0
+    done < "$location"
 
     # Append function-wrapped config.
     script="$script"$'\n'"### config from install time, wrapped in function ###"
@@ -628,7 +680,8 @@ install() {
 
     # Enable and start systemd service+timer pair.
     ## Don't enable backup-btrfs.service directly; the timer does it.
-    cmd "enable systemd timer" systemctl enable backup-btrfs.timer
+    cmd "enable systemd timer" \
+        systemctl --quiet enable backup-btrfs.timer
     cmd "start systemd timer" systemctl start backup-btrfs.timer
 
     # Tell user it's been installed.
@@ -651,7 +704,8 @@ uninstall() {
 
     # Stop and disable systemd service+timer pair.
     cmd "stop systemd timer" systemctl stop backup-btrfs.timer
-    cmd "disable systemd timer" systemctl disable backup-btrfs.timer
+    cmd "disable systemd timer" \
+        systemctl --quiet disable backup-btrfs.timer
     cmd "disable systemd service" systemctl disable backup-btrfs.service
 
     # Remove systemd units.
@@ -668,9 +722,12 @@ uninstall() {
     msg "Uninstall complete."
 }
 
-USAGE="Usage: backup-btrfs [DEBUG] {action}
+USAGE="Usage: backup-btrfs [options ...] {action} [options ...]
 
-Run btrfs backups. Here are the valid actions.
+Run btrfs backups.
+
+
+Actions:
 
 backup     Run btrfs backups according to config.
 install    Bundle script and config into no-arg system script and set
@@ -679,9 +736,18 @@ reinstall  Redo install with latest script and config versions.
 uninstall  Remove installed file and systemd units.
 usage      Show this usage information.
 
-If 'DEBUG' is passed, then actions are simulated instead. This is good
-for testing purposes, such as if the control script has just been
-modified.
+
+Options:
+
+DEBUG      Simulate actions and increase verbosity to maximum. This is
+           good for testing purposes, such as after changing the
+           control script.
+quiet      Decrease verbosity by one level.
+verbose    Increase verbosity by one level.
+
+
+Note: Verbosity currently ranges from -2 to +3 and defaults to 0.
+Note: Arguments may be abbreviated if unambiguous.
 "
 ## Usage: usage
 # Show usage message.
@@ -691,26 +757,36 @@ usage() {
 
 ## Usage: main "$@"
 # Run the script.
-##
-# TODO: restructure arg parsing to be "[options ...] action", and add
-# "quiet" option(s) to suppress cmd[-eval] goal output (and msg).
 main() {
-    if [ "$1" = "DEBUG" ]; then
-        DEBUG=true
-        shift
-    fi
-    if [ $# != '1' ]; then
-        usage
-        fatal "Expected exectly 1 action."
-    fi
-
-    case "$1" in
-        backup|install|reinstall|uninstall)
-            init
-            $1 ;;
-        usage) usage ;;
-        *) usage
-           fatal "Unknown action: '$1'." ;;
+    local -a acts opts
+    local action
+    acts=(backup install reinstall uninstall usage)
+    opts=(DEBUG quiet verbose)
+    VERBOSITY=0
+    while [ "$#" -ge "1" ]; do
+        if first-in-rest "$1" "${acts[@]}"; then
+            if [ -z "$action" ]; then
+                action="$1"
+            else
+                fatal "Multiple actions given: $action, $1, [...]."
+            fi
+        elif first-in-rest "$1" "${opts[@]}"; then
+            case "$1" in
+                D*) DEBUG=true VERBOSITY=3 ;;
+                v*)        ((VERBOSITY++)) ;;
+                q*)        ((VERBOSITY--)) ;;
+                *)   fatal "WTF? (opt $1)" ;;
+            esac
+        else
+            fatal "Unknown argument '$1'."
+        fi
+        shift 1
+    done
+    case "$action" in
+        b*|i*|r*|un*)     init; $action ;;
+        us*)              usage; return ;;
+        '')   usage; fatal "No action." ;;
+        *) fatal "WTF? action=$action." ;;
     esac
 }
 

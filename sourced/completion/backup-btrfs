@@ -2,7 +2,8 @@
 # Bash completion for backup-btrfs.sh
 
 _backup-btrfs() {
-    local commands=(DEBUG backup install reinstall uninstall usage)
+    local commands=(backup install reinstall uninstall usage
+                    DEBUG quiet verbose)
     COMPREPLY=($(compgen -W "${commands[*]}" -- "${COMP_WORDS[COMP_CWORD]}"))
 }
 complete -F _backup-btrfs backup-btrfs
