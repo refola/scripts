@@ -376,36 +376,35 @@ snapshot() {
     cmd-eval "'sync' so 'btrfs send' works later" sync
 }
 
-## Usage: clone-or-update from-dir to-dir subvolume
-# Use btrfs commands to make it so that to-dir/sanitized-subvolume
+## Usage: clone-or-update from to subvolume
+# Use btrfs commands to make it so that to/sanitized-subvolume
 # contains a copy of the latest btrfs subvolume at
-# from-dir/sanitized-subvolume.
+# from/sanitized-subvolume.
 ##
-# Result: to-dir/sanitized-subvolume/latest-snapshot-date matches
-# from-dir/sanitized-subvolume/latest-snapshot-date.
+# Result: to/sanitized-subvolume/latest-snapshot-date matches
+# from/sanitized-subvolume/latest-snapshot-date.
 clone-or-update() {
-    local from_dir="$1" to_dir="$2" subvol="$3"
-    local sanSv last from last_parent
-    sanSv="$(sanitize "$subvol")" || fatal "WTF? (sanitize $subvol)"
-    from_dir="$from_dir/$sanSv"
-    to_dir="$to_dir/$sanSv"
-    last="$(last-backup "$from_dir")"
+    local from="$1" to="$2" subvol="$3"
+    local sv last parent
+    sv="$(sanitize "$subvol")" || fatal "WTF? (sanitize $subvol)"
+    last="$(last-backup "$from/$sv")"
     ([ "$?" = "0" ] && [ -n "$last" ]) ||
-        fatal "Could not get last backup in '$from_dir'."
-    from="$from_dir/$last"
-    exists "$to_dir" || # Make sure target directory exists.
-        cmd "make clone target directory '$to_dir'" \
-            mkdir -p "$to_dir"
-    last_parent="$(last-backup "$to_dir" "$from_dir")"
+        fatal "Could not get last backup in '$from/$sv'."
+    exists "$to/$sv" || # Make sure target directory exists.
+        cmd "make clone target directory '$to/$sv'" \
+            mkdir -p "$to/$sv"
+    parent="$(last-backup "$to/$sv" "$from/$sv")"
+    dbg "clone-or-update: from='$from' to='$to' subvol='$subvol'"
+    dbg "                 sv='$sv' last='$last' parent='$parent'"
 
-    if [ -z "$last_parent" ]; then # No subvols found, so bootstrap.
-        cmd-eval "clone snapshot '$from' to '$to_dir'" \
-                 "sudo btrfs send --quiet '$from' | sudo btrfs receive '$to_dir'"
-    elif [ -e "$to_dir/$last" ]; then # Nothing to do.
-        msg "Skipping '$subvol' because '$to_dir' already has the latest snapshot from '$from_dir'."
+    if [ -z "$parent" ]; then # No subvols found, so bootstrap.
+        cmd-eval "clone snapshot '$sv/$last' from '$from' to '$to'" \
+                 "sudo btrfs send --quiet '$from/$sv/$last' | sudo btrfs receive '$to/$sv'"
+    elif [ -e "$to/$sv/$last" ]; then # Nothing to do.
+        msg "Skipping '$subvol' because '$to' already has the latest snapshot '$sv/$last' from '$from'."
     else # Incremental backup.
-        cmd-eval "clone snapshot from '$from' to '$to_dir' via parent '$last_parent'" \
-                 "sudo btrfs send --quiet -p '$from_dir/$last_parent' '$from' | sudo btrfs receive '$to_dir'"
+        cmd-eval "clone snapshot '$sv/$last' from '$from' to '$to' via parent '$sv/$parent'" \
+                 "sudo btrfs send --quiet -p '$from/$sv/$parent' '$from/$sv/$last' | sudo btrfs receive '$to/$sv'"
     fi
 }
 
