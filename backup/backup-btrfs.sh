@@ -127,7 +127,7 @@
 
 ### global variable declarations ###
 
-# Set by main()
+# Set by main(): must have usable defaults or installed version breaks
 DEBUG= # Disabled (non-blank for enabled, or run with DEBUG)
 ## How much info should be shown
 # -2: `fatal`
@@ -136,7 +136,7 @@ DEBUG= # Disabled (non-blank for enabled, or run with DEBUG)
 # +1: `fatal`, `msg`, `cmd` goals, `cmd` commands
 # +2: `fatal`, `msg`, `cmd` goals, `cmd` commands, `cmd` outputs
 # +3: `fatal`, `msg`, `cmd` goals, `cmd` commands, `cmd` outputs, `dbg`
-VERBOSITY=
+VERBOSITY=0 # default
 
 # Set near run-exit-traps()
 EXIT_TRAPS=()
@@ -640,7 +640,7 @@ install() {
         if [ "$line" = "$stop_at" ]; then
             break
         elif [ -z "$script" ]; then # leading shebang line
-            script="$REPLY"$'\n'"$AUTOGEN_MSG"
+            script="$line"$'\n'"$AUTOGEN_MSG"
         else
             script="$script"$'\n'"$line"
         fi
@@ -667,7 +667,7 @@ install() {
     cmd "copy derived script from '$tmp_path'" \
         cp "$tmp_path" "$INSTALL_PATH"
     cmd "adjust permissions on '$INSTALL_PATH'" \
-        chmod +x "$INSTALL_PATH" # TODO: change all perm bits
+        chmod 0755 "$INSTALL_PATH" # rwxr-xr-x
     cmd "remove temp file '$tmp_path'" rm "$tmp_path"
 
     # Copy systemd units.
