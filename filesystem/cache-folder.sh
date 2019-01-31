@@ -4,7 +4,7 @@
 # Cache a single folder.
 cache-one() {
     echo "Caching folder $1."
-    find "$1" -type f -exec cat {} > /dev/null +
+    ionice --class idle find "$1" -type f -exec cat {} > /dev/null +
 }
 
 if [ "$#" = "0" ]; then
