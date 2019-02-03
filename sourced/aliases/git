@@ -2,6 +2,7 @@
 # Git shortcuts
 alias ga='git add'
 alias gaa='git add --all'
+alias gb='git blame'
 alias gc='git commit'
 alias gca='git commit --all'
 alias gd='git diff'
