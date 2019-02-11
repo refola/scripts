@@ -2,13 +2,12 @@
 ##diff-sort.sh
 # Use `diff` to compare directory trees, then move unique and
 # conflicting items into "_uniq" and "_conf" folders.
-##
+
 # "shopt -s lastpipe" prevents prevents both these ShellCheck errors
 # by having Bash run pipelines in the same shell.
 ##
 # shellcheck disable=SC2030,SC2031
-
-shopt -s lastpipe || # run loop in same shell so var changes persist
+shopt -s lastpipe # run loop in same shell so var changes persist
 
 USAGE="$0 [options ...] A B
 $0 [options ...] --flatten A
@@ -73,6 +72,10 @@ compare() {
 # Moves conflicting contents of directories A and B to respective
 # '_conf' folders, based on the given line produced by the 'diff'
 # command.
+##
+# TODO: Remove ShellCheck directive after getting a newer
+# top-level-directive-supporting version to compile.
+##
 # shellcheck disable=SC2030,SC2031
 conf() {
     local a="$1" b="$2" line="$3" patha pathb name path
@@ -121,6 +124,10 @@ uniq() {
 # '_uniq' folders) and conflicting contents (moved to respective
 # '_conf' folders), but without moving existing '_uniq' or '_conf'
 # folders.
+##
+# TODO: Remove ShellCheck directive after getting a newer
+# top-level-directive-supporting version to compile.
+##
 # shellcheck disable=SC2030,SC2031
 sort() {
     local a="$1" b="$2"
