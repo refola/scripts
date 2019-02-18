@@ -1,0 +1,4 @@
+# This folder contains (links to) scripts that should be sourced in
+# .zshrc or similar in order to work correctly. Note that due to
+# everything even recursively in this directory being sourced, it's
+# super important to comment everything in non-code files.

@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# Aliases to make Unix tools prettier, faster, safer, and generall more useful.
+
+# Make things more colorful, use human-usable units, and ISO 8601 time format.
+alias date='date --iso-8601=seconds'
+alias ls='ls --group-directories-first --time-style=+%FT%T%:z --color=auto'
+alias lah='ls -lAh' # Add nice long form args to above.
+alias df='df -h'
+alias free='free -m'
+alias grep='grep --color=tty'
+alias egrep='grep -E' # Per 'man grep', these are equivalent;
+alias fgrep='grep -F' # and the arg just compounds to grep's.
+alias less='less --RAW-CONTROL-CHARS' # Interpret color escapes.
+alias watch='watch --differences --precise --interval 1 --color' # Prettier and faster.
+
+# Prompt before losing data.
+alias cp='cp -i --reflink=auto' # and be CoW-efficient
+alias mv='mv -i'
+
+# Replace 'cd' with an almost-equivalent 'pushd'-based command
+alias cd='pcd'

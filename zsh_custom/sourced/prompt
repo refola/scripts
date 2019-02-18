@@ -1,0 +1,91 @@
+#!/usr/bin/env zsh
+
+# Custom Zsh prompt action and display configuration file
+
+# This contains everything that's done when a Zsh prompt happens,
+# namely setting: history behaviour, PROMPT_COMMAND, PS1, and PS2.
+##
+# TODO: Currently only PS1 has been ported/redone from what I have in
+# Bash.
+##
+# Note: Make sure all _lowercase_ functions are unset before exiting.
+
+
+## Set custom Zsh history management
+## TODO: Port from Bash.
+
+# History file control to go with fancy PROMPT_COMMAND stuff
+#export HISTFILE="$HOME/.bash_history" # This will always be empty....
+#export HISTARCHIVE="$HOME/.bash_history.d" # Where the "hist" command looks...
+
+# What to store and how
+#export HISTCONTROL="ignoreboth" # "both" = duplicate commands and whitespace
+#shopt -s histappend # Append history entries
+#shopt -s cmdhist # Store multiline commands as single commands
+
+# Set PROMPT_COMMAND.
+# pcmd() {
+#     local append="history -a"
+#     local read="history -n"
+#     local date="/bin/date" # avoid using `date` alias
+#     local save="cat $HISTFILE >> \"${HISTARCHIVE}/\$($date --utc +%F)\""
+#     local zero="> $HISTFILE"
+#     echo -n "$append; $read; $save; $zero"
+# }
+# export PROMPT_COMMAND="$(pcmd)"
+
+
+## Set custom prompts
+
+# Set PS1
+__PS1_SHOW_DIR() {
+    H="${H-/home/$USER}" # TODO: Remove once it's set globally
+    local dir="${PWD/#$H/~}" # Replace leading $H with (uneventfully literal) ~
+    local prefix="$dir[1]" # Get first character; either ~ or /
+    local repl="…" # Replacement character if it's too long
+    local end="${dir: -42}" # TODO: Don't hardcode amount of path to keep
+    if [ "${#end}" -lt "$((${#dir}-${#prefix}-${#repl}))" ]; then
+        dir="$prefix$repl$end"
+    fi
+    echo -n "$dir"
+}
+__PS1_SLEEP_REMINDER() {
+    for x in 23 0 1 2 3 4; do
+        echo -n "%(${x}T,%B%9FGo to sleep!%F{16}%K{16},)"
+    done
+}
+ps1() {
+    # Colors
+    local b='%f%B'
+    local yellow='%b%F{yellow}'
+    local bgray='%B%F{8}'
+    local green='%b%F{green}'
+    local bred='%B%F{red}'
+    local off='%f%k%b%u%s'
+
+    # Time stuff
+    local hm='%D{%H%M}'
+    local sec='%D{%S}'
+    local time="$yellow$hm$bgray:$sec"
+
+    # Nearby directories
+    local dir_cmd='$(__PS1_SHOW_DIR)'
+    local dir="$green$dir_cmd"
+
+    # Status code and "> "
+    local root_status='%(!.#.>)'
+    local status_code='%(?,,%?!)'
+    local status_text="$b$root_status$bred$status_code "
+
+    # Sleep reminder
+    local sleep_reminder='$(__PS1_SLEEP_REMINDER)'
+
+    # Echo the whole thing
+    echo -n "$time$dir$status_text$off$sleep_reminder"
+
+    # Result:
+    # %3F%D{%H%M}%8F:%D{%S}%2F%(3/,…/,)%2/%15F%(!.#.>)%9F%(?,,%?!) %f$(__PS1_SLEEP_REMINDER)
+}
+setopt promptsubst
+export PS1="$(ps1)"
+unset ps1

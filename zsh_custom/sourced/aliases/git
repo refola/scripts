@@ -1,0 +1,11 @@
+#!/bin/sh
+# Git shortcuts
+alias ga='git add'
+alias gaa='git add --all'
+alias gb='git blame'
+alias gc='git commit'
+alias gca='git commit --all'
+alias gd='git diff'
+alias gp='git pull origin master && git push origin master'
+alias gr='git fetch origin master && git rebase -i master'
+alias gs='git status'
