@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+# ~/.bashrc
 # Custom .bashrc that just sources other files.
 
 # "true" or not "true": Should debugging messages be printed?  "true"
