@@ -51,7 +51,7 @@ __PS1_SHOW_DIR() {
 }
 __PS1_SLEEP_REMINDER() {
     for x in 23 0 1 2 3 4; do
-        echo -n "%(${x}T,%B%9FGo to sleep!%F{16}%K{16},)"
+        echo -n "%(${x}T,%B%9FGo to sleep!%b%9f ,)"
     done
 }
 ps1() {
