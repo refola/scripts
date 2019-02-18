@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # ~/.zshrc
-# Set ZSH environment stuff.
+# Port the most useful bits of my custom Bash setup to Z Shell.
 
 # Lines configured by zsh-newuser-install
 HISTFILE=~/.zsh_history
@@ -18,57 +18,62 @@ compinit
 # End of lines added by compinstall
 
 
-# Custom stuff
+## Ported from .bashrc.
 
-# Set PS1
-__ps1_show_dir() {
-    H="${H-/home/$USER}" # TODO: Remove once it's set globally
-    local dir="${PWD/#$H/~}" # Replace leading $H with (uneventfully literal) ~
-    local prefix="$dir[1]" # Get first character; either ~ or /
-    local repl="…" # Replacement character if it's too long
-    local end="${dir: -42}" # TODO: Don't hardcode amount of path to keep
-    if [ "${#end}" -lt "$((${#dir}-${#prefix}-${#repl}))" ]; then
-        dir="$prefix$repl$end"
+# "true" or not "true": Should debugging messages be printed?  "true"
+# is useful for figuring out which sourced thing is causing errors,
+# while not "true" is good for general use when things are working.
+DEBUG="false" # not "true"
+#DEBUG="true"
+
+# Usage: __msg message
+# Prints message iff DEBUG is true.
+__msg(){
+    if [ "$DEBUG" = "true" ]; then
+        echo "$@"
     fi
-    echo -n "$dir"
 }
-__ps1_sleep_reminder() {
-    for x in 23 0 1 2 3 4; do
-        echo -n "%(${x}T,%B%9FGo to sleep!%F{16}%K{16},)"
+__msg "DEBUG=$DEBUG"
+
+# These variables are required for bootstrapping Zsh customizations.
+__h="/home/$USER" # local version of $H
+__custom_sourced="$__h/sampla/samselpla/scripts/zsh_custom/sourced" # TODO: fix hard-coding
+
+# Custom behaviour locations.
+# Note: Do not include /etc/bash_completion.d. It's already dealt with
+# by /etc/bash_completion, which has a bunch of custom functions that
+# /etc/bash_completion.d needs.
+__to_source=(
+    "$HOME/.profile"
+    "$__custom_sourced"
+)
+
+# Usage: __source_thing thing [...]
+# Source every thing given, maximally recursively.
+__source_thing() {
+    local x
+    for x in "$@"; do
+        if [ -d "$x" ]; then
+            __msg "Getting contents of $x to source"
+            __source_thing "$x"/*
+        elif [ -f "$x" ]; then
+            __msg "Sourcing $x"
+            . "$x"
+        else
+            __msg "Cannot source $x"
+        fi
     done
 }
-ps1() {
-    # Colors
-    local b='%f%B'
-    local yellow='%b%F{yellow}'
-    local bgray='%B%F{8}'
-    local green='%b%F{green}'
-    local bred='%B%F{red}'
-    local off='%f%k%b%u%s'
 
-    # Time stuff
-    local hm='%D{%H%M}'
-    local sec='%D{%S}'
-    local time="$yellow$hm$bgray:$sec"
+__source_thing "${__to_source[@]}" # Source everything.
 
-    # Nearby directories
-    local dir_cmd='$(__ps1_show_dir)'
-    local dir="$green$dir_cmd"
+# We don't want to exit the interactive shell, even if `cd` fails.
+# shellcheck disable=SC2164
+cd "$__h" # Move out of the multi-distro "home" folder mess.
 
-    # Status code and "> "
-    local root_status='%(!.#.>)'
-    local status_code='%(?,,%?!)'
-    local status_text="$b$root_status$bred$status_code "
+# Clean up the environment after the changes.
+for __cleanup_variable in DEBUG __msg __h __custom_sourced __to_source __source_thing; do
+    unset "$__cleanup_variable"
+done
+unset __cleanup_variable
 
-    # Sleep reminder
-    local sleep_reminder='$(__ps1_sleep_reminder)'
-
-    # Echo the whole thing
-    echo -n "$time$dir$status_text$off$sleep_reminder"
-
-    # Result:
-    # %3F%D{%H%M}%8F:%D{%S}%2F%(3/,…/,)%2/%15F%(!.#.>)%9F%(?,,%?!) %f$(__ps1_sleep_reminder)
-}
-setopt promptsubst
-export PS1="$(ps1)"
-unset ps1
