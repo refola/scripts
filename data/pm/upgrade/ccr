@@ -1,0 +1,3 @@
+scmd pacman -Syuw --noconfirm
+scmd pacman -Su
+cmd ccr -Syu --ccronly

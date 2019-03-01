@@ -38,7 +38,7 @@ pm=manager      Force use of given package manager.
 
 Currently supported package managers:
 * apt-get (Debian, *buntu, Mint, etc)
-* chaser (Chakra)
+* ccr, chaser (Chakra)
 * dnf (Fedora)
 * nix-env (NixOS)
 * pacman (Arch, Chakra, Kaos, etc)
