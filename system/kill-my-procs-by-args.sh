@@ -2,7 +2,7 @@
 ## system/kill-my-procs-by-name.sh
 # Kill current user's processes by name.
 
-usage="Usage: $0 'enough of contiguous command name and/or args' [...]
+usage="Usage: $0 'regex matching command name and/or args' [...]
 
 Kills invoking user's processes by name and arguments, as a
 more-general and more-dangerous variant of the idea behind the
@@ -20,8 +20,8 @@ update-grub' to fail due to the actual process name being
 'sh'. Furthermore, because there could be several other scripts
 running under the 'sh' interpreter, running 'killall sh' would kill
 too much. However, because 'update-grub' is in the arguments passed to
-'sh' when it's ran, searching by full command name + args may yield
-the desired result.
+'sh' when it's ran, searching by command name + args with
+'sh.*update-grub' may yield the desired result.
 
 Warning: Even though this is more accurate than 'killall' for killing
 interpreted scripts by invoked name, this can easily kill too much if
@@ -42,7 +42,7 @@ for name in "$@"; do
     # TODO: Why doesn't $BASHPID work directly?!‽
     ## 'pgrep' is no substitute for grepping thru ps output for args
     # shellcheck disable=SC2009
-    for line in $(bp=$BASHPID; ps xo pid=,args= | grep "$name" |
+    for line in $(bp=$BASHPID; ps xo pid=,args= | grep -E "$name" |
                       grep -v "grep $name" | grep -Ev " *($bp|$$) "); do
         pid="$(echo "$line" | sed -r 's/\s*([0-9]+) .*/\1/g')"
         kill "$pid"
