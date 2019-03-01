@@ -1,1 +1,3 @@
-chaser install $args
+echo "TODO: CCR installs are not currently supported due to naive support breaking pacman installs."
+echo "If a ccr install fails, try running 'chaser instal package-name' manually."
+pacman -S $args
