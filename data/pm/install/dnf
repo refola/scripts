@@ -1,1 +1,1 @@
-dnf install $args
+scmd dnf install "$@"

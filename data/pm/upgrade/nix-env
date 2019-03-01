@@ -1,1 +1,1 @@
-nix-env --upgrade $args
+cmd nix-env --upgrade "$@"

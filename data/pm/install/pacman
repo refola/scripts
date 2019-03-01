@@ -1,1 +1,1 @@
-pacman --needed -S $args
+scmd pacman --needed -S "$@"

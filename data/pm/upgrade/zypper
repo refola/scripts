@@ -1,3 +1,3 @@
-zypper refresh
-zypper update --download-only --no-confirm
-zypper update
+scmd zypper refresh
+scmd zypper update --download-only --no-confirm
+scmd zypper update

@@ -1,2 +1,2 @@
-pacman -Syuw --noconfirm
-pacman -Su
+scmd pacman -Syuw --noconfirm
+scmd pacman -Su

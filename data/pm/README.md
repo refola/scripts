@@ -11,76 +11,58 @@ managers and operations without having to modify `pm`'s code.
 Each folder corresponds to an operation that pm supports. The symlinks
 are for shorcut commands.
 
-For example, `pm up` will check `up`, find that it's a symlink
-pointing to `upgrade`, and then run the commands in `upgrade/$pm`
-where `$pm` is the detected package manager name.
+For example, `pm up` will check the `up` folder, follow the symlink to
+`upgrade`, and then run the commands in `upgrade/$pm` where `$pm` is
+the detected package manager name.
 
 
-# Use of `sudo`
+# Package manager scope, detection, and precedence
 
-## Determining which package manager to use `sudo` with
+Hypothetically, `pm` could be expanded from a cross-distro basic
+package manager into a sort of intelligent
+[universal install script](https://www.xkcd.com/1654) with
+sane/customizable prioritization and stopping on the first
+success. But for now `pm` just chooses one system-level package
+manager and acts based on that.
 
-The `sudo-pms` and `non-sudo-pms` files respectively list the package
-managers for `pm` to support with and without `sudo`. Most package
-managers need to be ran with `sudo` explicitly, though some have that
-functionality built-in, like how `pm` works. These files tell `pm`
-which package manager is which of which type.
-
-For example, `ccr` is in the `non-sudo-pms` file, so `pm` will not
-prefix any `ccr` commands with `sudo`. However, `pacman` is in the
-`sudo-pms` file, so `pm` will run system-changing `pacman` commands
-with `sudo`.
-
-## Avoiding `sudo` based on the operation
-
-Normally, `pm` will determine based on the name of a command whether
-or not it should prefix a command's invocation with `sudo`. However,
-if an operation folder contains a `.no-sudo` file, then the commands
-for that operation are guaranteed not to use `sudo`, even if they
-otherwise would.
-
-For example, the `search` folder contains a `.no-sudo` file, so `pm
-search pkg-name` will not use `sudo`, even if it runs a command like
-`pacman` or `apt-get` that's usually used with `sudo`.
-
-
-# Package manager precedence
-
-Eventually `pm` might add support for running several package managers
-in a single operation, e.g., for the plethora of language-specific
-user package systems. But for now `pm` just chooses one system-level
-package manager and runs that.
-
-In particular, `pm` chooses the first package manager found in the
-`non-sudo-pms` file, or, failing that, the first in `sudo-pms`. This
-precedence is justified by the author's experience of all encountered
-system-level package managers that have their own `sudo` invocation
-being the user's/system's prefered package manager.
+In particular, `pm` chooses the first existing package manager found
+in the `pms` file. This file is a whitespace-separated manually sorted
+list of package manager command names. Prioritization is currently
+done by using a "high priority" list, a line, and then a "low
+priority" list.
 
 For example, even though Chakra Linux has the `pacman` command, `pm`
-will run operations on Chakra via the commands found in `ccr` ("Chakra
-Community Repository") files instead.
-
-Note that this still works even for operations not supported by `pm`'s
-chosen package manager, since `pm` just runs a list of commands in a
-file named after the package manager it's nominally using.
-
-For example, the `info/ccr` file contains `pacman -Qi $args`, since
-the `ccr` front-end doesn't support querying package info, but
-`pacman` does.
+will run operations on Chakra via the `chaser` files instead.
 
 
 # Package manager commands
 
-Within each operation folder are several files named after the package
-managers that `pm` runs. If `pm` is invoked with operation `$op` and
-finds package manager `$pm`, then `pm` will run the commands found in
-the file at `$op/$pm`.
+Command files are source-able (Bash) shell scripts.
 
-In order to allow per-package-manager control over how `pm`'s
-arguments are handled, the variable `$args` in a command will be
-replaced with any arguments that `pm` was passed after its
-operation. For example, if `pm` is ran with `pm in shiny-package` and
-detects that your system's package manager is `ccr`, then it will read
-the file at `in/ccr`, find that it contains `ccr -S $args`, and then
-run `ccr -S shiny-package`.
+Here are the key environment details the script will find itself in:
+
+- The package names are set as the positional parameters (`"$@"`).
+- `cmd command [args ...]` will show the user what command is being
+  ran and then run it, exiting with error message on failure.
+- `scmd command [args ...]` is a shortcut for `cmd sudo command
+  [args ...]`.
+- `fail "reason for failure"` will show the reason and immediately
+  exit.
+- These functions are defined by `pm` and cannot be directly used as
+  command names: `cmd, detect, fail, msg, main, pm-op, scmd`. If a
+  package manager uses a command with any of these names, it's
+  recommended to use the `cmd` function or the `command` shell
+  builtin.
+- Sourcing the script is literally the last thing `pm` does, so
+  setting variables/functions/etc can be done freely without concern
+  for conflict.
+
+Finally, if correct package action commands are guaranteed to be the
+same for a given action with a given set of package managers, then
+a symbolic link can be used to avoid duplicating code.
+
+
+# Checking for shell script syntax pitfalls
+
+For convenience, there's a script called `check-scripts.sh` which runs
+`shellcheck` on all the package management action scripts.

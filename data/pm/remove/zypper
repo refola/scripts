@@ -1,1 +1,1 @@
-zypper remove --clean-deps $args
+scmd zypper remove --clean-deps "$@"

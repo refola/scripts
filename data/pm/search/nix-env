@@ -1,1 +1,2 @@
-nix-env -qacs --description $args | cat
+msg "Running command: nix-env -qacs --description $* | cat"
+nix-env -qacs --description "$@" | cat

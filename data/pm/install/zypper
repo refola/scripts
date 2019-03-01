@@ -1,1 +1,1 @@
-zypper install $args
+scmd zypper install "$@"

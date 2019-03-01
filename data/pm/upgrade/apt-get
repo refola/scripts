@@ -1,4 +1,4 @@
-apt-get update
-apt-get dist-upgrade --download-only --yes
-apt-get dist-upgrade
-apt-get autoremove
+scmd apt-get update
+scmd apt-get dist-upgrade --download-only --yes
+scmd apt-get dist-upgrade
+scmd apt-get autoremove

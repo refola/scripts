@@ -1,22 +1,17 @@
-# TODO: Sorry for the kludgy 'one-liner'. Abusing the fact that 'pm'
-# runs 'eval' on each line of the applicable data files was the most
-# expedient way to make installing both CCR and non-CCR packages work
-# again after Chakra's ccr->chaser update.
+msg "Sorting between pacman and chaser targets."
+regs=() # Packages in regular repositories
+ccrs=() # Packages in the CCR
+for pkg in "$@"; do
+    # Test if pacman search for the exact package name
+    # returns exactly the package name.
+    if [ "$pkg" = "$(pacman -Ssq "^$pkg\$")" ]; then
+        regs+=("$pkg")
+    else
+        ccrs+=("$pkg")
+    fi
+done
 
-# A better solution is for `chaser` to support installing non-CCR
-# packages and/or for `pm` to have cleaner support for proper logic in
-# its data files. The former depends on upstream and the latter would
-# break the "just list a series of commands without even worrying
-# about if sudo is needed or stopping if one fails" logic of `pm`'s
-# data files.
-
-# For now, this line should work (albeit inefficiently) as long as
-# `pm` doesn't use a `pkg` variable that's in `pm-op`'s scope. In
-# particular, this very long line loops thru each package name given,
-# installs the package (if not already installed) with pacman (if
-# exact result found) or chaser (otherwise), returning 1 on first
-# failure. This should at least satisfy correctness with respect to
-# `pm`'s assumptions, albeit in a way that requires excessive user
-# prompting when installing several packages at once.
-
-for pkg in $args; do { [ "$pkg" = "$(pacman -Ssq "^$pkg\$")" ] && { sudo pacman --needed -S $pkg || return 1; } } || { chaser install $pkg || return 1; }; done
+msg "Installing pacman targets: ${regs[*]}"
+scmd pacman --needed -S "${regs[@]}"
+msg "Installing chaser targets: ${ccrs[*]}"
+cmd chaser install "${ccrs[@]}"

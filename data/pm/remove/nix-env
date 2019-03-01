@@ -1,1 +1,1 @@
-nix-env -e $args
+cmd nix-env -e "$@"

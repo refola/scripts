@@ -1,1 +1,1 @@
-pacman -Qi $args
+cmd pacman -Qi "$@"

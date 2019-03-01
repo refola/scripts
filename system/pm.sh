@@ -3,13 +3,8 @@
 # pm.sh - package manager frontend for multiple distros
 
 # Package managers, split by sudo-using status
-NON_SUDO_PMS=($(get-data "pm/non-sudo-pms")) ||
-    fatal "Could not get list of non-sudo package managers."
-SUDO_PMS=($(get-data "pm/sudo-pms")) ||
-    fatal "Could not get list of sudo-using package managers."
-
-# Non-sudo pms first to minimize directly calling sudo.
-PMS=("${NON_SUDO_PMS[@]}" "${SUDO_PMS[@]}")
+PMS=($(get-data "pm/pms")) ||
+    fatal "Could not get list of supported package managers."
 
 # Is debug mode enabled?
 DEBUG=
@@ -18,7 +13,7 @@ DEBUG=
 PM=
 
 # Instructions
-USAGE="Usage: $(basename "$0") [options ...] [operation [package ...]]
+USAGE="Usage: pm [options ...] [operation [package ...]]
 
 pm is an interactive frontend for multiple distros' package managers,
 with the goal of enabling a single set of commands to handle common
@@ -44,19 +39,47 @@ pm=manager      Force use of given package manager.
 Currently supported package managers:
 * apt-get (Debian, *buntu, Mint, etc)
 * chaser (Chakra)
+* dnf (Fedora)
 * nix-env (NixOS)
 * pacman (Arch, Chakra, Kaos, etc)
 * zypper (openSUSE)
 
 Limitations:
-* The info command doesn't yet support zypper.
-* This works by checking for the existence of a package manager, but
-  it should check 'ID=' and 'ID_LIKE' in /etc/os-release instead.
+* dnf: info and search commands not supported
+* zypper: info command not supported
+* All: package managers should be inferred from 'ID=' and 'ID_LIKE' in
+  /etc/os-release instead of checking mere command existance.
 
 Developer information:
 * Please see $(get-data pm/README.md -path) for how package manager
   operations are defined.
 "
+
+
+## Usage: cmd command [args ...]
+# Echo and then run given command with given args, failing on error.
+cmd() {
+    msg "Running command: $*"
+    command "$@" ||
+        fail "Unsuccessful command: $*"
+}
+## Usage: scmd command [args ...]
+# Shortcut for: cmd sudo command [args ...]
+scmd() { cmd sudo "$@"; }
+
+## Usage: fail args ...
+# Runs err with given args and exits the script.
+fail() {
+    echo -e "\e[1;4;91mError\e[0m: $*" 1>&2
+    exit 1
+}
+
+## Usage: msg args ...
+# Echos args in fancy style, so it's clear that it's from pm and not
+# underlying package manager commands.
+msg() {
+    echo -e "\e[1;34mpm: \e[0;32m$1\e[0m"
+}
 
 
 ## Usage: package_manager="$(detect)"
@@ -77,72 +100,21 @@ detect() {
     fatal "No package manager found"
 }
 
-## Usage: fatal args ...
-# Runs err with given args and exits the script.
-fatal() {
-    echo -e "\e[1;4;91mError\e[0m: $*" 1>&2
-    exit 1
-}
-
-## Usage: maybe-sudo command operation
-# Returns 0 if calls to command in operation should be prefixed with
-# "sudo", otherwise returns 1.
-maybe-sudo() {
-    local cmd="$1"
-    local op="$2"
-    local old_IFS="$IFS"
-    local IFS=" "
-    local zero="${SUDO_PMS[*]}"
-    local one="${NON_SUDO_PMS[*]}"
-    IFS="$old_IFS"
-    local test
-    test="$(echo -e "$zero\n$one" | grep -e "\b$cmd\b")"
-    case "$test" in
-        "$zero")
-            if ! [ -f "$(get-data "pm/$op/.no-sudo" -path)" ]; then
-                return 0
-            else
-                return 1
-            fi
-            ;;
-        "$one")
-            return 1 ;;
-        *) # Blindly assume that unknown commands don't need sudo.
-            return 1 ;;
-    esac
-}
-
-## Usage: msg args ...
-# Echos args in fancy style, so it's clear that it's from pm.
-msg() {
-    echo -e "\e[1;34mpm: \e[0;32m$1\e[0m"
-}
-
 ## Usage: pm-op operation [args ...]
 # Get and run the appropriate commands for the system's package
 # manager to do the requested operation with the given arguments.
 pm-op() {
-    local pm
+    local pm op cmd
     pm="$(detect)" || return 1
-    local op="$1"
+    op="$1"
     shift
-    local args="$*"
-    local raw_cmds
-    raw_cmds="$(get-data "pm/$op/$pm")" ||
-        fatal "Can't $op with $pm."
-    local IFS=$'\n'
-    for line in $raw_cmds; do
-        cmd="${line/ *}"
-        if maybe-sudo "$cmd" "$op"; then
-            line="sudo $line"
-        fi
-        line="$(echo "$line" | sed -r "s/\\\$args/$args/g")" ||
-            fatal "Failed \$args substitution: $line"
-        msg "Running $line"
-        if [ -z "$DEBUG" ]; then
-            eval "$line" || fatal "Command did not complete successfully."
-        fi
-    done
+    cmd="$(get-data "pm/$op/$pm" -path)" ||
+        fail "'get-data' failed."
+    [ -f "$cmd" ] ||
+        fail "Can't $op with $pm."
+    msg "Running action: $op/$pm $*"
+    [ -n "$DEBUG" ] ||
+        . "$cmd"
 }
 
 
@@ -175,15 +147,8 @@ main() {
             msg "Forcing use of package manager $PM."
             main "$@" ;;
         *)
-            # Most commands don't need anything special. Just gotta
-            # check that they exist.
-            if [ -d "$(get-data "pm/$arg" -path)" ]; then
-                pm-op "$arg" "$@"
-            else
-                msg "Unknown argument: $arg"
-                echo "$USAGE"
-                exit 1
-            fi ;;
+            # Most commands don't need anything special.
+            pm-op "$arg" "$@" ;;
     esac
 }
 

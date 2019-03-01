@@ -1,1 +1,1 @@
-pacman -Ss $args
+cmd pacman -Ss "$@"

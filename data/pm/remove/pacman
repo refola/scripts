@@ -1,1 +1,1 @@
-pacman -Rcns $args
+scmd pacman -Rcns "$@"

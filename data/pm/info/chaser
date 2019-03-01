@@ -1,1 +1,1 @@
-pacman -Qi $args
+pacman

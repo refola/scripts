@@ -1,3 +1,3 @@
-pacman -Syuw --noconfirm
-pacman -Su
-chaser update
+scmd pacman -Syuw --noconfirm
+scmd pacman -Su
+cmd chaser update

@@ -1,4 +1,7 @@
+chaser
+
 apt-get
 dnf
+nix-env
 pacman
 zypper

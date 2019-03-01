@@ -1,1 +1,1 @@
-dnf remove $args
+scmd dnf remove "$@"
