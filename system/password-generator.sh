@@ -66,10 +66,17 @@ Note: This script was originally inspired by
 http://blog.colovirt.com/2009/01/07/linux-generating-strong-passwords-using-randomurandom/
 "
 
+## msg message
+# Prints message to STDERR so it doesn't clutter STDOUT if this is ran
+# from a script.
+msg() {
+    echo "$@" >&2
+}
+
 ## usage
 # Print usage information and exit.
 usage() {
-    echo "$usage"
+    msg "$usage"
     exit 1
 }
 
@@ -84,20 +91,20 @@ pw-gen() {
     local file
     file="$(mktemp)" || exit 1
 
-    echo "Getting the first $bytes from $randsrc."
+    msg "Getting the first $bytes from $randsrc."
     head --bytes="$bytes" "$randsrc" > "$file"
 
     if [ "$b64" = "b64" ]; then
-        echo -e "Base64-encoding bytes.\n"
+        msg -e "Base64-encoding bytes.\n"
         base64 --wrap=20 "$file"
     else
-        echo -e "Filtering bytes by $pattern\n"
+        msg -e "Filtering bytes by $pattern\n"
         # Filtering wastes a lot of random bytes, but I don't know of
         # a _simple_ and _general_ way to improve byte economy
         # (currently between 3.9% and 37.1% with built-in patterns)
         # without risking biasing the output.
         tr --delete --complement "$pattern" < "$file" | fold --width=20
-        echo
+        msg
     fi
     rm "$file"
 }
