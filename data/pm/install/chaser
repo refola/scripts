@@ -11,7 +11,11 @@ for pkg in "$@"; do
     fi
 done
 
-msg "Installing pacman targets: ${regs[*]}"
-scmd pacman --needed -S "${regs[@]}"
-msg "Installing chaser targets: ${ccrs[*]}"
-cmd chaser install "${ccrs[@]}"
+if [ "${#regs[@]}" -ge 1 ]; then
+   msg "Installing pacman targets: ${regs[*]}"
+   scmd pacman --needed -S "${regs[@]}"
+fi
+if [ "${#ccrs[@]}" -ge 1 ]; then
+   msg "Installing chaser targets: ${ccrs[*]}"
+   cmd chaser install "${ccrs[@]}"
+fi
