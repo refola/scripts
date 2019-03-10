@@ -434,8 +434,7 @@ delete-older-than() {
 ## Usage: subvol-loop function num-fn-args fn-args [...] subvolumes [...]
 # Iterates through each subvolume, running the given 'function' with
 # its 'fn-args', of which there are 'num-fn-args', appending the
-# current subvolume to the end of the arguments for 'function'. This
-# abstraction is meant to replace the current 'snap' function.
+# current subvolume to the end of the arguments for 'function'.
 subvol-loop() {
     local fn num_fn_args fn_args subvols args svs sv
     fn="$1" num_fn_args="$2" # known-location args
@@ -458,7 +457,7 @@ subvol-loop() {
     done
 }
 
-## Usage: make-snaps from to subvolume [...]
+## Usage: make-snaps from to subvolumes [...]
 # Make a read-only btrfs snapshot at 'to' for each given subvolume in
 # 'from'. This is directly useful for being able to revert file
 # changes (which is _NOT_ a backup!), and the snapshots are useful for
@@ -502,9 +501,6 @@ delete-old() {
 # Runs initialization for the script. This should be called by main()
 # and only main(), once and only once.
 init() {
-    local dep
-    DEPS=(btrfs cat chmod cp date find get-config get-data mkdir
-          mktemp readlink rm rmdir sleep sudo sync systemctl)
     # Notify of debug mode if active
     if [ -n "$DEBUG" ]; then
         msg "Debug mode active. External commands will not really be ran."
@@ -513,10 +509,10 @@ init() {
     dbg "VERBOSITY=$VERBOSITY"
 
     # Check that required programs are installed.
-    for dep in "${DEPS[@]}"; do
-        cmd-eval "make sure '$dep' command exists" \
-                 "type -P $dep > /dev/null"
-    done
+    DEPS=(btrfs cat chmod cp date find get-config get-data mkdir
+          mktemp readlink rm rmdir sleep sudo sync systemctl)
+    cmd-eval "make sure commands exist:\n\t${DEPS[*]}" \
+             "type -P ${DEPS[*]} > /dev/null"
 
     # Check lock directory to prevent parallel runs.
     LOCKDIR="/tmp/.backup-btrfs.lock"
