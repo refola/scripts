@@ -1,4 +1,17 @@
 #!/usr/bin/env bash
+
+DEPRECATION_NOTE="This script is deprecated. It has grown well beyond
+the point where dealing with shell language quirks takes more time
+than is saved by easier access to running programs and redirecting
+their I/O. When I have the time, I plan to officially replace this
+script with a more coherent and feature-rich 500±200 line Python, Go,
+Lisp, or even C# program, quite possibly one already written by
+someone else."
+
+echo
+echo -e "\e[31mWarning:\e[0;1m $DEPRECATION_NOTE\e[0m" >&2
+echo
+
 ##
 # backup-btrfs.sh
 ##
@@ -408,23 +421,33 @@ clone-or-update() {
     fi
 }
 
-## Usage: del-older-than location time subvolume
-# Deletes each btrfs snapshot for subvolume at 'location' that is
-# older than 'time', with age determined by the name of the snapshot,
-# expected to be in ISO-8601 format and UTC, as used by the rest of
-# this script. This is useful for deleting old snapshot archives to
-# free up space.
+## Usage: del-older-than location time min_keep_count subvolume
+# Deletes btrfs snapshots for 'subvolume' at 'location' that are older
+# than 'time', keeping at least the latest 'min_keep_count' regardless
+# of age. Age is determined by the name of the snapshot, expected to
+# be in ISO-8601 format and UTC, as used by the rest of this
+# script. This is useful for deleting old snapshot archives to free up
+# space.
+##
+# ASSUMPTION: Glob order is lexicographical.
 delete-older-than() {
-    local location stamp maybe_older
-    location="$1/$(sanitize "$3")" || fatal "WTF? (sanitize $3)"
-    stamp="$(date --utc --iso-8601=seconds --date="$2")"
-    for maybe_older in "$location"/*; do
+    local loc="$1" t="$2" keep="$3" sv="$4"
+    local location stamp targets target i
+    location="$loc/$(sanitize "$sv")" || fatal "WTF? (sanitize $sv)"
+    stamp="$(date --utc --iso-8601=seconds --date="$t")"
+    targets=("$location"/*)
+    i=0
+    while [[ $((i+keep)) -lt "${#targets[@]}" ]]; do
+        target="${targets[$i]}"
         # "<" works because ISO-8601 makes chronological and
         # lexicographical sorting identical.
-        if [[ "$maybe_older" < "$location/$stamp" ]]; then
-            cmd "delete old subvolume '$maybe_older'" \
-                btrfs subvolume delete "$maybe_older"
+        if [[ "$target" < "$location/$stamp" ]]; then
+            cmd "delete old subvolume '$target'" \
+                btrfs subvolume delete "$target"
+        else
+            break
         fi
+        ((i++)); true # "true" avoids ++'s surprising error semantic
     done
 }
 
@@ -468,7 +491,7 @@ make-snaps() {
     subvol-loop snapshot 2 "$@"
 }
 
-## Usage: copy-latest from to subvolume [...]
+## Usage: copy-latest from to subvolumes [...]
 # Copy the latest snapshot for each given subvolume in 'from' to
 # 'to'. This is useful for real backups, (incrementally) copying
 # entire subvolumes between devices.
@@ -477,16 +500,24 @@ copy-latest() {
     subvol-loop clone-or-update 2 "$@"
 }
 
-## Usage: delete-old snap_dir time subvolume [...]
-# Delete snapshots older than 'time' from snap_dir. 'time' is a
+## Usage: delete-old snap_dir time subvolumes [...]
+# DEPRECATED: Use delete-old-keep-n instead.
+delete-old() {
+    msg "Translating deprecated delete-old($*) to delete-old-keep-n(${*:1:2} 1 ${*:3})."
+    delete-old-keep-n "${@:1:2}" 1 "${@:3}"
+}
+
+## Usage: delete-old snap_dir time min_keep_count subvolumes [...]
+# Delete snapshots older than 'time' from 'snap_dir', keeping at least
+# the latest 'min_keep_count' snapshots regardless of age. 'time' is a
 # date/time string as used by "date --date=STRING". For example, a
 # time of "3 days ago" will delete snapshots which are more than 3
 # days old. This is useful when the device for 'from' doesn't have
 # much space and the device for 'to' acts as an archive of the old
 # states of 'from'.
-delete-old() {
+delete-old-keep-n() {
     exists "$1" || return 1
-    subvol-loop delete-older-than 2 "$@"
+    subvol-loop delete-older-than 3 "$@"
     # Sync everything to free up cleared space.
     cmd "sync '$1' to free deleted snapshots' space" \
         btrfs filesystem sync "$1"
