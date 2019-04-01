@@ -1,3 +1,17 @@
+msg "Warning: chaser is currently poorly supported due to lack of a
+clean mechanism to install packages via the correct program (i.e.,
+choosing between pacman and chaser). It is also currently slower than
+ccr. It is recommended to reinstall ccr and add ccr to pacman.conf's
+IgnorePkg line to keep ccr from being replaced by chaser.
+
+That is, please run this command
+
+   pm in ccr
+
+and then look for an 'IgnorePkg' line in '/etc/pacman.conf' and change
+add 'ccr' to the right side of the ' = '. Make sure to uncomment the
+line if it starts with a '#'."
+
 scmd pacman -Syuw --noconfirm
 scmd pacman -Su
 cmd chaser update
