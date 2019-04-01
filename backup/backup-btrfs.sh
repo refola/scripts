@@ -503,7 +503,7 @@ copy-latest() {
 ## Usage: delete-old snap_dir time subvolumes [...]
 # DEPRECATED: Use delete-old-keep-n instead.
 delete-old() {
-    msg "Translating deprecated delete-old($*) to delete-old-keep-n(${*:1:2} 1 ${*:3})."
+    msg "Translating deprecated delete-old($(printf "'%s' " "$@")) to delete-old-keep-n($(printf "'%s' " "${@:1:2}" 1 "${@:3}"))."
     delete-old-keep-n "${@:1:2}" 1 "${@:3}"
 }
 
