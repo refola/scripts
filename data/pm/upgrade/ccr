@@ -1,3 +1,11 @@
+msg "Note: ccr is officially deprecated, but pm will continue to
+prefer it until chaser is improved. See [TODO: add bug urls] for
+chaser's status.
+
+In particular, 'chaser install' is CCR-only (and I haven't been able
+to figure out reliable commands to determine if pacman can install a
+package) and 'chaser update' is slower than 'ccr -Syu --ccronly'."
+
 scmd pacman -Syuw --noconfirm
 scmd pacman -Su
 cmd ccr -Syu --ccronly
