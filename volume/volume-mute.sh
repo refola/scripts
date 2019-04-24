@@ -1,2 +1,4 @@
 #!/bin/sh
-pactl set-sink-mute 0 toggle
+x='Default Sink: '
+sink="$(pactl info | grep "$x" | cut "-c$((${#x}+1))-")"
+pactl set-sink-mute "$sink" toggle
