@@ -1,13 +1,20 @@
 #!/usr/bin/env python3
 
-"""
-backup-btrfs2.py
-Modified: 2019-04-19
-Run btrfs backups via (incremental) snapshots.
+"""backup-btrfs2.py
 
-This script snapshots btrfs subvolumes and (incrementally) clones them
-to other drives.
+Modified: 2019-04-28
 
+# Don't try running until 0.3+. Rename to 1.0.0-beta-1 when kinda
+# working as before. Rename to 2.0.0-alpha-1 when implementing the
+# logical improvements that motivated migrating to Python.
+Version: 0.2
+
+Purpose: Backup data via incremental btrfs snapshots.
+
+Description: This script snapshots btrfs subvolumes and
+(incrementally) clones them to other drives.
+
+Detailed code description:
 Please check out this link for underlying btrfs commands used and
 alternative btrfs backup scripts (which are probably more-advanced and
 useful than this one):
@@ -131,7 +138,7 @@ Backup paths (assuming the backup drive wasn't available when the
 
 """
 
-from sh import sudo
+from sh import Command, sudo
 from os import listdir
 from os.path import basename, join, lexists
 from sys import argv, exit
@@ -187,14 +194,14 @@ def run_exit_traps():
     for f in EXIT_TRAPS:
         # TODO: msg "Running exit trap: $i"
         f()
-# TODO: trap run-exit-traps EXIT # Might only work on Linux+Bash.
+# TODO: sh->py: `trap run-exit-traps EXIT`
 
 
 # # Usage: add_exit_trap(function1[, function2[, ...]])
 # Adds given function(s) to the list of things to run on script exit.
-def add_exit_trap(*args):
+def add_exit_trap(*funcs):
     global EXIT_TRAPS
-    EXIT_TRAPS += args
+    EXIT_TRAPS += funcs
 
 
 # # Usage: fatal(error)
@@ -203,8 +210,8 @@ def add_exit_trap(*args):
 ##
 # VERBOSITY: any
 def fatal(error, code=1):
-    # TODO: '\e[31mError:\e[0;1m $*\e[0m' formatting
-    # TODO: >&2 redirection
+    # TODO: sh->py: '\e[31mError:\e[0;1m $*\e[0m' formatting
+    # TODO: sh->py: '>&2' redirection
     print("Error: " + error)
     exit(code)
 
@@ -219,7 +226,7 @@ def msg(text):
     VERBOSITY <= -1 or print(text)
 
 
-# # Usage: cmd(goal, command [args ...]
+# # Usage: cmd(goal, command [args ...])
 # Normal function: Displays goal and runs given external command (with
 # given args as applicable). Exits script on error.
 ##
@@ -227,15 +234,21 @@ def msg(text):
 # attempted.
 ##
 # Note: Every simple system-changing command in this script should be
-# ran via cmd. Use 'cmd-eval' if you need shell features like unix
-# pipes.
+# ran via cmd or similar. Use 'cmd-eval' if you need shell features
+# like unix pipes.
 ##
 # TODO: This should be merged with cmd-eval, but that seems to require
 # a sophisticated string-escaping function to convert this one's
 # variadicness into an eval'able string.
 ##
 # VERBOSITY: 0 (goals), 1 (commands), 2 (outputs)
-def cmd(goal, cmd, *args):
+def cmd(goal, cmd, *args,
+        root=True, side_effects=True,
+        dbg_result=None, dbg_func=None):
+    # TODO: 1.x: Better debug mode:
+    # - run command as-is if side_effects is False
+    # - run dbg_func if side_effects is True
+    # - blindly return return dbg_result if dbg_func is None
     VERBOSITY >= 0 and msg("Doing task: %s." % goal)
     # TODO: '\e[33m' formatting
     VERBOSITY >= 1 and msg("sudo %s %s" % (cmd, ' '.join(args)))
@@ -248,7 +261,7 @@ def cmd(goal, cmd, *args):
         # fatal("Could not %s." % goal)
 
 
-# # Usage: cmd_eval(goal, "string to evaluate")
+# # Usage: cmd_eval(goal, "string to evaluate", side_effects=True)
 # Normal function: Displays goal and evals given string. Exits script
 # on error.
 ##
@@ -262,16 +275,17 @@ def cmd(goal, cmd, *args):
 # this. Thus this is also good for non-root commands.
 ##
 # VERBOSITY: 0 (goals), 1 (commands), 2 (outputs)
-def cmd_eval(goal, str2eval):
+def cmd_eval(goal, str2eval, side_effects=True, globals=None, locals=None):
+    # TODO: sh->py: rewrite eval logic
     VERBOSITY >= 0 and msg("Doing task: %s." % goal)
     # TODO: '\e[33m' fmt
     VERBOSITY >= 1 and msg(str2eval)
     if not DEBUG:
         if VERBOSITY >= 2:
-            eval(str2eval) or fatal("Could not %s." % goal)
+            eval(str2eval, globals, locals) or fatal("Could not %s." % goal)
         else:
             # TODO: suppress output
-            eval(str2eval) or fatal("Could not %s." % goal)
+            eval(str2eval, globals, locals) or fatal("Could not %s." % goal)
 
 
 # # Usage: dbg(messages[, ...])
@@ -524,15 +538,18 @@ def init():
 
 # === main stuff ===
 
-# # Usage: get_config_path()
-# Gets the path to the script's config.
+# Returns the the path of the script's config file.
 def get_config_path():
-    # TODO: sh->py translation pass 2 stopping point.
+    return Command('get-config')('backup-btrfs2/control_script.py', '-path')
 
-    # TODO: How to use the 'sh' package to run commands whose names
-    # aren't valid Python identifiers? Or is there a better way to run
-    # this?
-    return sh['get-config']('backup-btrfs2/control_script.py', '-path')
+
+# Returns text containing the contents of the config file.
+def get_config():
+    with open(get_config_path(), 'rt') as f:
+        cfg = ''
+        for line in f:
+            cfg += line
+        return cfg
 
 
 # This explains how the config file works.
@@ -573,9 +590,9 @@ cases."""
 # if not.
 def check_config():
     # Check the config, explaining how it works if it isn't already set.
-    # TODO: sh->py
-    if not sh['get-config']('backup-btrfs2/control_script.py', '-verbatim',
-                            '-what-do', CONFIG_USE):
+    # TODO: sh->py: turn exit code into return bool
+    if not Command('get-config')('backup-btrfs2/control_script.py',
+                                 '-verbatim', '-what-do', CONFIG_USE):
         fatal("Could not get config.")
 
 
@@ -584,15 +601,13 @@ def check_config():
 def backup():
     msg("Running backups.")
     check_config()  # Don't try running an imaginary config.
-    # Source the config script to run it.
-    # TODO: sh->py
-    # source(get_config_path)
-    # . "$(get-config-path)"
+    # Read the config script to run it.
+    eval(get_config(), globals(), locals())
 
 
 INSTALL_PATH = "/sbin/backup-btrfs.installed"
 SYSTEMD_TARGET = "/etc/systemd/system"
-AUTOGEN_MSG = """## DO NOT EDIT THIS AUTOGENERATED FILE!
+AUTOGEN_MSG = """# # DO NOT EDIT THIS AUTOGENERATED FILE!
 # This file was made via 'backup-btrfs install'. If you want to change
 # it, then make the appropriate change in your own config (and/or
 # the script itself) and run 'backup-btrfs reinstall'.\n\n\n"""
@@ -627,23 +642,26 @@ def install():
                 script += line
 
     # Append function-wrapped config.
+    # TODO: sh->py: This logic should be pasted at the end.
     script += """
 # === config from install time, wrapped in function ===
 def backup():
     msg('Running backups.')
-    """ + config + "\n\n\n"
+    """ + get_config() + "\n\n\n"
 
     # Append init-running and backup-running.
-    config += '''
+    script += '''
 init()  # Run init manually; this has no main.
 backup()  # Run backup manually; this has no main.
 '''
 
     # Save to $install_path
-    tmp_path = sh.mktemp()
-    # TODO: sh->py
+    # TODO: sh->py: standard library functions for temp files?
+    # TODO: sh->py: don't actually make temp file in debug mode
+    tmp_path = cmd("make temp file", 'mktemp').rstrip()
     cmd_eval("save derived script to temp file",
-             'echo "$script" > "$tmp_path"')
+             'with open(tmp_path) as out: out.write(script)',
+             globals=globals(), locals=locals())
     cmd("copy derived script from '%s'" % tmp_path,
         'cp', tmp_path, INSTALL_PATH)
     cmd("adjust permissions on '%s'" % INSTALL_PATH,
@@ -651,7 +669,8 @@ backup()  # Run backup manually; this has no main.
     cmd("remove temp file '%s'" % tmp_path, 'rm', tmp_path)
 
     # Copy systemd units.
-    fro = cmd('get-data', 'backup-btrfs', '-path', sudo=False)
+    fro = cmd('get-data', 'backup-btrfs2', '-path', root=False).trim()
+    # TODO: sh->py: use standard library copy function
     cmd("copy systemd service",
         'cp', join(fro, 'backup-btrfs.service'), SYSTEMD_TARGET)
     cmd("copy systemd timer",
@@ -666,7 +685,7 @@ backup()  # Run backup manually; this has no main.
 
     # Tell user it's been installed.
     msg("Install complete! Here are the systemd timers to confirm.")
-    cmd("list systemd timers", 'systemctl', 'list-timers', sudo=False)
+    cmd("list systemd timers", 'systemctl', 'list-timers', root=False)
 
 
 # # Usage: reinstall()
@@ -764,7 +783,6 @@ def main():
                 fatal("WTF? (opt %s)" % arg)
         else:
             fatal("Unknown argument '%s'." % arg)
-        args = args[1:]
 
     if action in acts:
         if action == "usage":
