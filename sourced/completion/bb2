@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Bash completion for bb2.py
+
+_bb2() {
+    local commands=(backup install reinstall uninstall usage
+                    DEBUG quiet verbose)
+    COMPREPLY=($(compgen -W "${commands[*]}" -- "${COMP_WORDS[COMP_CWORD]}"))
+}
+complete -F _bb2 bb2
