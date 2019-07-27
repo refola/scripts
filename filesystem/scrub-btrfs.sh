@@ -33,7 +33,7 @@ blue() { echo -en "\e[1;34m$*\e[0m"; }
 scrubit() {
     local name="$1"
     local location="$2"
-    local file="${place}/${time}_${name}"
+    local file="$place/$name/${time}_$name"
     # shellcheck disable=SC2155
     local disp="$(bold "$name") at $(bold "$location")"
     # '-e' may be too broad, but anything stricter risks blocking
@@ -92,7 +92,7 @@ main() {
 
     # Before starting, make sure that sudo is freshly validated.
     echo "$(blue Entering sudo mode)."
-    sudo -v
+    sudo -v || exit 1
     handle-backup-service
     local scrub_pids=()
     for line in "${disks[@]}"; do
