@@ -18,6 +18,7 @@ file-based audio player plays them in the right order.
 
 Options
 \e[1m--debug\e[0m  Show extra info.
+\e[1m--dirs\e[0m   Also rename directories.
 \e[1m--dry\e[0m    Don't actually run the commands.
 \e[1m--quiet\e[0m  Don't show commands.
 "
@@ -44,7 +45,8 @@ rename() {
         dbg "rename() $1: x=$x"
         if [ -d "$d/$x" ]; then
             rename "$d/$x"
-        else
+        fi
+        if [ ! -d "$d/$x" ] || [ "$DIRS" = "true" ]; then
             y="$(echo "$x" | sed -r "s/$MATCH/$RENAME/")"
             [ "$x" != "$y" ] && cmd mv "$d/$x" "$d/$y"
         fi
@@ -57,6 +59,9 @@ main() {
         case "$1" in
             --debug)
                 DEBUG=true
+                ;;
+            --dirs)
+                DIRS=true
                 ;;
             --dry)
                 DRY=true
