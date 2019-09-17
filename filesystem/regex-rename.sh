@@ -6,13 +6,15 @@ usage() {
     # Example match and rename patterns
     local match='(.*[^ -])[ -]* ([0-9]{2}) [ -]*([^ -].*)'
     local rename='\2 - \1 - \3'
+    # Name of script
+    local name="$(basename "$0")"
     # Show usage message
-    echo -e "$0 [options ...] match-regex rename-regex path [...]
+    echo -e "$name [options ...] match-regex rename-regex path [...]
 
 Apply regex find/rename on file names under given path(s).
 
 For example,
-\e[1m$0 '$match' '$rename' /path/to/music\e[0m
+\e[1m$name '$match' '$rename' /path/to/music\e[0m
 could rewrite track file names to start with their track number so a
 file-based audio player plays them in the right order.
 
