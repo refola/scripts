@@ -5,7 +5,7 @@ usage="password-generator [options ...] {pattern-name}
 password-generator [options ...] custom {custom-pattern}
 password-generator --base64 [options ..]
 
-Generate password-like strings from '/dev/random'. Options are as
+Generate password-like strings from '/dev/urandom'. Options are as
 follows.
 
 --base64
@@ -24,7 +24,7 @@ follows.
 
 --source     file
              Read bytes from the given file instead of from
-             '/dev/random'.
+             '/dev/urandom'.
              Warning: This option makes it easy to compromise your own
              security. As such, it is only recommended for testing
              purposes.
@@ -164,7 +164,7 @@ main() {
 
     # Set defaults if unset.
     bytes="${bytes-200}"
-    randsrc="${randsrc-/dev/random}"
+    randsrc="${randsrc-/dev/urandom}"
 
     # Generate the passwords.
     pw-gen "$pattern" "$bytes" "$randsrc" $b64
