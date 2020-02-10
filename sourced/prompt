@@ -10,25 +10,42 @@
 
 ## Set custom Bash history management
 
-# History file control to go with fancy PROMPT_COMMAND stuff
-export HISTFILE="$HOME/.bash_history" # This will always be empty....
-export HISTARCHIVE="$HOME/.bash_history.d" # Where the "hist" command looks...
+# Goals:
+# 1. All history should be 'permanently' saved somewhere as soon as
+#    the command completes.
+# 2. History should be as easily accessible as possible from any
+#    shell, so long as this does not conflict with goal 1.
+# 3. History should be conveniently organized, so long as this does
+#    not conflict with goals 1 or 2.
 
-# What to store and how
+declare -g HISTFILE HISTCONTROL \
+        HISTARCHIVE _REFOLA_REAL_HISTFILE \
+        PROMPT_COMMAND
+
+# What to store and where
+export HISTARCHIVE="$HOME/.bash_history.d" # Where the "hist" command looks
+export HISTFILE="/tmp/refola_transient_bash_history_${UID}_$$" # transient
 export HISTCONTROL="ignoreboth" # "both" = duplicate commands and whitespace
+export HISTTIMEFORMAT="%FT%T%z: " # save timestamps, approximate ISO-8601
 shopt -s histappend # Append history entries
 shopt -s cmdhist # Store multiline commands as single commands
 
+# Customize HISTFILE by session tag
+echo -n "Session tag? " >&2
+read -r _REFOLA_SHELL_SESSION_TAG
+export _REFOLA_REAL_HISTFILE="$HISTARCHIVE/$(/bin/date --utc +%F)${_REFOLA_SHELL_SESSION_TAG:+_$_REFOLA_SHELL_SESSION_TAG}"
+history -n "$_REFOLA_REAL_HISTFILE" # read history from file
+touch "$HISTFILE" # initialize
+
 # Set PROMPT_COMMAND.
-pcmd() {
-    local append="history -a"
-    local read="history -n"
-    local date="/bin/date" # avoid using `date` alias
-    local save="cat $HISTFILE >> \"${HISTARCHIVE}/\$($date --utc +%F)\""
-    local zero="> $HISTFILE"
-    echo -n "$append; $read; $save; $zero"
+_REFOLA_PROMPT_COMMAND() {
+    # history management
+    history -n # read history file
+    history -a # append latest command to history file
+    cat "$HISTFILE" >> "$_REFOLA_REAL_HISTFILE" # save to real history file
+    > "$HISTFILE" # blank temporary history file
 }
-export PROMPT_COMMAND="$(pcmd)"
+export PROMPT_COMMAND="_REFOLA_PROMPT_COMMAND"
 
 
 ## Set custom prompts
@@ -69,6 +86,9 @@ _PS1_STATUS() {
 
 # Set PS1.
 ps1() {
+    # Show session tag
+    local tag='${_REFOLA_SHELL_SESSION_TAG:+[$_REFOLA_SHELL_SESSION_TAG] }'
+
     # Time stuff
     local brown="$(color '0;33')"
     local hm='\D{%H%M}'
@@ -88,9 +108,9 @@ ps1() {
 
     # Echo the whole thing, returning colors back to normal at the end
     local off="$(color 0)"
-    echo -n "$time$dir$status$off"
+    echo -n "$tag$time$dir$status$off"
     # Result:
-    # \[\e[0;33m\]\D{%H%M}\[\e[1;30m\]:\D{%S}\[\e[0;32m\]${PWD/#$H/$(_PS1_LITERAL_TILDE_WITHOUT_SIDE_EFFECTS)}\[\e[1;37m\]>\[\e[1;31m\]$(_PS1_STATUS) \[\e[0m\]
+    # ${_REFOLA_SHELL_SESSION_TAG:+[$_REFOLA_SHELL_SESSION_TAG] }\[\e[0;33m\]\D{%H%M}\[\e[1;30m\]:\D{%S}\[\e[0;32m\]${PWD/#$H/$(_PS1_LITERAL_TILDE_WITHOUT_SIDE_EFFECTS)}\[\e[0;1m\]>\[\e[1;31m\]$(_PS1_STATUS) \[\e[0m\]
 }
 export PS1="$(ps1)"
 
@@ -104,7 +124,7 @@ export PS2="$(ps2)"
 
 
 ## Unset all lowercase functions
-unset pcmd color ps1 ps2
+unset color ps1 ps2
 
 
 ## Note for a future project idea
