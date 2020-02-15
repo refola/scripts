@@ -31,8 +31,14 @@ shopt -s histappend # Append history entries
 shopt -s cmdhist # Store multiline commands as single commands
 
 # Customize HISTFILE by session tag
-echo -n "Session tag? " >&2
-read -r _REFOLA_SHELL_SESSION_TAG
+if [ "$KONSOLE_PROFILE_NAME" != "Shell" ]; then
+    # TODO: Make more robust logic for determining shell interactivity
+    # when some programs (notably Dolphin) start interactive shells
+    # and paste in commands before allowing user input. For now, we
+    # just use this one variable to test if we're running in Dolphin.
+    echo -n "Session tag? " >&2
+    read -r _REFOLA_SHELL_SESSION_TAG
+fi
 export _REFOLA_REAL_HISTFILE="$HISTARCHIVE/$(/bin/date --utc +%F)${_REFOLA_SHELL_SESSION_TAG:+_$_REFOLA_SHELL_SESSION_TAG}"
 history -n "$_REFOLA_REAL_HISTFILE" # read history from file
 touch "$HISTFILE" # initialize
