@@ -177,6 +177,7 @@ _flatten() {
     [ -d "$src" ] ||
         fatal "_flatten: source '$src' is non-directory corresponding to existant target '$target'"
     cd "$src" || fatal "_flatten: could not 'cd' to source '$src'"
+    shopt -s dotglob # necessary for './*' to get everything
     xs=(./*)
     dbg "_flatten: xs=(${xs[*]})"
     cd - >/dev/null || # don't break relative paths
