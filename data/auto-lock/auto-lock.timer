@@ -1,0 +1,12 @@
+# Run auto-lock.service every 5 minutes.
+
+[Unit]
+Description=automatic time-based screen locker
+
+[Timer]
+AccuracySec=1min
+OnBootSec=15sec
+OnUnitActiveSec=5min
+
+[Install]
+WantedBy=timers.target

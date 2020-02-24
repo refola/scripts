@@ -1,0 +1,10 @@
+# Run script to check the time and automatically lock the computer if
+# it's between the set times.
+
+[Unit]
+Description=automatic time-based screen locker
+
+[Service]
+Type=oneshot
+# ExecStart requires an absolute path and args. So env it is.
+ExecStart=/usr/bin/env auto-lock maybe-lock

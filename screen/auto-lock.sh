@@ -8,7 +8,9 @@ END=
 NOW=
 
 SCRIPT_NAME="auto-lock"
-USAGE="$SCRIPT_NAME [configure | help | install | maybe-lock | uninstall]
+USAGE="$SCRIPT_NAME [option]
+
+Automatically lock the screen during a configured time.
 
 When ran without options, show this help info and exit.
 
@@ -18,7 +20,13 @@ configure    Show format information and edit the configuration file.
 help         Show this usage info and exit.
 install      Set a user systemd unit file to run this automatically.
 maybe-lock   Lock if and only if within configured time range.
+reinstall    Uninstall and install.
 uninstall    Remove the user systemd unit file.
+
+Returns true (0) if the action was successful. Otherwise returns a
+false value. In particular, maybe-lock returns true if it actually
+caused the screen to become locked and false if the screen was already
+locked or if it's not during the locking time.
 "
 
 
@@ -31,17 +39,19 @@ fail() {
     exit 1
 }
 
-## my_var="$(get-cfg cfg_name cfg_desc)"
+## get-cfg var_name cfg_name cfg_desc
 # Get configuration from cfg_name, showing cfg_desc and prompting the
-# user to edit it as needed.
+# user to edit it as needed. On success, saves result to a global
+# variable called var_name. On failure, exits the script with an
+# error.
 get-cfg() {
-    local cfg_name="$2" cfg_desc="$3"
+    local var_name="$1" cfg_name="$2" cfg_desc="$3"
     local result
     result="$(get-config "$SCRIPT_NAME/$cfg_name" -what-do "$cfg_desc")"
     if [ $? != "0" ]; then
         fail "get-cfg(): Could not get config $cfg_name."
     else
-        echo "$result"
+        eval "$var_name='$result'"
     fi
 }
 
@@ -53,8 +63,10 @@ lock() {
 # Read the configs and current time, setting $START, $END and $NOW
 # accordingly, in seconds since the epoch.
 get-times() {
-    START="$(date +%s --date="$(get-cfg start "The lockout start time in 24-hour 'HH:MM' format")")"
-    END="$(date +%s --date="$(get-cfg end "The lockout end time in 24-hour 'HH:MM' format")")"
+    get-cfg START start "The lockout start time in 24-hour 'HH:MM' format"
+    START="$(date +%s --date="$START")"
+    get-cfg END end "The lockout end time in 24-hour 'HH:MM' format"
+    END="$(date +%s --date="$END")"
     NOW="$(date +%s)" || fail "get-times(): Could not get current time"
 }
 
@@ -62,12 +74,18 @@ get-times() {
 # Remove given configs.
 rm-cfgs() {
     for cfg in "$@"; do
-        rm "$(get-config -path "$SCRIPT_NAME/$cfg")"
+        rm "$(get-config "$SCRIPT_NAME/$cfg" -path)"
     done
 }
 
 # Return status code indicating if we're in the lock time range.
 should-lock-now() {
+    # First, don't lock if it's already locked.
+    if [ "$(qdbus org.freedesktop.ScreenSaver /ScreenSaver GetActive)" = "true" ]; then
+        false; return
+    fi
+
+    # Now check if it should be locked based on time.
     get-times
     # Problem: START and END wrap around. E.g., (START, NOW, END)
     # hours of (20, 22, 04) and (20, 03, 04) count as in the time
@@ -103,7 +121,7 @@ should-lock-now() {
 # Guide user thru configuration.
 configure() {
     rm-cfgs start end
-    read-configs
+    get-times
 }
 
 # Show usage info.
@@ -111,21 +129,38 @@ help() {
     echo "$USAGE"
 }
 
-# Install user systemd unit file.
+# Install user systemd unit files.
 install() {
-    fail "install(): unimplemented"
+    get-times # make sure there's valid configuration first
+    local prefix
+    prefix="$(get-data "$SCRIPT_NAME/$SCRIPT_NAME" -path)" ||
+        fail "install(): could not get systemd unit file prefix"
+    for ext in service timer; do
+        systemctl --user enable "$prefix.$ext" ||
+            fail "install(): could not enable systemd unit '$prefix.$ext'"
+    done
+    systemctl --user start "$SCRIPT_NAME.timer" ||
+        fail "install(): could not start $SCRIPT_NAME.timer"
 }
 
 # Lock iff it's the right time.
 maybe-lock() {
-    if should-lock-now; then
+    should-lock-now &&
         lock
-    fi
 }
 
-# Uninstall user systemd unit file.
+# Uninstall and install systemd unit files.
+reinstall() {
+    uninstall &&
+        install
+}
+
+# Uninstall user systemd unit files.
 uninstall() {
-    fail "uninstall(): unimplemented"
+    for ext in service timer; do
+        systemctl --user disable "$SCRIPT_NAME.$ext" ||
+            fail "uninstall(): could not disable '$SCRIPT_NAME.$ext'"
+    done
 }
 
 
@@ -138,7 +173,7 @@ main() {
         help
     elif [ $# -eq 1 ]; then
         case "$1" in
-            configure|help|install|maybe-lock|uninstall)
+            configure|help|install|maybe-lock|reinstall|uninstall)
                 "$1"
                 ;;
             *)
