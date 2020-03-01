@@ -52,13 +52,14 @@ usage() {
     echo "$usage"
 }
 
+## clean-empty-dirs [-p] directory...
 # Make sure that given directories are either nonempty or
 # nonexistent. With '-p' as a first argument, also attempt removing
 # parents with the same logic.
 clean-empty-dirs() {
     local arg='' x
-    if [ "${1/\/*/}" = "$1" ]; then
-        arg="$1"
+    if [ "$1" = '-p' ]; then
+        arg="-p"
         shift
     fi
     for x in "$@"; do
@@ -108,6 +109,7 @@ nuke() {
     clean-empty-dirs -p "$tmp_loc"
 }
 
+## main "$@"
 # Handle args and run appropriate action.
 main() {
     if [ -z "$1" ]; then
