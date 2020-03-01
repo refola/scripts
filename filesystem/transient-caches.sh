@@ -75,8 +75,8 @@ enable() {
     for x in "${dirs[@]}"; do
         [ -L "$loc/$x" ] && [ -d "$tmp_loc/$x" ] && continue # Already done.
         [ -d "$loc/$x" ] && mv "$loc/$x" "$tmp_loc/" # Move existing.
-        mkdir -p "$tmp_loc/$x" # Make sure it exists.
-        ln -s "$tmp_loc/$x" "$loc/$x" # Set symlink.
+        [ ! -e "$tmp_loc/$x" ] && mkdir -p "$tmp_loc/$x" # Make sure it exists.
+        [ ! -e "$loc/$x" ] && ln -s -T "$tmp_loc/$x" "$loc/$x" # Set symlink.
     done
 }
 
