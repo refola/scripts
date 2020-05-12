@@ -2,7 +2,7 @@
 # Bash completion for bb2.py
 
 _auto-lock() {
-    local commands=(configure help install maybe-lock reinstall uninstall)
+    local commands=(active configure help install maybe-lock pause reinstall resume uninstall)
     COMPREPLY=($(compgen -W "${commands[*]}" -- "${COMP_WORDS[COMP_CWORD]}"))
 }
 complete -F _auto-lock auto-lock

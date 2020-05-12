@@ -8,19 +8,22 @@ END=
 NOW=
 
 SCRIPT_NAME="auto-lock"
-USAGE="$SCRIPT_NAME [option]
+USAGE="$SCRIPT_NAME [command [args]]
 
 Automatically lock the screen during a configured time.
 
 When ran without options, show this help info and exit.
 
-Options are as follows:
+Commands are as follows:
 
+active [-q]  Check if automation is active, suppressing output with -q.
 configure    Show format information and edit the configuration file.
 help         Show this usage info and exit.
 install      Set a user systemd unit file to run this automatically.
 maybe-lock   Lock if and only if within configured time range.
+pause [time] Pause auto-lock activation, optionally resuming after given time.
 reinstall    Uninstall and install.
+resume       Resume automatic locking.
 uninstall    Remove the user systemd unit file.
 
 Returns true (0) if the action was successful. Otherwise returns a
@@ -118,6 +121,20 @@ should-lock-now() {
 
 ### MAIN OPTION FUNCTIONS
 
+## active [-q]
+# Check if systemd service is active. Suppress output with -q.
+active() {
+    systemctl --user --quiet is-active auto-lock.timer
+    status=$?
+    [ -z "$1" ] &&
+        if [ "$status" = 0 ]; then
+            echo "active"
+        else
+            echo "inactive"
+        fi
+    return $status
+}
+
 # Guide user thru configuration.
 configure() {
     rm-cfgs start end
@@ -136,10 +153,10 @@ install() {
     prefix="$(get-data "$SCRIPT_NAME/$SCRIPT_NAME" -path)" ||
         fail "install(): could not get systemd unit file prefix"
     for ext in service timer; do
-        systemctl --user enable "$prefix.$ext" ||
+        systemctl --user --quiet enable "$prefix.$ext" ||
             fail "install(): could not enable systemd unit '$prefix.$ext'"
     done
-    systemctl --user start "$SCRIPT_NAME.timer" ||
+    systemctl --user --quiet start "$SCRIPT_NAME.timer" ||
         fail "install(): could not start $SCRIPT_NAME.timer"
 }
 
@@ -149,16 +166,36 @@ maybe-lock() {
         lock
 }
 
+# Pause systemd timer.
+pause() {
+    if active -q; then
+        systemctl --user stop auto-lock.timer
+        if [ -n "$1" ]; then
+            echo "Auto-locking will resume in $1."
+            echo "Please manually run 'auto-lock resume' if command interrupted."
+            sleep "$1"
+            resume
+        fi
+    fi
+}
+
 # Uninstall and install systemd unit files.
 reinstall() {
     uninstall &&
         install
 }
 
+# Resume systemd timer
+resume() {
+    if ! active -q; then
+        systemctl --user start auto-lock.timer
+    fi
+}
+
 # Uninstall user systemd unit files.
 uninstall() {
     for ext in service timer; do
-        systemctl --user disable "$SCRIPT_NAME.$ext" ||
+        systemctl --user --quiet disable "$SCRIPT_NAME.$ext" ||
             fail "uninstall(): could not disable '$SCRIPT_NAME.$ext'"
     done
 }
@@ -169,20 +206,34 @@ uninstall() {
 ## main "$@"
 # Go from args to actions.
 main() {
-    if [ $# -eq 0 ]; then
+    case $# in
+    0)
         help
-    elif [ $# -eq 1 ]; then
+        ;;
+    1)
         case "$1" in
-            configure|help|install|maybe-lock|reinstall|uninstall)
+            active|configure|help|install|maybe-lock|pause|reinstall|resume|uninstall)
                 "$1"
                 ;;
             *)
-                fail "Invalid arg"
+                fail "Invalid command"
                 ;;
         esac
-    else
-        fail "Too many args"
-    fi
+        ;;
+    2)
+        case "$1" in
+            active|pause)
+                "$@"
+                ;;
+            *)
+                fail "Bad command '$1' or it doesn't accept arguments."
+                ;;
+        esac
+        ;;
+    *)
+        fail "Too many arguments."
+        ;;
+    esac
 }
 
 main "$@"
