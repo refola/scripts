@@ -8,7 +8,16 @@
 # msg message
 ##
 # Send the given message to $USER via the `write` command.
-msg() { echo -e "$0: $1" | write "$USER"; }
+msg() {
+    if which notify-send &>/dev/null; then
+        # we can show fancy notifications
+        notify-send -a "$0" "$0" "$1"
+    else
+        # fallback to standard *nix utilities
+        mesg y # Enable `write` command
+        echo -e "$0: $1" | write "$USER"
+    fi
+}
 
 # checkMemStats name stat1 stat2 minPercent [...]
 ##
@@ -40,24 +49,32 @@ checkMemStats() {
 
 ram_default=20
 swap_default=70
-usage="$0 [minRamPercent [minSwapPercent]]
+usage="$0 [-q | --quiet] [minRamPercent [minSwapPercent]]
 
 Constantly check RAM and swap levels, giving a warning if they both
 get too low. By default, require at least $ram_default% free RAM, or
-at least $swap_default% free swap."
+at least $swap_default% free swap.
+
+With '-q' or '--quiet', only show low memory and error messages."
 
 # main "$@"
 ##
 # Run the script, with whichever parameters are available.
 main() {
-    if [ "$#" != 2 ]; then
+    local quiet
+    if [ "$1" = "-q" ] || [ "$1" = "--quiet" ]; then
+        quiet=true
+        shift
+    fi
+    if [ "$#" != 2 ] && [ -z "$quiet" ]; then
         echo "$usage"
     fi
-    mesg y # Enable `write` command
+    [ -z "$quiet" ] &&
+        msg "$0 started. This is how low memory alerts will appear."
     while true; do
         checkMemStats RAM MemAvailable MemTotal "${1-$ram_default}" \
                       Swap SwapFree SwapTotal "${2-$swap_default}" ||
-            sleep 9
+            sleep 9 # wait longer after reporting low memory to reduce spam
         sleep 1
     done
 }
