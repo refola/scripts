@@ -80,7 +80,8 @@ get-times() {
 
 # Lock the screen.
 lock() {
-    qdbus org.freedesktop.ScreenSaver /ScreenSaver Lock
+    dbus-send --dest=org.freedesktop.ScreenSaver --print-reply=literal \
+              /ScreenSaver org.freedesktop.ScreenSaver.Lock
 }
 
 ## q-code text code [-q]
@@ -90,19 +91,6 @@ q-code() {
     [ "$3" != '-q' ] &&
         echo "$1"
     return "$2"
-}
-
-## qdbus [args ...]
-# Wrap qdbus or qdbus-qt5 command as appropriate.
-qdbus() {
-    local cmd
-    for cmd in qdbus qdbus-qt5; do
-        if which "$cmd" &>/dev/null; then
-            command "$cmd" "$@"
-            return
-        fi
-    done
-    fail "qdbus(): Could not find real 'qdbus' command."
 }
 
 ## rm-cfgs cfg_name [...]
@@ -202,7 +190,9 @@ is-installed() {
 # Tell if screen is already locked.
 is-locked() {
     local code status
-    [ "$(qdbus org.freedesktop.ScreenSaver /ScreenSaver GetActive)" = "true" ]
+    dbus-send --dest=org.freedesktop.ScreenSaver --print-reply=literal \
+              /ScreenSaver org.freedesktop.ScreenSaver.GetActive |
+        grep -q true
     code=$?
     if [ $code = 0 ]; then
         status=locked
