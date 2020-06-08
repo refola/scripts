@@ -16,21 +16,31 @@ When ran without options, show this help info and exit.
 
 Commands are as follows:
 
-active [-q]  Check if automation is active, suppressing output with -q.
-configure    Show format information and edit the configuration file.
-help         Show this usage info and exit.
-install      Set a user systemd unit file to run this automatically.
-maybe-lock   Lock if and only if within configured time range.
-pause [time] Pause auto-lock activation, optionally resuming after given time.
-reinstall    Uninstall and install.
-resume       Resume automatic locking.
-uninstall    Remove the user systemd unit file.
+configure         Show format information and edit the configuration file.
+help              Show this usage info and exit.
+install           Set a user systemd unit file to run this automatically.
+is-active [-q]    Check if installed service is active.
+is-installed [-q] Check if locking service is installed.
+is-locked [-q]    Check if screen is already locked.
+is-lock-time [-q] Check if it's time to be locked.
+maybe-lock        Lock if and only if within configured time range.
+pause [time]      Pause locking service, optionally resuming after given time.
+reinstall         Uninstall and install.
+resume            Resume automatic locking.
+status [-q]       Check all the is-* statuses, suppressing output with -q.
+uninstall         Remove the user systemd unit file.
 
-Returns true (0) if the action was successful. Otherwise returns a
-false value. In particular, maybe-lock returns true if it actually
-caused the screen to become locked and false if the screen was already
-locked or if it's not during the locking time.
+Exit status:
+
+All commands return 0 (true) if \"successful\" (i.e., either the
+requested action was performed correctly or requested status is
+true). Specific error/false returns are as follows, with values adding
+if multiple conditions exist simultaneously.
+
+maybe-lock  1 if already locked, 2 if not locking time.
+status      1 if inactive, 2 if uninstalled, 4 if unlocked, 8 if not lock time.
 "
+
 
 
 ### UTILITY FUNCTIONS
@@ -58,11 +68,6 @@ get-cfg() {
     fi
 }
 
-# Lock the screen.
-lock() {
-    qdbus org.freedesktop.ScreenSaver /ScreenSaver Lock
-}
-
 # Read the configs and current time, setting $START, $END and $NOW
 # accordingly, in seconds since the epoch.
 get-times() {
@@ -73,6 +78,33 @@ get-times() {
     NOW="$(date +%s)" || fail "get-times(): Could not get current time"
 }
 
+# Lock the screen.
+lock() {
+    qdbus org.freedesktop.ScreenSaver /ScreenSaver Lock
+}
+
+## q-code text code [-q]
+# Echo text if and only if '-q' is not passed. Then return with status
+# given by code.
+q-code() {
+    [ "$3" != '-q' ] &&
+        echo "$1"
+    return "$2"
+}
+
+## qdbus [args ...]
+# Wrap qdbus or qdbus-qt5 command as appropriate.
+qdbus() {
+    local cmd
+    for cmd in qdbus qdbus-qt5; do
+        if which "$cmd" &>/dev/null; then
+            command "$cmd" "$@"
+            return
+        fi
+    done
+    fail "qdbus(): Could not find real 'qdbus' command."
+}
+
 ## rm-cfgs cfg_name [...]
 # Remove given configs.
 rm-cfgs() {
@@ -81,59 +113,29 @@ rm-cfgs() {
     done
 }
 
-# Return status code indicating if we're in the lock time range.
+# Return status code indicating if we should lock the screen
 should-lock-now() {
-    # First, don't lock if it's already locked.
-    if [ "$(qdbus org.freedesktop.ScreenSaver /ScreenSaver GetActive)" = "true" ]; then
-        false; return
-    fi
-
-    # Now check if it should be locked based on time.
-    get-times
-    # Problem: START and END wrap around. E.g., (START, NOW, END)
-    # hours of (20, 22, 04) and (20, 03, 04) count as in the time
-    # range. But (20, 05, 04) is not in the time range.
-    ##
-    # Cases:
-    ## 1: START < END:
-    ### Return true if START < NOW < END. Otherwise false.
-    ## 2: END < START:
-    ### Return false if END < NOW < START. Otherwise true.
-    ## 3: START == END:
-    ### Invalid times. Fail.
-    if [ "$START" -lt "$END" ]; then
-        if [ "$START" -lt "$NOW" ] && [ "$NOW" -lt "$END" ]; then
-            true; return
-        else
-            false; return
-        fi
-    elif [ "$END" -lt "$START" ]; then
-        if [ "$END" -lt "$NOW" ] && [ "$NOW" -lt "$START" ]; then
-            false; return
-        else
-            true; return
-        fi
-    else
-        fail "should-lock-now(): equal start and end times are invalid."
-    fi
+    ! is-locked -q &&   # shouldn't lock if it's already locked.
+        is-lock-time -q
 }
+
+## x-in-xs x [xs ...]
+# Check if the first given arg "x" is in the given list of "xs".
+x-in-xs() {
+    local x="$1"
+    shift
+    while [ $# -ge 1 ]; do
+        if [ "$x" = "$1" ]; then
+            return 0
+        fi
+        shift
+    done
+    return 1
+}
+
 
 
 ### MAIN OPTION FUNCTIONS
-
-## active [-q]
-# Check if systemd service is active. Suppress output with -q.
-active() {
-    systemctl --user --quiet is-active auto-lock.timer
-    status=$?
-    [ -z "$1" ] &&
-        if [ "$status" = 0 ]; then
-            echo "active"
-        else
-            echo "inactive"
-        fi
-    return $status
-}
 
 # Guide user thru configuration.
 configure() {
@@ -148,16 +150,97 @@ help() {
 
 # Install user systemd unit files.
 install() {
+    if is-installed -q; then
+        echo "already installed"
+        return 1
+    fi
     get-times # make sure there's valid configuration first
     local prefix
     prefix="$(get-data "$SCRIPT_NAME/$SCRIPT_NAME" -path)" ||
-        fail "install(): could not get systemd unit file prefix"
+        fail "install(): Could not get systemd unit file prefix"
     for ext in service timer; do
         systemctl --user --quiet enable "$prefix.$ext" ||
-            fail "install(): could not enable systemd unit '$prefix.$ext'"
+            fail "install(): Could not enable systemd unit '$prefix.$ext'"
     done
     systemctl --user --quiet start "$SCRIPT_NAME.timer" ||
-        fail "install(): could not start $SCRIPT_NAME.timer"
+        fail "install(): Could not start $SCRIPT_NAME.timer"
+    echo "install finished"
+}
+
+# Tell if systemd timer is active.
+is-active() {
+    local code status
+    systemctl --user --quiet is-active auto-lock.timer
+    code=$?
+    if [ $code = 0 ]; then
+        status="auto-locking active"
+    else
+        status="auto-locking paused"
+        code=1
+    fi
+    q-code "$status" "$code" "$1"
+}
+# Tell if systemd service and timer are installed.
+is-installed() {
+    local code status
+    # TODO: streamline when/if systemd adds, e.g., 'is-existent'
+    systemctl --user status auto-lock.service &>/dev/null
+    code=$?
+    # per 'man systemctl', exit status 4 is "no such unit". so instead
+    # of checking for success (status code 0, "unit is active"; only
+    # for brief instant that script is running from timer activating),
+    # we check for lack of "no such unit" error.
+    if [ $code != 4 ]; then
+        status="auto-locker installed"
+        code=0
+    else
+        status="auto-locker not installed"
+        code=1
+    fi
+    q-code "$status" "$code" "$1"
+}
+# Tell if screen is already locked.
+is-locked() {
+    local code status
+    [ "$(qdbus org.freedesktop.ScreenSaver /ScreenSaver GetActive)" = "true" ]
+    code=$?
+    if [ $code = 0 ]; then
+        status=locked
+    else
+        status=unlocked
+    fi
+    q-code "$status" "$code" "$1"
+}
+# Tell if it's time to lock.
+is-lock-time() {
+    local code status
+    get-times
+    # problem: start and end wrap around. e.g., (start, now, end)
+    # hours of (20, 22, 04) and (20, 03, 04) count as in the time
+    # range. but (20, 05, 04) is not in the time range.
+    ##
+    # cases:
+    ## 1: start < end:
+    ### return true if start < now < end. otherwise false.
+    ## 2: end < start:
+    ### return false if end < now < start. otherwise true.
+    ## 3: start == end:
+    ### invalid times. fail.
+    if [ "$START" -lt "$END" ]; then
+        [ "$START" -lt "$NOW" ] && [ "$NOW" -lt "$END" ]
+        code=$?
+    elif [ "$END" -lt "$START" ]; then
+        ! ([ "$END" -lt "$NOW" ] && [ "$NOW" -lt "$START" ])
+        code=$?
+    else
+        fail "is-lock-time(): equal start and end times are invalid."
+    fi
+    if [ $code = 0 ]; then
+        status="time to lock screen"
+    else
+        status="not time to lock screen"
+    fi
+    q-code "$status" "$code" "$1"
 }
 
 # Lock iff it's the right time.
@@ -168,7 +251,7 @@ maybe-lock() {
 
 # Pause systemd timer.
 pause() {
-    if active -q; then
+    if is-active -q; then
         systemctl --user stop auto-lock.timer
         if [ -n "$1" ]; then
             echo "Auto-locking will resume in $1."
@@ -181,24 +264,48 @@ pause() {
 
 # Uninstall and install systemd unit files.
 reinstall() {
-    uninstall &&
-        install
+    uninstall
+    install
 }
 
-# Resume systemd timer
+# Resume systemd timer.
 resume() {
-    if ! active -q; then
+    if ! is-active -q; then
         systemctl --user start auto-lock.timer
     fi
 }
 
+## status [-q]
+# Check systemd service and locking status. Suppress output with -q.
+# Exit status code is sum of whichever combination of these applies: 1
+# if inactive, 2 if uninstalled, 4 if unlocked, 8 if not lock time.
+status() {
+    local status=0 pow=1
+    for fn in is-active is-installed is-locked is-lock-time; do
+        $fn "$@" || # "$@" passes '-q' if-and-only-if it was passed here
+            ((status |= pow)) # "|=" is like "+=" for binary OR
+                              # (equivalent in this case, but the less
+                              # common operator more clearly expresses
+                              # semantic intent of error code
+                              # composition)
+        ((pow*=2))
+    done
+    return $status
+}
+
 # Uninstall user systemd unit files.
 uninstall() {
+    if ! is-installed -q; then
+        echo "already not installed"
+        return 1
+    fi
     for ext in service timer; do
         systemctl --user --quiet disable "$SCRIPT_NAME.$ext" ||
             fail "uninstall(): could not disable '$SCRIPT_NAME.$ext'"
     done
+    echo "uninstall finished"
 }
+
 
 
 ### MAIN ###
@@ -206,29 +313,27 @@ uninstall() {
 ## main "$@"
 # Go from args to actions.
 main() {
+    local -a arg_cmds=(is-active is-installed is-locked is-lock-time
+                       pause status)
+    local -a all_cmds=("${arg_cmds[@]}" configure help install maybe-lock
+                      reinstall resume uninstall)
     case $# in
     0)
         help
         ;;
     1)
-        case "$1" in
-            active|configure|help|install|maybe-lock|pause|reinstall|resume|uninstall)
-                "$1"
-                ;;
-            *)
-                fail "Invalid command"
-                ;;
-        esac
+        if x-in-xs "$1" "${all_cmds[@]}"; then
+            "$1"
+        else
+            fail "Invalid command '$1'"
+        fi
         ;;
     2)
-        case "$1" in
-            active|pause)
-                "$@"
-                ;;
-            *)
-                fail "Bad command '$1' or it doesn't accept arguments."
-                ;;
-        esac
+        if x-in-xs "$1" "${arg_cmds[@]}"; then
+            "$@"
+        else
+            fail "Bad command '$1' or it doesn't accept arguments."
+        fi
         ;;
     *)
         fail "Too many arguments."

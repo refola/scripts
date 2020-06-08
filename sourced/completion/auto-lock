@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-# Bash completion for bb2.py
+# Bash completion for auto-lock.sh
 
 _auto-lock() {
-    local commands=(active configure help install maybe-lock pause reinstall resume uninstall)
+    local commands=(configure help install
+                    is-active is-installed is-locked is-lock-time
+                    maybe-lock pause reinstall resume status uninstall)
     COMPREPLY=($(compgen -W "${commands[*]}" -- "${COMP_WORDS[COMP_CWORD]}"))
 }
 complete -F _auto-lock auto-lock
