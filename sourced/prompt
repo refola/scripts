@@ -31,7 +31,8 @@ shopt -s histappend # Append history entries
 shopt -s cmdhist # Store multiline commands as single commands
 
 # Customize HISTFILE by session tag
-if [ "$KONSOLE_PROFILE_NAME" != "Shell" ]; then
+#if [ "$KONSOLE_PROFILE_NAME" != "Shell" ]; then
+if false; then
     # TODO: Make more robust logic for determining shell interactivity
     # when some programs (notably Dolphin) start interactive shells
     # and paste in commands before allowing user input. For now, we
