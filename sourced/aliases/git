@@ -8,5 +8,4 @@ alias gca='git commit --all'
 alias gd='git diff'
 alias gp='git pull origin master && git push origin master'
 alias gr='git fetch origin master && git rebase -i master'
-# '--no-optional-locks' avoids non-obvious loss of commits when repos are additionally synced via other means
-alias gs='git --no-optional-locks status'
+alias gs='git status'

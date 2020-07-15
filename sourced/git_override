@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+## git_override
+# wrap git to set GIT_OPTIONAL_LOCKS=0 in the presence of a
+# .git_no_optional_locks file.
+git() {
+    old_PWD="$PWD"
+    while [ ! -d ./.git ]; do
+        [ "$PWD" != "/" ] || break
+        cd .. || break
+    done
+    if [ -e ./.git_no_optional_locks ]; then
+        echo "git(): .git_no_optional_locks override file detected in repo root. setting GIT_OPTIONAL_LOCKS=0." >&2
+        export GIT_OPTIONAL_LOCKS=0
+    fi
+    cd "$old_PWD" || return 1
+    command git "$@"
+}
