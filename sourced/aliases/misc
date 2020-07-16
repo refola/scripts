@@ -10,3 +10,6 @@ alias gofmtr="find . -type f -name '*.go' -print0 | xargs -0 -r -n1 gofmt -w"
 
 # Parallelize make with 6 cores.
 alias make='make -j6'
+
+# Use a more modern markdown processor.
+alias markdown=cmark-py3
