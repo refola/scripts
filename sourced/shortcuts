@@ -5,7 +5,7 @@
 # Make functions that source given commands, enabling things like "cd"
 # in the commands to have the desired effects in interactive shells.
 local fn
-for fn in cdh cmcd cdl mkcd pcd; do
+for fn in cdh cdl cmcd mkcd pcd; do
     if [ "$DEBUG" = "true" ]; then
         echo "shortcut: $fn"
     fi
