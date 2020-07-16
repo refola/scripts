@@ -1,7 +1,11 @@
 #!/bin/sh
 
 # Quickly retract Yakuake when it gets stuck (bug workaround)
-alias a='qdbus org.kde.yakuake /yakuake/window org.kde.yakuake.toggleWindowState'
+if which qdbus; then
+    alias a='qdbus org.kde.yakuake /yakuake/window org.kde.yakuake.toggleWindowState'
+elif which qdbus-qt5; then
+    alias a='qdbus-qt5 org.kde.yakuake /yakuake/window org.kde.yakuake.toggleWindowState'
+fi 1>/dev/null 2>/dev/null
 
 # Ignore return values being _potentially_ masked. I'm that tired of
 # that false positive.
