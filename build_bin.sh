@@ -43,6 +43,7 @@ example
 graveyard
 sourced
 test
+x
 zsh_custom
 "
 
