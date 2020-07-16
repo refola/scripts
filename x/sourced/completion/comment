@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Bash completion for comment.sh
+
+_comment() {
+    local IFS=$'\n'
+    local files="$(ls -1 "$(get-config "comment" -path)")"
+    COMPREPLY=( $(compgen -W "${files[@]}" -- "${COMP_WORDS[COMP_CWORD]}") )
+}
+complete -F _comment comment
