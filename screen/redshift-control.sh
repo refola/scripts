@@ -44,15 +44,6 @@ format is provider[:option[...]], with providers listed by
 'redshift -l list'"
 get coords coords "$_coords"
 get place place "the name of the place your coordinates describe"
-# important places this may end up (uncomment exactly one):
-#coords="35:-111"; place="Flagstaff"
-#coords="43:-86"; place="Grand Rapids"
-#coords="35:-81"; place="Flagstaff - 2hrs"
-#coords="33:-112"; place="Phoenix"
-#coords="33:-82"; place="Phoenix - 2hrs"
-#coords="32:-111"; place="Tucson"
-#coords="-8.6:115.2"; place="Bali"
-#
 # get brightnesses and colour temperatures
 _day_brite="default day brightness, with 1-9 meaning 10%-90% and 0
 meaning 100%; use '0' if you want to control it with monitor
