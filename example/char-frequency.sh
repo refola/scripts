@@ -17,5 +17,7 @@ while [ "$i" -lt "$len" ]; do
 done
 
 for i in "${!chars[@]}"; do
-    echo "$i: ${chars[$i]}"
-done
+    echo "${chars[$i]} $i"
+done |
+    sort -n |
+    sed -r 's/^([0-9]+) (.)$/\2: \1/g'
