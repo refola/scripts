@@ -75,7 +75,7 @@ get() {
         exit 1
     else
         # Save config to variable.
-        eval \"global \$var_name='\$result'\"
+        eval \"declare -g \$var_name='\$result'\"
     fi
 }
 \e[0;32m# Get the config.
