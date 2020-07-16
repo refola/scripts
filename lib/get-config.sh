@@ -61,6 +61,7 @@ an updated $(basename "$0") will allow something like:
 to generate a sourcable script for getting configs with given prefix
 via a function of given fn_name.
 
+\e[0;32m## get variable_name config-name config-description
 \e[0;32m# Shortcut function to get a config with description, exiting on fail.
 \e[0;1m_script_name=\"foo\"
 get() {
