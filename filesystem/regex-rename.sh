@@ -71,6 +71,7 @@ rename() {
     if [ -d "$1" ] && [ -z "$NORECURSE" ] &&
            ([ ! -L "$1" ] || [ -n "$FOLLOWLINKS" ]); then
         shopt -s nullglob  # don't loop over invalid "$1/*"
+        shopt -s dotglob   # include 'hidden' files
         for x in "$1"/*; do
             rename "$x"
         done
