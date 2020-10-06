@@ -6,6 +6,7 @@
 declare DEBUG
 declare DIRS
 declare DRY
+declare FOLLOWLINKS
 declare NORECURSE
 declare QUIET
 declare RELINK
@@ -35,12 +36,13 @@ could rewrite track file names to start with their track number so a
 file-based audio player plays them in the right order.
 
 Options
-$(b --debug)       Show extra info.
-$(b --dirs)        Also rename directories.
-$(b --dry)         Don't actually run the commands.
-$(b --no-recurse)  Only process given paths, not folder contents.
-$(b --quiet)       Don't show commands.
-$(b --relink)      Change symlink targets instead of names.
+$(b --debug)         Show extra info.
+$(b --dirs)          Also rename directories.
+$(b --dry)           Don't actually run the commands.
+$(b --follow-links)  Follow symbolic links during recursion.
+$(b --no-recurse)    Only process given paths, not folder contents.
+$(b --quiet)         Don't show commands.
+$(b --relink)        Change symlink targets instead of names.
 "
 }
 
@@ -66,7 +68,8 @@ rename() {
     # recurse
     dbg "rename() $1"
     local x
-    if [ -d "$1" ] && [ -z "$NORECURSE" ]; then
+    if [ -d "$1" ] && [ -z "$NORECURSE" ] &&
+           ([ ! -L "$1" ] || [ -n "$FOLLOWLINKS" ]); then
         shopt -s nullglob  # don't loop over invalid "$1/*"
         for x in "$1"/*; do
             rename "$x"
@@ -107,6 +110,9 @@ main() {
                 ;;
             --dry)
                 DRY=true
+                ;;
+            --follow-links)
+                FOLLOWLINKS=true
                 ;;
             --no-recurse)
                 NORECURSE=true
