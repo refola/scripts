@@ -2,6 +2,22 @@
 # regex-rename.sh
 # Rename files by regex pattern.
 
+# globals
+declare DEBUG
+declare DIRS
+declare DRY
+declare NORECURSE
+declare QUIET
+declare RELINK
+
+declare MATCH
+declare RENAME
+
+# b text
+##
+# Bold the given text and echo it back.
+b() { echo -e "\e[1m$*\e[0m"; }
+
 usage() {
     # Example match and rename patterns
     local match='(.*[^ -])[ -]* ([0-9]{2}) [ -]*([^ -].*)'
@@ -19,10 +35,12 @@ could rewrite track file names to start with their track number so a
 file-based audio player plays them in the right order.
 
 Options
-\e[1m--debug\e[0m  Show extra info.
-\e[1m--dirs\e[0m   Also rename directories.
-\e[1m--dry\e[0m    Don't actually run the commands.
-\e[1m--quiet\e[0m  Don't show commands.
+$(b --debug)       Show extra info.
+$(b --dirs)        Also rename directories.
+$(b --dry)         Don't actually run the commands.
+$(b --no-recurse)  Only process given paths, not folder contents.
+$(b --quiet)       Don't show commands.
+$(b --relink)      Change symlink targets instead of names.
 "
 }
 
@@ -35,28 +53,50 @@ cmd() {
     [ -z "$DRY" ] && "$@"
 }
 
+# escape-slashes string
+##
+# Echo back the string, turning each '/' into '\/'.
+escape-slashes() { echo "$1" | sed -r 's!/!\\/!g'; }
+
 # rename location
 ##
 # Recursively renames all files under location that match the $MATCH
 # pattern to new names following the $RENAME pattern.
 rename() {
+    # recurse
     dbg "rename() $1"
-    local d="${1%/}" x y
-    for x in "$d"/*; do
-        x="${x#"$d/"}"
-        dbg "rename() $1: x=$x"
-        if [ -d "$d/$x" ]; then
-            rename "$d/$x"
+    local x
+    if [ -d "$1" ] && [ -z "$NORECURSE" ]; then
+        shopt -s nullglob  # don't loop over invalid "$1/*"
+        for x in "$1"/*; do
+            rename "$x"
+        done
+    fi
+
+    # handle the item
+    local loc="$1" dir name target new
+    dir="${loc%/*}"
+    name="${loc##*/}"
+    dbg "rename() dir=$dir   name=$name"
+    if [ "$RELINK" = "true" ]; then
+        if [ -L "$loc" ]; then
+            target="$(readlink "$loc")"
+            dbg "rename() -> target=$target"
+            new="$(echo "$target" | sed -r "s/$MATCH/$RENAME/")"
+            if [ "$target" != "$new" ]; then
+                cmd rm "$loc"
+                cmd ln -s "$new" "$loc"
+            fi
         fi
-        if [ ! -d "$d/$x" ] || [ "$DIRS" = "true" ]; then
-            y="$(echo "$x" | sed -r "s/$MATCH/$RENAME/")"
-            [ "$x" != "$y" ] && cmd mv "$d/$x" "$d/$y"
-        fi
-    done
+    elif [ ! -d "$loc" ] || [ "$DIRS" = "true" ]; then
+        new="$(echo "$name" | sed -r "s/$MATCH/$RENAME/")"
+        [ "$name" != "$new" ] && cmd mv "$dir/$name" "$dir/$new"
+    fi
 }
 
 main() {
     local path
+    local -a paths
     while [ "$#" -ge 1 ]; do
         case "$1" in
             --debug)
@@ -68,8 +108,14 @@ main() {
             --dry)
                 DRY=true
                 ;;
+            --no-recurse)
+                NORECURSE=true
+                ;;
             --quiet)
                 QUIET=true
+                ;;
+            --relink)
+                RELINK=true
                 ;;
             *)
                 break
@@ -78,14 +124,14 @@ main() {
         shift
     done
     [ "$#" -ge 3 ] || { usage && exit 1; }
-    MATCH="$1"
-    RENAME="$2"
+    MATCH="$(escape-slashes "$1")"
+    RENAME="$(escape-slashes "$2")"
     shift 2
-    PATHS=("$@")
-    dbg "DEBUG=$DEBUG  DRY=$DRY  QUIET=$QUIET"
+    paths=("$@")
+    dbg "DEBUG=$DEBUG  DRY=$DRY  QUIET=$QUIET  RELINK=$RELINK"
     dbg "MATCH='$MATCH'  RENAME='$RENAME'"
-    dbg "PATHS=(${PATHS[*]})"
-    for path in "${PATHS[@]}"; do
+    dbg "paths=(${paths[*]})"
+    for path in "${paths[@]}"; do
         rename "$path"
     done
 }
