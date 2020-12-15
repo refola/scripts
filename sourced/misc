@@ -19,4 +19,13 @@ shopt -s dotglob
 shopt -s expand_aliases
 shopt -s extglob
 shopt -s hostcomplete
-shopt -s nocaseglob
+
+# Stop "bash: !: event not found" when using exclamations in quoted
+# strings.
+if [[ "$0" = "-bash" ]] ||
+       [[ "$SHELL" = "/bin/bash" ]] ||
+       [[ "$(readlink -f "/$0")" = "$(readlink -f "$(which bash)")" ]] ||
+       [[ "$(readlink -f "$0")" = "$(readlink -f "$(which bash)")" ]]
+then
+    set +o histexpand
+fi
