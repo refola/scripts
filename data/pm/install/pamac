@@ -1,0 +1,4 @@
+# "pamac install" works for non-AUR packages, and the man page says
+# "pamac build" is for AUR only, but it's useful to have a single
+# command that works for everything, and the latter is it.
+scmd pamac build "$@"

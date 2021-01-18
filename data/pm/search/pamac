@@ -1,0 +1,1 @@
+cmd pamac search --aur "$@"
