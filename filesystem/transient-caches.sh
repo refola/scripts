@@ -69,14 +69,23 @@ clean-empty-dirs() {
     done
 }
 
+## smkdir /path/to/directory
+# "Securely" (i.e., permission mode 700) make the directory,
+# insecurely making parent directories as needed.
+smkdir() {
+    # We're only worried about security of the given folder
+    # shellcheck disable=SC2174
+    mkdir -p -m 700 "$1"
+}
+
 # Set temp stuff to be in /tmp, idempotently
 enable() {
-    mkdir -p "$tmp_loc"
+    smkdir "$tmp_loc"
     local x
     for x in "${dirs[@]}"; do
         [ -L "$loc/$x" ] && [ -d "$tmp_loc/$x" ] && continue # Already done.
         [ -d "$loc/$x" ] && mv "$loc/$x" "$tmp_loc/" # Move existing.
-        [ ! -e "$tmp_loc/$x" ] && mkdir -p "$tmp_loc/$x" # Make sure it exists.
+        [ ! -e "$tmp_loc/$x" ] && smkdir "$tmp_loc/$x" # Make sure it exists.
         [ ! -e "$loc/$x" ] && ln -s -T "$tmp_loc/$x" "$loc/$x" # Set symlink.
     done
 }
@@ -102,8 +111,8 @@ nuke() {
     for x in "${dirs[@]}"; do
         # Using ':?' cancels command with error if the variable is
         # unset, preventing accidental calling of 'rm -rf /'.
-        [ -d "$tmp_loc/$x" ] && rm -rf "${tmp_loc:?}/$x" # /tmp caches
-        [ -d "$loc/$x" ] && rm -rf "${loc:?}/$x" # ~/.cache caches
+        [ -d "$tmp_loc/$x" ] && rm -rf "${tmp_loc:?}/${x:?}" # /tmp caches
+        [ -d "$loc/$x" ] && rm -rf "${loc:?}/${x:?}" # ~/.cache caches
         [ -L "$loc/$x" ] && rm "$loc/$x" # ~/.cache dangling symlinks
     done
     clean-empty-dirs -p "$tmp_loc"
@@ -117,7 +126,7 @@ main() {
         exit 1
     fi
 
-    while [ ! -z "$1" ]; do
+    while [ -n "$1" ]; do
         case "$1" in
             dbg)
                 debug
