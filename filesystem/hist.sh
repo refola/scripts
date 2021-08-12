@@ -4,19 +4,27 @@
 # given pattern, displaying last several results.
 
 count=25 # default
-usage="$(basename "$0") [--] regex [count]
-$(basename "$0") [args ...]
+name="$(basename "$0")"
+usage="$name [--] regex [count]
+$name {--grep, -g} [grep-args ...] regex
+$name {--raw, -r} [all-grep-args ...]
+$name [{--help, -h}]
 
 Searches files in ${HISTARCHIVE/$HOME/\~} for given regex, returning the
 last 'count' (default $count) lines.
 
-Special args:
-all        When passed as a count, show all results.
+Non-regex args:
 --         Force the next arg to be the regex (e.g., to search for '--raw')
---grep -g  Only do the search, skipping filtration. Accepts additional
-           grep args.
+all        When passed as a count, show all results.
+--grep -g  Only do the search, skipping count-based
+           filtration. Remaining args are passed to grep as-is, after
+           the default '-Eh'. The regex must either be at the end and
+           lack a leading '-', or it must follow a '-e' or
+           '--regexp='.
+--help -h  Show this help info and exit.
 --raw  -r  Switch to raw grep mode without even the default
            '-Ehe'. Further args are passed to grep as-is.
+
 "
 
 files=("$HISTARCHIVE"/*) # custom history location used by $PROMPT_COMMAND
@@ -25,17 +33,17 @@ filter=true # if the filter applies
 
 # arg parsing
 case "$1" in
-    "") # show usage when no args given
+    ""|--help|-h) # also show usage when no args given
         echo "$usage"
         exit 1 ;;
     --)
         shift
         args+=(--regexp="$1") ;;
-    --grep)
+    --grep|-g)
         shift
         filter=""
         args+=("$@") ;;
-    --raw)
+    --raw|-r)
         shift
         filter=""
         args=("$@") ;;
