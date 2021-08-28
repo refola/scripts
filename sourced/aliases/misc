@@ -8,8 +8,9 @@ alias emac="\$EDITOR"
 # Format an entire Go project at once.
 alias gofmtr="find . -type f -name '*.go' -print0 | xargs -0 -r -n1 gofmt -w"
 
-# Parallelize make with 6 cores.
-alias make='make -j6'
+# Parallelize make with as many cores as exist on the most concurrent CPU.
+# shellcheck disable=SC2139  # core count does not need recalculating every invocation
+alias make="make -j$(grep '^cpu cores' /proc/cpuinfo | awk '{print $4}' | sort -n | tail -n1)"
 
 # Use a more modern markdown processor.
 alias markdown=cmark-py3
