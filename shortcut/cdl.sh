@@ -2,13 +2,10 @@
 ## cdl.sh
 # Sourcable script for `cdl()` function.
 
-## SC2039
-# I'm using a "POSIX" shebang so ShellCheck can help me avoid
+# SC3043: I'm using a "POSIX" shebang so ShellCheck can help me avoid
 # Bash-isms so this works in Zsh, which does indeed support "local".
-## SC2168
-# This is sourced into a function, so "local" is valid.
 ##
-# shellcheck disable=SC2039,SC2168
+# shellcheck disable=SC3043
 local force vars_path h pwd
 
 if [ "$1" = "-f" ]; then
@@ -21,7 +18,7 @@ vars_path="$(get-config "var-save/$*" -path)"
 
 if [ -z "$1" ] || [ ! -e "$vars_path" ]; then
     echo "Usage: cdl [-f] name"
-    echo "Restores \$PWD and \$H with given name, as saved by cdl."
+    echo "Restores \$PWD and \$H with given name, as saved by 'cds'."
     echo "With '-f' also makes referenced paths exist before cd'ing."
     # Show list of saved variable sets
     vars_path="$(get-config "var-save" -path)"
