@@ -246,7 +246,7 @@ cmd() {
 # Normal function: Displays goal and evals given string. Exits script
 # on error.
 ##
-# In debug mode: Displays goald and shows code that would have been
+# In debug mode: Displays goal and shows code that would have been
 # eval'd.
 ##
 # This is the less-automatic variant of 'cmd', intended for cases
@@ -401,7 +401,12 @@ clone-or-update() {
     local sv last parent
     sv="$(sanitize "$subvol")" || fatal "WTF? (sanitize $subvol)"
     last="$(last-backup "$from/$sv")"
-    ([ "$?" = "0" ] && [ -n "$last" ]) ||
+    {
+        # Using "$?" instead of if ... makes clearer the above
+        # assignment and the below boolean.
+        # shellcheck disable=SC2181
+        [ "$?" = "0" ] && [ -n "$last" ]
+    } ||
         fatal "Could not get last backup in '$from/$sv'."
     exists "$to/$sv" || # Make sure target directory exists.
         cmd "make clone target directory '$to/$sv'" \
@@ -520,9 +525,7 @@ delete-old-keep-n() {
     subvol-loop delete-older-than 3 "$@"
     # Sync everything to free up cleared space.
     cmd "sync '$1' to free deleted snapshots' space" \
-        btrfs filesystem sync "$1"
-    # TODO: remove message when/if obsolete
-    msg "Note that btrfs' cleanup of freed space may take a while longer."
+        btrfs subvolume sync "$1"
 }
 
 
