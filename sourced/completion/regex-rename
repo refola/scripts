@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Bash completion for regex-rename.sh
+
+_regex-rename() {
+    local opts=(
+          --debug
+          --dirs
+          --dry
+          --follow-links
+          --no-recurse
+          --quiet
+          --relink
+          )
+    COMPREPLY=($(compgen -W "${opts[*]}" -- "${COMP_WORDS[COMP_CWORD]}"))
+}
+complete -F _regex-rename regex-rename
