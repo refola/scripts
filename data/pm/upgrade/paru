@@ -1,0 +1,3 @@
+cmd paru --repo -Syuw --noconfirm
+cmd paru --repo -Su
+cmd paru --aur  -Syu

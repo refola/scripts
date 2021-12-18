@@ -1,9 +1,44 @@
-ccr
-chaser
-pamac
+## pms
 
+# This is a list of package managers for the `pm` multi-distro package
+# manager frontend script. Each comment line is identified by a
+# leading `#`. Each word in a non-comment line is interpreted as a
+# package manager command name to search for, with the first one
+# winning. See `README.md` for how to make the helper scripts that
+# `pm` uses for package management operations once it`s found a
+# package manager in this list.
+
+
+## Higher-level package managers
+
+# These provide extra features like automatic sudo invocation and
+# building packages from user / community repositories, and are thus
+# preferred if available.
+
+# Chakra package managers which supported the CCR when it was a thing
+ccr chaser
+
+# Arch package managers which support the AUR
+pamac paru yay
+
+
+## Lower-level package managers
+
+# These are the basic package manager commands which should be present
+# even if fancier options aren't available. These are listed last so
+# they're used only if there's no higher-level option.
+
+# Debian
 apt-get
+
+# Fedora
 dnf
+
+# NixOS
 nix-env
+
+# Arch
 pacman
+
+# openSUSE
 zypper

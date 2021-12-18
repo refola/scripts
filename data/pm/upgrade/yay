@@ -1,0 +1,3 @@
+cmd yay --repo -Syuw --noconfirm
+cmd yay --repo -Su
+cmd yay --aur  -Syu
