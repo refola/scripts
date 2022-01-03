@@ -1,1 +1,5 @@
+# it's annoying, so explain the fix
+msg "pamac detected as AUR frontend."
+msg "Please try paru or yay if GUI-based authentication prompts get annoying."
+
 cmd pamac search --aur "$@"

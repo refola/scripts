@@ -1,3 +1,7 @@
+# it's annoying, so explain the fix
+msg "pamac detected as AUR frontend."
+msg "Please try paru or yay if GUI-based authentication prompts get annoying."
+
 # "pamac install" works for non-AUR packages, and the man page says
 # "pamac build" is for AUR only, but it's useful to have a single
 # command that works for everything, and the latter is it.
