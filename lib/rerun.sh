@@ -5,8 +5,8 @@
 usage() {
     local cmd=rerun
     cat << EOF
-$cmd [--force] command args [...]
-$cmd [--force] {--file | -f} file... {--command | -c} command [args...]
+$cmd [options...] command args [...]
+$cmd [options...] {--file | -f} file... {--command | -c} command [args...]
 
 Repeatedly run a command whenever the file(s) it acts on change, or
 when any given file changes.
@@ -18,8 +18,11 @@ In the second case, all files must be immediately after the "-f"
 argument and the command (with its args) after the "-c" argument, and
 only explicitly given files are watched.
 
-With --force, don't exit on nonzero command return value (i.e., only
-exit when interrupted with, e.g., ^C).
+Options:
+
+--force    Don't exit on nonzero command return value (i.e., only
+           exit when interrupted with, e.g., ^C).
+--debug    Show diagnostic information.
 
 EOF
 }
@@ -71,14 +74,17 @@ wait() {
 }
 
 main() {
-    local files=()
     local cmd=()
-    local force=
-    local status
+    local files=()
+    local force='' debug='' status=''
 
     # process args
     while [ "$#" -gt 0 ]; do
         case "$1" in
+            --debug)
+                debug=true
+                shift
+                ;;
             --force)
                 force=true
                 shift
@@ -123,7 +129,7 @@ main() {
     fi
 
     # debug...
-    [ -n "$DEBUG" ] && echo "cmd=(${cmd[*]}), files=(${files[*]})"
+    [ -n "$debug" ] && echo "cmd=(${cmd[*]}), files=(${files[*]})"
 
     # keep running the command
     while true; do
