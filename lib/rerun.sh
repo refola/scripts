@@ -33,7 +33,7 @@ EOF
 wait() {
     local ns=({1..15})
     local traps="$(trap)"
-    trap -- 'return 1' "${ns[@]}"
+    trap -- 'echo && return 1' "${ns[@]}"
 
     if which fswatch &>/dev/null; then
         # Nice cross-platform tool: https://github.com/emcrisostomo/fswatch
